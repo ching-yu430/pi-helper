@@ -1,0 +1,49 @@
+/* Shared responsive refinements; loaded after each page's existing styles. */
+:root { color-scheme: light; }
+body { overflow-wrap: anywhere; }
+main, header > div { width: 100%; }
+a, button, summary, input, select, textarea { scroll-margin-block: 24px 120px; }
+summary { min-height: 44px; align-content: center; }
+button, input, select, textarea { max-width: 100%; }
+pre { max-width: 100%; tab-size: 2; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #b47b13; outline-offset: 3px; }
+.sync-banner { flex-wrap: wrap; }
+.sync-banner > span { flex: 1 1 200px; }
+.sync-banner button { min-height: 44px; }
+.dashboard-stats { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.dashboard-board { min-width: 0; }
+.group-card.state-stale { background: #f4f5f5; border-style: dashed; }
+.state-stale .badge { background: #e4e7e9; color: #475660; }
+.stat-stale { background: #edf0f2; }
+body[data-assistant-view="board"] main { padding-bottom: max(36px,env(safe-area-inset-bottom)); }
+.assistant-views { flex-wrap: wrap; }
+@media (max-width: 720px) {
+  header > div { display: flow-root; }
+  .student-entry { float: none; width: fit-content; margin: 0 0 12px auto; }
+  body[data-assistant-view="tools"] header { padding-bottom: 18px; }
+  body[data-assistant-view="tools"] .flash-tab { position: static; display: block; margin: 12px 12px 0 auto; border-radius: 12px; max-width: none; }
+  body[data-assistant-view="tools"] main { padding-bottom: calc(170px + env(safe-area-inset-bottom)); }
+  .dashboard-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .stat-item:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
+  .grid { grid-template-columns: minmax(0,1fr); }
+  .settings-toolbar { flex-wrap: wrap; }
+  .flash-meta { flex-wrap: wrap; }
+  .flash-meta button { margin-left: auto; }
+  .flash-nav { flex-wrap: wrap; }
+  .flash-nav > button { flex: 1 1 130px; }
+  .top-links { justify-content: flex-start; }
+  .top-links > * { flex: 1 1 auto; text-align: center; }
+  .guide-dialog { max-height: calc(100dvh - 24px); }
+  #toast { width: max-content; max-width: calc(100vw - 32px); text-align: center; }
+}
+@media (max-width: 360px) {
+  h1 { font-size: 23px; }
+  .login-row { align-items: stretch; flex-direction: column; }
+  .login-row button { width: 100%; }
+  .card, .classroom-dashboard { padding: 16px 14px; }
+  .guide-controls { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

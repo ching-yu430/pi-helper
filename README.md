@@ -1,53 +1,51 @@
-# 樹莓派 5 學生自助版與助教版
+# 樹莓派 5 課堂連線小幫手
 
-更新：2026-10-15。支援 GitHub Pages；同步需設定自己的 Supabase。
+學生自助排查、刷機圖解與助教看板；HTML / CSS / JavaScript 可直接放在 GitHub Pages，跨裝置同步由 Supabase RPC 提供。
 
-## 本次更新
+## 這次調整
 
-- 學生／助教版加強手機單欄排版、16px 輸入欄位、觸控按鈕與安全區留白。
-- 密碼不設字數限制（不可空字串），短密碼及長密碼都可完整驗證。
-- 移除「開啟組別看板」，改為登入表單；登入後只顯示更新及關閉按鈕。
-- 學生頁面每次開啟自動顯示四步導覽，可略過及重新開啟。
+- 新增 responsive.css，統一手機觸控、窄螢幕表單、刷機按鈕、安全區與工具列留白；修正助教刷機入口與頁首可能互相遮擋。
+- 排查工具不再依賴助教登入；全班紀錄與管理操作仍由資料庫驗證密碼。
+- 看板增加「暫無更新」，超過一分鐘未更新的處理中／求助回報不再計入活躍狀態。
+- 切換組別時結束上一組的裝置紀錄；同步佇列依 session 保留待送資料，避免換組或重設時結束訊息被覆蓋。
+- 同步內容額外遮蔽 IPv4；原始輸出仍只用於本機 AI 提示詞。
+- 重新整理看板不覆蓋尚未儲存的截止日期；助教權限失效時清除看板。
+- 公開金鑰檢查、逾時／限流提示、首次導覽記憶與減少動態效果支援。
+- 新增每組保留最近 20 筆的看板讀取函式，避免單組擠掉其他組。
 
-- 學生與助教固定使用本堂課，移除課堂加入、退出與更換功能。
-- 助教改為密碼登入；若未修改過密碼，首次沿用先前提供的管理碼；已修改者使用目前密碼。
-- 看板更新與關閉按鈕固定同一排。
-- 截止日期只選日期，另以開關控制課堂是否開放。
-- 助教版改為「組別看板／排查工具」頁籤，加入各組狀態統計與桌面／手機卡片版面。
-- 保留學生一步一問、刷機圖解與完整 AI 提示詞預覽。
+## 部署到既有 GitHub Pages
 
-## 更新方式
+1. 將本資料夾的網站檔案與 assets/ 原樣覆蓋到儲存庫根目錄；保留 .nojekyll。新增的 responsive.css 也必須上傳。
+2. 保留 config.js 的現有公開連線設定；若換 Supabase 專案，依 SUPABASE_SETUP.md 設定。
+3. 在 GitHub Settings → Pages 確認部署來源為放置檔案的分支與根目錄，等待部署成功。所有本機資源使用相對路徑，適用儲存庫子路徑。
+4. 既有課堂若已有原本函式，可在 Supabase SQL Editor 執行 supabase/update-report-fairness.sql，更新看板讀取邏輯。此檔不刪資料、不改密碼、不建立課堂；此處未代為執行。
+5. 開啟學生 index.html 與助教 assistant.html，以兩個瀏覽器驗收同步、登入、手機排版與課堂設定。
 
-1. 解壓縮，將全部檔案與資料夾覆蓋上傳 GitHub 儲存庫根目錄。
-2. 提交並等待 Pages 完成部署，重新整理網頁。
-3. 學生選組別直接開始；助教輸入密碼登入。
+此交付為本機修改套件；未連接 GitHub 帳戶，也未推送或部署網站。不要在正式課堂反覆執行 create-classroom.sql。
 
-本次資料庫更新已套用，不必重跑 SQL。課堂開關、截止日期與現有助教密碼均沿用目前資料庫設定。
+## 目前功能邊界
 
-檔案：index.html 為學生版，assistant.html 為助教版。config.js、sync-client.js、student-sync.js、teacher-dashboard.js、student-guide.js 及 assets/ 圖片都必須一併上傳。詳細使用方式見 SUPABASE_SETUP.md。
+目前同步為學生回報、助教讀取與課堂開關控制，尚未提供助教文字回覆、學生收訊或已讀確認。若「雙向」指即時對話，需要另加訊息資料表、以學生 session secret 驗證的讀取 RPC、助教寫入 RPC 與學生收訊介面，詳見 AUDIT.md。
 
-密碼由資料庫驗證，不放在公開程式碼中；原助教管理碼不包含在套件中。學生公開課堂碼已固定設定，介面不會要求填入。
+學生課堂碼為公開值，無法證明回報者確實屬於該組；適合受控課堂輔助，不適合作為點名、成績或正式身分紀錄。統一助教密碼也不提供個別助教身分與稽核。
 
-## Imager 查核紀錄
+## 本次驗證
 
-2026-10-15 實際查詢官方軟體頁：Windows 下載連結 imager_latest.exe 轉向 imager_2.0.12.exe，Last-Modified 為 2026-10-08。
-同時讀取 v2.0.12 原始碼的 Hostname／Locale／User／Wi-Fi／Remote Access／Pi Connect／Writing 相關 QML，核對欄位與操作順序。
-本環境沒有直接啟動 Windows 安裝程式。圖片取自官方現行文件，為官方介面範例，不是本次自行操作 Windows 所截。
+在專案根目錄執行：
 
-已補上：Capital city 影響無線地區、Time zone／Keyboard layout、Wi-Fi Secure network／Confirm password／Hidden SSID、SSH 開關與密碼驗證、Connect、Writing Summary、清除警告與完成驗證。
-介面語言及 OS 提供的條件式選項可能不同；網站使用繁體中文說明與英文欄位對照。官方圖中的 Jay／London／Pi Towers／磁碟名稱是例子，不代表課堂值；各步已明確提示。SSH 官方圖是關閉狀態，課堂步驟要求開啟。
+~~~sh
+node tests/run-tests.cjs
+~~~
 
-## 驗證範圍
+121 項檢查通過，包含 JavaScript 語法、相對資源、學生流程連結、14 步刷機圖片、輸入驗證、同步切組佇列、IP 遮蔽、助教看板與登出等 DOM 模擬。測試不需要安裝套件，且不向正式資料庫發送測試資料。
 
-JavaScript 語法、26 個學生排查節點、14 個刷機步驟、AI 預覽與返回、組別切換、同步資料白名單、裝置識別、自動回報及助教看板模擬已通過。
-已對使用者指定 Supabase 完成學生加入、回報寫入、助教讀取、錯誤管理碼拒絕、錯誤裝置憑證拒絕及過期回報不覆寫等真實 API 測試。測試在獨立課堂執行，已在正式 GitHub Pages 手動加入並測試第 9 組回報；本次修正需上傳新版檔案後進行前端驗收。未使用實體手機或 Pi 測試。
+本次環境沒有可用的預覽瀏覽器，未完成瀏覽器畫面／手機截圖驗證、實體手機與 Pi 測試、正式 Supabase 或 SQL 實機驗證。原套件先前宣稱的雲端測試不作為本次已驗證證據。
 
-## 官方來源
+## 官方參考
 
-- https://www.raspberrypi.com/software/
-- https://github.com/raspberrypi/rpi-imager/releases/tag/v2.0.12
-- https://www.raspberrypi.com/documentation/computers/getting-started.html
-- https://supabase.com/docs/guides/database/functions
-- https://supabase.com/docs/guides/getting-started/api-keys
+- [GitHub Pages](https://docs.github.com/en/pages)
+- [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys)
+- [Supabase database functions](https://supabase.com/docs/guides/database/functions)
+- [Raspberry Pi 官方下載](https://www.raspberrypi.com/software/)
 
-課堂設定依先前提供的樹莓派 5 講義；仍採有桌面 64-bit、.local 優先與各組手機熱點。
+Imager 圖片與教學內容沿用原套件，來源見 assets/imager/SOURCES.md；本次未重新核對所有 Imager 版本欄位或課堂講義。課堂固定帳密請依實際教學要求確認。
