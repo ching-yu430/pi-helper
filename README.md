@@ -1,57 +1,47 @@
 # 樹莓派 5 連線小幫手 — 學生自助版
 
-更新日期：2026-10-15。
+更新日期：2026-10-15（刷機圖解與 AI 提示詞版）。
 
-## 更新現有 GitHub Pages
+## 更新至 GitHub Pages
 
-1. 先解壓縮 ZIP。
-2. 將 `index.html`、`assistant.html`、`.nojekyll`、`README.md` 上傳至原 GitHub 儲存庫的最外層。
-3. 覆蓋原有 `index.html` 並提交變更。保留 `assistant.html`，學生版求助頁會連到它。
-4. 等待 Pages 部署完成，再重新整理網站。若原本已設定 main 的 /(root)，不必重新設定。
-5. 學生使用原本的首頁網址；助教版網址為首頁網址後面加上 `assistant.html`。
+先解壓縮，將裡面的 index.html、assistant.html、README.md、.nojekyll 上傳至原儲存庫最外層，覆蓋同名檔案並提交。等待 Pages 部署完成，再重新整理網站。
+原本已設定 main 分支與 /(root) 時，不必重新設定。
+助教完整版是 assistant.html，請一併上傳；入口已放在右上角。
 
-## 本次改版
+## 本次更新
 
-- 首頁選組別即可開始；帳號與已確認 IP 放在其他設定。
-- 優先使用 .local，名稱解析失敗才引導查 IP。
-- 一次顯示一個步驟及相關結果選項；可回上一步、重新開始。
-- 複製指令不代表已執行，需自行回報實際結果。
-- 金鑰異常、忘記帳密、服務故障等情況交助教，不引導學生自行重刷或刪金鑰。
-- 可貼上回覆、複製排查紀錄給助教；AI 提示詞放在求助頁的展開區。
-- 學生版紀錄只保留在目前頁面記憶體，重新整理會清除，不會自動送給助教或 AI。
-- 修改組別後重新開始會清除本次流程紀錄。
-- 原本完整工具保留為 assistant.html。
+1. 學生版加入 11 個刷機步驟，每步搭配繁體中文設定示意圖。
+2. 組別名稱會同步更新圖片與可複製欄位，刷機填 pi5-XX，不加 .local。
+3. 刷機依課堂講義設定 Pi 5、Raspberry Pi OS 64-bit 有桌面版本、TW／Asia/Taipei、課堂帳密、手機熱點及 SSH 密碼驗證。
+4. 刷機完成後可以轉入 .local SSH 連線排查。
+5. 連線排查與刷機圖解皆可複製 AI 提示詞；不會自動送到 AI。
+6. 已移除學生版「複製給助教」功能，求助頁改為 AI 提示詞。
+7. 助教完整版入口移到右上角。
 
-## 驗證範圍
+## 圖片說明
 
-已檢查程式語法、26 個學生流程節點、SSH 與遠端桌面成功路徑、IP 驗證、求助紀錄與重設。
-尚未用實體手機或真實樹莓派測試這份學生介面。
-兩個網頁均無需建置、資料庫或 API 金鑰。
+圖片是內建 SVG 教學示意，並非 Raspberry Pi Imager 實際截圖。不同版本依設定欄位名稱操作；所有圖片均包含在 index.html，不需另傳圖片或連外載入圖片。
+自訂主機名稱、國家、時區等欄位依課堂講義整理。新版 Imager 可能採用獨立的 Hostname、Localisation、User、Wi-Fi、Remote Access 分頁；舊版可能使用 OS 自訂設定與 Services 分頁。
 
-## 使用 GitHub 網站上傳與部署
+## 功能與資料
 
-1. 先解壓縮 ZIP，不要只把 ZIP 本身上傳到 GitHub。
-2. 登入 GitHub，建立儲存庫，名稱可用 `pi-ssh-helper`。使用免費方案時，選擇 **Public**。
-3. 在儲存庫頁面選 **Add file → Upload files**；新建空儲存庫也可使用 **uploading an existing file**。
-4. 上傳解壓縮後的 `index.html`、`.nojekyll`、`README.md`，並提交變更（**Commit changes**）。
-5. 確認 `index.html` 直接位於儲存庫最外層，不要再包在 `github-pages-export` 或其他資料夾內。
-6. 若上傳介面沒有顯示 `.nojekyll`，可用 **Add file → Create new file** 建立同名檔案；內容可留空或填一行註解後提交。
-7. 開啟 **Settings → Pages**。
-8. 在 **Build and deployment → Source** 選 **Deploy from a branch**。
-9. **Branch** 選 `main`，資料夾選 **/(root)**，按 **Save**。若你的預設分支名稱不同，選擇實際存放這些檔案的分支。
-10. 等待部署完成。可在 **Actions** 查看 `pages build and deployment` 的執行狀態；完成後回到 **Settings → Pages** 開啟顯示的網站網址。
-11. 一般專案網址格式為 `https://你的GitHub帳號.github.io/pi-ssh-helper/`；以 Pages 顯示的實際網址為準。
-12. 將網站網址分享給其他助教，手機與電腦都能開啟，不需登入判斷器。
+學生版一次顯示一個連線步驟，可返回、重設、貼上回覆，再複製 AI 提示詞。這些動作不會替電腦執行指令。刷機步驟按「已完成」只表示使用者自行回報完成，網頁不會驗證 Imager 或 SD 卡狀態。
+紀錄留在目前頁面記憶體，重新整理會清除。不會自動傳給助教或 AI，不應輸入私人密碼或私鑰。
 
-## 日後更新
+## 驗證
 
-修改 `index.html`，上傳覆蓋儲存庫中的同名檔案並提交。Pages 完成部署後重新整理網頁。通常不需要重新設定 Pages；若仍看到舊內容，可在電腦按 Ctrl+F5。
+已檢查 JavaScript 語法、26 個連線流程節點、11 個刷機步驟、組別圖片更新、轉入 SSH、AI 提示詞與重設。圖片通過 SVG 結構檢查；尚未用實體手機或真實 Pi 測試整體操作。
 
-## 本機檢視
+## 全新儲存庫
 
-可直接開啟 index.html。正式分享建議使用 GitHub Pages 的 HTTPS 網址。
-手機網頁不會替電腦執行指令，指令須在標示的 Windows PowerShell 或樹莓派 SSH 執行。
+1. 建立 GitHub 儲存庫；免費方案使用 Public。
+2. 將解壓縮後的四個檔案上傳至根目錄，不要只上傳 ZIP。
+3. Settings → Pages → Deploy from a branch → main → /(root) → Save。
+4. 等待部署完成，使用 Pages 顯示的網址。
 
-## 官方文件
+## 參考
 
-https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+課堂提供：樹莓派5_免查IP版、樹莓派5_電腦查IP版。
+Raspberry Pi Imager 官方下載：https://www.raspberrypi.com/software/
+Raspberry Pi 官方設定說明：https://www.raspberrypi.com/documentation/computers/getting-started.html
+GitHub Pages：https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
