@@ -1,0 +1,94 @@
+# 開啟課堂同步：一次設定，學生與助教共用
+
+目前套件內 config.js 的專案設定留空，避免連到錯誤專案；在完成以下設定前，網頁仍可做本機排查，沒有跨裝置同步。
+
+## 1. 選擇 Supabase 專案
+
+可使用你自己的新專案，或你已有權限的專案。本工具使用 pi_helper schema，以及 pi_helper_ 開頭的公開函式，不會改動其他應用的資料表。
+在專案取得：
+
+- Project URL（格式為 https://你的專案代號.supabase.co）
+- Publishable key（sb_publishable_ 開頭），或 legacy anon key
+
+這兩項是前端連線設定。請勿填 service_role、sb_secret_、資料庫密碼或助教管理碼。
+若找不到，可從專案 Connect／Data API／API Keys 設定頁查找。
+
+## 2. 建立資料表與 API
+
+1. Supabase → SQL Editor → New query。
+2. 貼上 supabase/setup.sql 全部內容，執行 Run。
+3. 成功後，另開一個查詢，貼上 supabase/create-classroom.sql 並執行一次。
+4. 儲存它回傳的「課堂加入碼」與「助教管理碼」。每次執行 create-classroom.sql 都會建立新的一堂課，不是更新舊課。
+
+預設課堂有效 30 天；建立前可在 SQL 改 title 與 interval。學生只需拿到課堂加入碼；助教另持有管理碼。不要把管理碼寫到 GitHub、config.js 或公開網址。
+
+## 3. 編輯 config.js
+
+填入你專案的 Project URL 與 publishable key：
+
+```js
+window.PI_HELPER_CONFIG = Object.freeze({
+  supabaseUrl: 'https://你的專案代號.supabase.co',
+  supabaseKey: '你的 publishable key 或 legacy anon key',
+  pollMs: 5000
+});
+```
+
+保留 5000 即為助教看板每 5 秒輪詢。這份實作使用 Supabase Data API 查詢更新，不是 WebSocket 推播；不必在 Dashboard 開啟 Realtime publication。
+
+## 4. 更新 GitHub Pages
+
+把套件所有網站檔案與 assets 資料夾維持原結構，上傳到儲存庫根目錄，覆蓋同名檔案並提交。只更新 index.html 不會帶入同步程式與圖片。
+執行 Pages 部署後，重新整理；若顯示舊內容可按 Ctrl+F5。
+
+## 5. 學生如何加入
+
+1. 開啟學生版，展開「課堂同步（讓助教看到進度）」。
+2. 填課堂加入碼，按「加入課堂同步」。
+3. 選正確組別，開始連線或刷機。
+4. 看到「已同步至課堂」才表示最近一次送出成功。
+
+同步內容僅為組別、目前階段、步驟、回報選項／求助原因、狀態與時間。你貼在文字框的原始輸出、SSH 指令中的 IP、登入帳號、密碼與熱點設定不會自動上傳。
+刷新頁面後須重新加入；退出會停止後續上傳。重新開始排查會建立新裝置紀錄，雲端舊紀錄仍保留，不會冒充另一位學生覆寫。
+
+## 6. 助教如何查看
+
+1. 右上角開啟助教完整版（assistant.html）。
+2. 在最上方的「各組排查看板」填課堂加入碼及助教管理碼。
+3. 按「開啟組別看板」，每 5 秒自動更新。
+4. 黃色卡片表示學生回報「需要協助」。同組多台裝置回報時，最新紀錄顯示在上方，可展開其他裝置紀錄。
+5. 看板不是樹莓派健康監測；它反映學生操作網頁的回報。超過 1 分鐘沒有更新會提示，不直接判定離線或故障。
+6. 關閉看板會清除本頁記憶體中的管理碼。
+
+學生頁面開啟並加入同步時，約每 15 秒送出一次目前狀態，操作步驟則立即送出。助教看板最慢再等約 5 秒顯示，網路時間另計。
+
+## 7. 上課前兩個瀏覽器驗收
+
+- 在學生瀏覽器加入課堂，選第 5 組並開始；在助教瀏覽器開啟同堂課看板，確認第 5 組出現。
+- 學生選「都不符合／看不懂，用 AI 協助」，確認助教卡片變成需要協助。
+- 貼上原始錯誤文字，確認它沒有出現在助教看板（原始文字只供本機 AI 提示詞）。
+- 使用錯誤管理碼應讀取失敗；無管理碼不應能列出全班資料。
+- 測試網路中斷，學生應顯示尚未同步，助教不應把舊資料當成最新狀態。
+
+## 8. 權限與管理
+
+pi_helper schema 不直接授權給 anon／authenticated；資料表開啟 RLS。只有三個公開 RPC 供前端呼叫。
+學生 API 核對有效課堂碼，只能更新自己持有裝置憑證的紀錄；助教列出全班資料前，會另外核對管理碼。加入碼持有者可以自選組別，因此這不是學生身分驗證系統。
+
+要停止一堂課，可在 SQL Editor 使用建立課堂時取得的 id 執行：
+
+```sql
+update pi_helper.rooms set active = false where id = '填入該堂課的 uuid';
+```
+
+要查看自己建立的課堂，可在 SQL Editor 執行：
+
+```sql
+select id, title, active, ends_at from pi_helper.rooms order by created_at desc;
+```
+
+資料不會自動刪除。課堂結束後可由擁有者依需要管理保留時間。
+
+## 驗證限制
+
+本套件已做前端模擬與權限條件檢查，尚未在你的 Supabase 專案建立資料表或實際跨裝置測試。需要先完成設定，再依上面的驗收步驟測試。

@@ -1,0 +1,100 @@
+-- 在 Supabase SQL Editor 執行一次。只建立本工具專用的 schema、資料表與函式。
+begin;
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
+create schema if not exists pi_helper;
+revoke all on schema pi_helper from public, anon, authenticated;
+create table if not exists pi_helper.rooms (
+ id uuid primary key default gen_random_uuid(),
+ title text not null,
+ join_hash text unique not null,
+ teacher_hash text not null,
+ active boolean not null default true,
+ ends_at timestamptz not null,
+ created_at timestamptz not null default now()
+);
+create table if not exists pi_helper.reports (
+ room_id uuid not null references pi_helper.rooms(id) on delete cascade,
+ session_id uuid not null,
+ token_hash text not null,
+ group_no smallint not null check(group_no between 1 and 9),
+ stage text not null check(length(stage)<=30),
+ step text not null check(length(step)<=200),
+ result text not null check(length(result)<=500),
+ state text not null check(state in ('working','need_help','done','ended')),
+ revision bigint not null,
+ updated_at timestamptz not null default now(),
+ primary key(room_id,session_id)
+);
+alter table pi_helper.rooms enable row level security;
+alter table pi_helper.reports enable row level security;
+revoke all on all tables in schema pi_helper from public, anon, authenticated;
+create index if not exists reports_room_updated on pi_helper.reports(room_id,updated_at desc);
+
+create or replace function public.pi_helper_student_join(p_room_code text)
+returns text language plpgsql security definer set search_path='' as $$
+declare v_title text;
+begin
+ if p_room_code is null or length(p_room_code)<8 or length(p_room_code)>80 then raise exception 'ROOM_NOT_FOUND'; end if;
+ select r.title into v_title from pi_helper.rooms r
+ where r.join_hash=encode(extensions.digest(p_room_code,'sha256'),'hex')
+ and r.active and r.ends_at>now();
+ if not found then raise exception 'ROOM_NOT_FOUND'; end if;
+ return v_title;
+end; $$;
+
+create or replace function public.pi_helper_student_report(
+ p_room_code text,p_session_id uuid,p_session_secret text,p_group_no smallint,
+ p_stage text,p_step text,p_result text,p_status text,p_revision bigint)
+returns timestamptz language plpgsql security definer set search_path='' as $$
+declare v_room uuid; v_token text; v_time timestamptz;
+begin
+ if p_room_code is null or length(p_room_code)<8 or length(p_room_code)>80 then raise exception 'ROOM_NOT_FOUND'; end if;
+ select r.id into v_room from pi_helper.rooms r
+ where r.join_hash=encode(extensions.digest(p_room_code,'sha256'),'hex')
+ and r.active and r.ends_at>now();
+ if not found then raise exception 'ROOM_NOT_FOUND'; end if;
+ if p_session_id is null or p_session_secret is null or length(p_session_secret)<32 or length(p_session_secret)>128
+ or p_group_no is null or p_group_no<1 or p_group_no>9 or p_revision is null or p_revision<1
+ or p_stage is null or length(p_stage)>30 or p_step is null or length(p_step)>200
+ or p_result is null or length(p_result)>500 or p_status is null or p_status not in ('working','need_help','done','ended')
+ then raise exception 'INVALID_REPORT'; end if;
+ v_token:=encode(extensions.digest(p_session_secret,'sha256'),'hex');
+ insert into pi_helper.reports as current_report(room_id,session_id,token_hash,group_no,stage,step,result,state,revision,updated_at)
+ values(v_room,p_session_id,v_token,p_group_no,p_stage,p_step,p_result,p_status,p_revision,now())
+ on conflict(room_id,session_id) do update set
+ stage=excluded.stage,step=excluded.step,result=excluded.result,state=excluded.state,
+ revision=excluded.revision,updated_at=now()
+ where current_report.token_hash=excluded.token_hash and current_report.group_no=excluded.group_no
+ and current_report.revision<excluded.revision
+ returning updated_at into v_time;
+ if v_time is null then
+  select r.updated_at into v_time from pi_helper.reports r
+  where r.room_id=v_room and r.session_id=p_session_id and r.token_hash=v_token and r.group_no=p_group_no;
+  if not found then raise exception 'SESSION_DENIED'; end if;
+ end if;
+ return v_time;
+end; $$;
+
+create or replace function public.pi_helper_teacher_reports(p_room_code text,p_teacher_code text)
+returns table(session_id uuid,group_no smallint,stage text,step text,result text,state text,updated_at timestamptz)
+language plpgsql security definer set search_path='' as $$
+declare v_room uuid; v_teacher_hash text;
+begin
+ if p_room_code is null or length(p_room_code)>80 or p_teacher_code is null or length(p_teacher_code)>128 then raise exception 'TEACHER_DENIED'; end if;
+ select r.id,r.teacher_hash into v_room,v_teacher_hash from pi_helper.rooms r
+ where r.join_hash=encode(extensions.digest(p_room_code,'sha256'),'hex')
+ and r.active and r.ends_at>now();
+ if not found then raise exception 'TEACHER_DENIED'; end if;
+ if extensions.crypt(p_teacher_code,v_teacher_hash)<>v_teacher_hash then raise exception 'TEACHER_DENIED'; end if;
+ return query select r.session_id,r.group_no,r.stage,r.step,r.result,r.state,r.updated_at
+ from pi_helper.reports r where r.room_id=v_room order by r.updated_at desc limit 500;
+end; $$;
+
+revoke execute on function public.pi_helper_student_join(text) from public,anon,authenticated;
+revoke execute on function public.pi_helper_student_report(text,uuid,text,smallint,text,text,text,text,bigint) from public,anon,authenticated;
+revoke execute on function public.pi_helper_teacher_reports(text,text) from public,anon,authenticated;
+grant execute on function public.pi_helper_student_join(text) to anon;
+grant execute on function public.pi_helper_student_report(text,uuid,text,smallint,text,text,text,text,bigint) to anon;
+grant execute on function public.pi_helper_teacher_reports(text,text) to anon;
+commit;

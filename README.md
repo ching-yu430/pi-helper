@@ -1,47 +1,50 @@
-# 樹莓派 5 連線小幫手 — 學生自助版
+# 樹莓派 5 學生自助版與助教版
 
-更新日期：2026-10-15（刷機圖解與 AI 提示詞版）。
-
-## 更新至 GitHub Pages
-
-先解壓縮，將裡面的 index.html、assistant.html、README.md、.nojekyll 上傳至原儲存庫最外層，覆蓋同名檔案並提交。等待 Pages 部署完成，再重新整理網站。
-原本已設定 main 分支與 /(root) 時，不必重新設定。
-助教完整版是 assistant.html，請一併上傳；入口已放在右上角。
+更新：2026-10-15。支援 GitHub Pages；同步需設定自己的 Supabase。
 
 ## 本次更新
 
-1. 學生版加入 11 個刷機步驟，每步搭配繁體中文設定示意圖。
-2. 組別名稱會同步更新圖片與可複製欄位，刷機填 pi5-XX，不加 .local。
-3. 刷機依課堂講義設定 Pi 5、Raspberry Pi OS 64-bit 有桌面版本、TW／Asia/Taipei、課堂帳密、手機熱點及 SSH 密碼驗證。
-4. 刷機完成後可以轉入 .local SSH 連線排查。
-5. 連線排查與刷機圖解皆可複製 AI 提示詞；不會自動送到 AI。
-6. 已移除學生版「複製給助教」功能，求助頁改為 AI 提示詞。
-7. 助教完整版入口移到右上角。
+- AI 提示詞完整預覽直接展開，放在複製按鈕前。
+- 連線步驟下方只保留「都不符合／看不懂，用 AI 協助」，移除重複的直接複製按鈕。刷機也由同類入口先預覽，再複製。
+- 刷機改為 14 步，核對 Imager 2.0.12 的介面原始碼，搭配官方文件的真實截圖。
+- 加入 Supabase 學生進度同步及助教的九組看板，助教每 5 秒自動更新。
 
-## 圖片說明
+## 上傳 GitHub
 
-圖片是內建 SVG 教學示意，並非 Raspberry Pi Imager 實際截圖。不同版本依設定欄位名稱操作；所有圖片均包含在 index.html，不需另傳圖片或連外載入圖片。
-自訂主機名稱、國家、時區等欄位依課堂講義整理。新版 Imager 可能採用獨立的 Hostname、Localisation、User、Wi-Fi、Remote Access 分頁；舊版可能使用 OS 自訂設定與 Services 分頁。
+解壓縮後，將裡面的檔案及資料夾上傳到儲存庫根目錄，保持資料夾結構。覆蓋舊檔並提交即可；既有 Pages 設定不必更改。
 
-## 功能與資料
+- index.html：學生版
+- assistant.html：助教版，包含組別看板
+- config.js：填 Supabase Project URL 與 publishable／anon key
+- sync-client.js、student-sync.js、teacher-dashboard.js：同步功能
+- assets/imager/：官方介面圖片，須連同資料夾上傳
+- SUPABASE_SETUP.md：同步設定與課前驗收
+- supabase/setup.sql：資料表及 API
+- supabase/create-classroom.sql：產生課堂加入碼與助教管理碼
+- .nojekyll：靜態網頁設定
 
-學生版一次顯示一個連線步驟，可返回、重設、貼上回覆，再複製 AI 提示詞。這些動作不會替電腦執行指令。刷機步驟按「已完成」只表示使用者自行回報完成，網頁不會驗證 Imager 或 SD 卡狀態。
-紀錄留在目前頁面記憶體，重新整理會清除。不會自動傳給助教或 AI，不應輸入私人密碼或私鑰。
+未設定 Supabase 時，頁面可本機排查，但不會同步。助教管理碼不應寫入任何網站原始檔。
 
-## 驗證
+## Imager 查核紀錄
 
-已檢查 JavaScript 語法、26 個連線流程節點、11 個刷機步驟、組別圖片更新、轉入 SSH、AI 提示詞與重設。圖片通過 SVG 結構檢查；尚未用實體手機或真實 Pi 測試整體操作。
+2026-10-15 實際查詢官方軟體頁：Windows 下載連結 imager_latest.exe 轉向 imager_2.0.12.exe，Last-Modified 為 2026-10-08。
+同時讀取 v2.0.12 原始碼的 Hostname／Locale／User／Wi-Fi／Remote Access／Pi Connect／Writing 相關 QML，核對欄位與操作順序。
+本環境沒有直接啟動 Windows 安裝程式。圖片取自官方現行文件，為官方介面範例，不是本次自行操作 Windows 所截。
 
-## 全新儲存庫
+已補上：Capital city 影響無線地區、Time zone／Keyboard layout、Wi-Fi Secure network／Confirm password／Hidden SSID、SSH 開關與密碼驗證、Connect、Writing Summary、清除警告與完成驗證。
+介面語言及 OS 提供的條件式選項可能不同；網站使用繁體中文說明與英文欄位對照。官方圖中的 Jay／London／Pi Towers／磁碟名稱是例子，不代表課堂值；各步已明確提示。SSH 官方圖是關閉狀態，課堂步驟要求開啟。
 
-1. 建立 GitHub 儲存庫；免費方案使用 Public。
-2. 將解壓縮後的四個檔案上傳至根目錄，不要只上傳 ZIP。
-3. Settings → Pages → Deploy from a branch → main → /(root) → Save。
-4. 等待部署完成，使用 Pages 顯示的網址。
+## 驗證範圍
 
-## 參考
+JavaScript 語法、26 個學生排查節點、14 個刷機步驟、AI 預覽與返回、組別切換、同步資料白名單、裝置識別、退出及助教看板模擬已通過。
+SQL 權限條件已檢查；尚未對使用者的 Supabase 執行 SQL，未作真實跨裝置、手機或 Pi 實測。
 
-課堂提供：樹莓派5_免查IP版、樹莓派5_電腦查IP版。
-Raspberry Pi Imager 官方下載：https://www.raspberrypi.com/software/
-Raspberry Pi 官方設定說明：https://www.raspberrypi.com/documentation/computers/getting-started.html
-GitHub Pages：https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+## 官方來源
+
+- https://www.raspberrypi.com/software/
+- https://github.com/raspberrypi/rpi-imager/releases/tag/v2.0.12
+- https://www.raspberrypi.com/documentation/computers/getting-started.html
+- https://supabase.com/docs/guides/database/functions
+- https://supabase.com/docs/guides/getting-started/api-keys
+
+課堂設定依先前提供的樹莓派 5 講義；仍採有桌面 64-bit、.local 優先與各組手機熱點。
