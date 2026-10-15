@@ -1,51 +1,34 @@
-# 樹莓派 5 課堂連線小幫手
+# 樹莓派 5 學生／助教課堂網站
 
-學生自助排查、刷機圖解與助教看板；HTML / CSS / JavaScript 可直接放在 GitHub Pages，跨裝置同步由 Supabase RPC 提供。
+靜態網站可部署 GitHub Pages；學生回報與助教看板使用原有 Supabase 設定。這是本機修正版，尚未推送 GitHub 或執行正式資料庫更新。
 
-## 這次調整
+## 本版四項更新
 
-- 新增 responsive.css，統一手機觸控、窄螢幕表單、刷機按鈕、安全區與工具列留白；修正助教刷機入口與頁首可能互相遮擋。
-- 排查工具不再依賴助教登入；全班紀錄與管理操作仍由資料庫驗證密碼。
-- 看板增加「暫無更新」，超過一分鐘未更新的處理中／求助回報不再計入活躍狀態。
-- 切換組別時結束上一組的裝置紀錄；同步佇列依 session 保留待送資料，避免換組或重設時結束訊息被覆蓋。
-- 同步內容額外遮蔽 IPv4；原始輸出仍只用於本機 AI 提示詞。
-- 重新整理看板不覆蓋尚未儲存的截止日期；助教權限失效時清除看板。
-- 公開金鑰檢查、逾時／限流提示、首次導覽記憶與減少動態效果支援。
-- 新增每組保留最近 20 筆的看板讀取函式，避免單組擠掉其他組。
+1. 清除紀錄：學生與助教排查工具提供「清除本機排查」，操作前確認；看板登入後另有「清除看板紀錄」，可選單組或全班，不改 Pi 檔案或課堂帳密。
+2. 明確導覽：六步區分網頁、Windows PowerShell 與 Pi SSH；提供會隨組別變更的範例、實際結果對照與刷機／已刷機入口。
+3. 助教組別與範例：看板可指定要協助的第 1～9 組、直接開啟該組排查工具、載入本組 .local 範例。另有九組虛構範例看板，不讀寫正式回報。切組時清除舊 IP 並回 .local，避免沿用別組目標。組數與 hostname 維持講義九組，未新增課堂組數或 hostname 的雲端編輯。
+4. 講義優先校對：以免查 IP PDF 為主，刷機優先；補齊安裝 xrdp、X11、重新開機、RDP 與正確關機。需要查 IP 才轉電腦查 IP PDF。兩份原始 PDF 已放 assets/handouts/，網站可直接開啟。完整對照見 TEACHING_REVIEW.md。
 
-## 部署到既有 GitHub Pages
+## 更新既有 GitHub Pages
 
-1. 將本資料夾的網站檔案與 assets/ 原樣覆蓋到儲存庫根目錄；保留 .nojekyll。新增的 responsive.css 也必須上傳。
-2. 保留 config.js 的現有公開連線設定；若換 Supabase 專案，依 SUPABASE_SETUP.md 設定。
-3. 在 GitHub Settings → Pages 確認部署來源為放置檔案的分支與根目錄，等待部署成功。所有本機資源使用相對路徑，適用儲存庫子路徑。
-4. 既有課堂若已有原本函式，可在 Supabase SQL Editor 執行 supabase/update-report-fairness.sql，更新看板讀取邏輯。此檔不刪資料、不改密碼、不建立課堂；此處未代為執行。
-5. 開啟學生 index.html 與助教 assistant.html，以兩個瀏覽器驗收同步、登入、手機排版與課堂設定。
+1. 將本資料夾內網站檔案原樣覆蓋至儲存庫根目錄，包括 responsive.css、course-guide.js、所有 JS、assets/handouts/、assets/imager/ 與 .nojekyll。不要只更新 HTML。
+2. 保留原 config.js 公開連線設定；不可放 secret key、service_role 或助教密碼。
+3. 若既有課堂已可登入，在 Supabase SQL Editor 檢查並執行 supabase/update-classroom-tools.sql，這是本版清除功能必需的升級。它加 cleared_at 欄位並更新受驗證 RPC，不刪資料、不建立課堂、不改密碼。未套用時原有排查仍可用，清除按鈕會回報失敗。
+4. 若原本缺少密碼／課堂設定函式，先依 SUPABASE_SETUP.md 補舊功能，再以 update-classroom-tools.sql 作為最後一步。不要重建既有課堂。
+5. 提交並等待 Pages 部署完成。所有資源使用相對路徑，可放儲存庫子路徑。再以學生與助教兩個瀏覽器驗收。
 
-此交付為本機修改套件；未連接 GitHub 帳戶，也未推送或部署網站。不要在正式課堂反覆執行 create-classroom.sql。
+## 清除的實際行為
 
-## 目前功能邊界
+「清除本機排查」清除本分頁設定、貼上內容與步驟，不會清空全班回報或 Pi 的檔案。學生端會盡力回報原 session 已結束。
 
-目前同步為學生回報、助教讀取與課堂開關控制，尚未提供助教文字回覆、學生收訊或已讀確認。若「雙向」指即時對話，需要另加訊息資料表、以學生 session secret 驗證的讀取 RPC、助教寫入 RPC 與學生收訊介面，詳見 AUDIT.md。
+「清除看板紀錄」限助教登入後，使用已驗證的 RPC 標記 cleared_at，讓選定組別的既有回報不顯示；原始資料保留在資料庫。學生若仍開著網頁並回報，該紀錄將重新顯示。要清空下課紀錄，可先關閉課堂再清除。此功能不是歷史資料的永久刪除或封存政策。
 
-學生課堂碼為公開值，無法證明回報者確實屬於該組；適合受控課堂輔助，不適合作為點名、成績或正式身分紀錄。統一助教密碼也不提供個別助教身分與稽核。
+## 測試
 
-## 本次驗證
+在專案根目錄執行 node tests/run-tests.cjs，無需安裝 npm 套件。最新 172 項檢查涵蓋語法、學生節點、刷機圖片、教學指令與順序、清除取消／範圍、範例不呼叫 API、組別範例、導覽及講義資源。
 
-在專案根目錄執行：
+DOM 為模擬，SQL 為程式審閱，未完成網站瀏覽器／實體手機畫面、實體 Pi、正式 Supabase／SQL 或 GitHub 部署驗證。PDF 已全文讀取並渲染核對主要教學頁。實機課前驗收見 TEACHING_REVIEW.md。
 
-~~~sh
-node tests/run-tests.cjs
-~~~
+## 目前範圍
 
-121 項檢查通過，包含 JavaScript 語法、相對資源、學生流程連結、14 步刷機圖片、輸入驗證、同步切組佇列、IP 遮蔽、助教看板與登出等 DOM 模擬。測試不需要安裝套件，且不向正式資料庫發送測試資料。
-
-本次環境沒有可用的預覽瀏覽器，未完成瀏覽器畫面／手機截圖驗證、實體手機與 Pi 測試、正式 Supabase 或 SQL 實機驗證。原套件先前宣稱的雲端測試不作為本次已驗證證據。
-
-## 官方參考
-
-- [GitHub Pages](https://docs.github.com/en/pages)
-- [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys)
-- [Supabase database functions](https://supabase.com/docs/guides/database/functions)
-- [Raspberry Pi 官方下載](https://www.raspberrypi.com/software/)
-
-Imager 圖片與教學內容沿用原套件，來源見 assets/imager/SOURCES.md；本次未重新核對所有 Imager 版本欄位或課堂講義。課堂固定帳密請依實際教學要求確認。
+目前仍是學生回報、助教讀取與控制課堂，不含助教文字傳訊與學生收訊。公開課堂碼／自行選組不能當身分、點名或成績憑據；助教共享密碼也沒有個人稽核與登入限流，詳見 AUDIT.md。

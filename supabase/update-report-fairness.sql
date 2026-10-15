@@ -1,5 +1,6 @@
 -- 既有課堂可執行；只更新讀取函式，不刪除資料，不更改密碼。
 begin;
+alter table pi_helper.reports add column if not exists cleared_at timestamptz;
 create or replace function public.pi_helper_teacher_reports(p_room_code text,p_teacher_code text)
 returns table(session_id uuid,group_no smallint,stage text,step text,result text,state text,updated_at timestamptz)
 language plpgsql security definer set search_path='' as $$
@@ -14,7 +15,7 @@ begin
  select ranked.session_id,ranked.group_no,ranked.stage,ranked.step,ranked.result,ranked.state,ranked.updated_at
  from (
   select r.*,row_number() over(partition by r.group_no order by r.updated_at desc,r.session_id) as position
-  from pi_helper.reports r where r.room_id=v_room
+  from pi_helper.reports r where r.room_id=v_room and r.cleared_at is null
  ) ranked where ranked.position<=20 order by ranked.updated_at desc;
 end; $$;
 

@@ -22,10 +22,12 @@ create table if not exists pi_helper.reports (
  step text not null check(length(step)<=200),
  result text not null check(length(result)<=500),
  state text not null check(state in ('working','need_help','done','ended')),
+ cleared_at timestamptz,
  revision bigint not null,
  updated_at timestamptz not null default now(),
  primary key(room_id,session_id)
 );
+alter table pi_helper.reports add column if not exists cleared_at timestamptz;
 alter table pi_helper.rooms enable row level security;
 alter table pi_helper.reports enable row level security;
 revoke all on all tables in schema pi_helper from public, anon, authenticated;
@@ -64,7 +66,7 @@ begin
  values(v_room,p_session_id,v_token,p_group_no,p_stage,p_step,p_result,p_status,p_revision,now())
  on conflict(room_id,session_id) do update set
  stage=excluded.stage,step=excluded.step,result=excluded.result,state=excluded.state,
- revision=excluded.revision,updated_at=now()
+ revision=excluded.revision,updated_at=now(),cleared_at=null
  where current_report.token_hash=excluded.token_hash and current_report.group_no=excluded.group_no
  and current_report.revision<excluded.revision
  returning updated_at into v_time;
@@ -102,7 +104,7 @@ begin
  select ranked.session_id,ranked.group_no,ranked.stage,ranked.step,ranked.result,ranked.state,ranked.updated_at
  from (
   select r.*,row_number() over(partition by r.group_no order by r.updated_at desc,r.session_id) as position
-  from pi_helper.reports r where r.room_id=v_room
+  from pi_helper.reports r where r.room_id=v_room and r.cleared_at is null
  ) ranked where ranked.position<=20 order by ranked.updated_at desc;
 end; $$;
 create or replace function public.pi_helper_teacher_room_info(p_room_code text,p_teacher_code text)
@@ -163,4 +165,21 @@ revoke execute on function public.pi_helper_teacher_set_open(text,text,boolean) 
 grant execute on function public.pi_helper_teacher_set_open(text,text,boolean) to anon;
 revoke execute on function public.pi_helper_teacher_change_password(text,text,text) from public,anon,authenticated;
 grant execute on function public.pi_helper_teacher_change_password(text,text,text) to anon;
+create or replace function public.pi_helper_teacher_clear_reports(p_room_code text,p_teacher_code text,p_group_no smallint default null)
+returns bigint language plpgsql security definer set search_path='' as $
+declare v_room pi_helper.rooms%rowtype; v_count bigint;
+begin
+ if p_room_code is null or length(p_room_code)>80 or p_teacher_code is null then raise exception 'TEACHER_DENIED'; end if;
+ if p_group_no is not null and (p_group_no<1 or p_group_no>9) then raise exception 'INVALID_GROUP'; end if;
+ select r.* into v_room from pi_helper.rooms r where r.join_hash=encode(extensions.digest(p_room_code,'sha256'),'hex') for update;
+ if not found then raise exception 'TEACHER_DENIED'; end if;
+ if not pi_helper.password_matches(p_teacher_code,v_room.teacher_hash) then raise exception 'TEACHER_DENIED'; end if;
+ update pi_helper.reports r set cleared_at=clock_timestamp()
+ where r.room_id=v_room.id and r.cleared_at is null and (p_group_no is null or r.group_no=p_group_no);
+ get diagnostics v_count=row_count;
+ return v_count;
+end; $;
+revoke execute on function public.pi_helper_teacher_clear_reports(text,text,smallint) from public,anon,authenticated;
+grant execute on function public.pi_helper_teacher_clear_reports(text,text,smallint) to anon;
+
 commit;

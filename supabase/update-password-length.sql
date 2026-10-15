@@ -1,5 +1,6 @@
 -- 助教密碼不設長度限制；先以 SHA-256 摘要再雜湊，避免 bcrypt 截斷長密碼。
 begin;
+alter table pi_helper.reports add column if not exists cleared_at timestamptz;
 create or replace function pi_helper.password_matches(p_password text,p_hash text)
 returns boolean language sql set search_path='' as $$
  select case when p_password is null or p_password='' or p_hash is null then false
@@ -22,7 +23,7 @@ begin
  select ranked.session_id,ranked.group_no,ranked.stage,ranked.step,ranked.result,ranked.state,ranked.updated_at
  from (
   select r.*,row_number() over(partition by r.group_no order by r.updated_at desc,r.session_id) as position
-  from pi_helper.reports r where r.room_id=v_room
+  from pi_helper.reports r where r.room_id=v_room and r.cleared_at is null
  ) ranked where ranked.position<=20 order by ranked.updated_at desc;
 end; $$;
 create or replace function public.pi_helper_teacher_room_info(p_room_code text,p_teacher_code text)

@@ -1,10 +1,22 @@
+# Supabase 本版升級
+
+若現有助教可登入，請在 SQL Editor 檢查並執行 **supabase/update-classroom-tools.sql**，才可使用「清除看板紀錄」。它只新增 cleared_at 欄位與更新專用 RPC，不刪資料、不改密碼、不建立課堂。本次未代為執行。
+
+清除可選單組或全班，需助教密碼驗證。清除後既有列暫時隱藏；學生下次成功回報會重新出現。要清空下課紀錄，先關閉課堂再清除。學生端的「清除本機排查」不會呼叫助教清除 API。
+
+新專案執行最新版 setup.sql，再執行 create-classroom.sql 一次，將學生課堂碼填入 config.js；助教碼私下保管。
+
+若缺少原本密碼／課堂設定函式，先依下方舊設定說明補齊，再以 update-classroom-tools.sql 作為最後一步。請勿在新版之後套用歷史 update-single-class.sql 或 update-expiry.sql。
+
+---
+
 # Supabase 設定與升級
 
 ## 既有課堂
 
 config.js 已帶有原套件的 Supabase URL、publishable key 與公開學生課堂碼。本次保留設定，但沒有讀取或修改正式資料庫，無法斷言原課堂目前是否開放、到期或已套用哪些 SQL。
 
-若原助教看板可正常登入，只需執行 supabase/update-report-fairness.sql 取得每組最近 20 筆的讀取行為。若缺少課堂設定／密碼函式，先檢查現有函式，必要時套用 supabase/update-password-length.sql，再套用 update-report-fairness.sql。不要重新建立既有課堂。較舊的 update-expiry.sql、update-single-class.sql 僅供歷史參考，不應在新版之後執行，以免覆寫新版函式。
+若原助教看板可正常登入，請改執行上方本版 update-classroom-tools.sql，已包含每組最近 20 筆及清除功能。若缺少課堂設定／密碼函式，先檢查現有函式，必要時套用 supabase/update-password-length.sql，再套用 update-report-fairness.sql。不要重新建立既有課堂。較舊的 update-expiry.sql、update-single-class.sql 僅供歷史參考，不應在新版之後執行，以免覆寫新版函式。
 
 ## 全新 Supabase 專案
 
