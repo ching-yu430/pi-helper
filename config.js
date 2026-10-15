@@ -3,5 +3,7 @@
 window.PI_HELPER_CONFIG = Object.freeze({
   supabaseUrl: 'https://xqiyrqhqpiclvowmntsw.supabase.co',
   supabaseKey: 'sb_publishable_kvUAH-RjuaPq2LaMPxFRgA_SDKCsCij',
-  pollMs: 5000
+  pollMs: 5000,
+  // 公開給學生的課堂加入碼；不是助教管理碼。
+  defaultRoomCode: '9f45be3a546c63a2'
 });
