@@ -109,3 +109,43 @@ h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus { outline: none; }
 .operation-picture{margin:20px 0;padding:16px;border:1px solid var(--site-border);border-radius:12px;background:#f8faf7}.operation-picture h3{font-size:18px;margin:0 0 12px}.operation-picture figure{margin:0}.operation-picture img{display:block;width:100%;height:auto;border:1px solid var(--site-border);border-radius:8px}.operation-picture figcaption{font-size:14px;margin:10px 0;line-height:1.7}.operation-values{padding:12px 14px;margin:12px 0;background:#fff5df;border:1px solid #d8bb78;border-radius:10px}.operation-values p{margin:4px 0}.operation-source{font-size:13px}.presenter-page .operation-picture img{max-height:45vh;object-fit:contain}.presenter-page .operation-values{font-size:20px}
 
 .student-help-followup{scroll-margin-top:16px}
+/* The projection layout keeps navigation on screen and scrolls only the lesson. */
+.page-presenter.presentation-mode{height:100dvh;overflow:hidden}
+.page-presenter.presentation-mode>header{display:none}
+.page-presenter.presentation-mode main{height:100dvh;width:100%;max-width:none;margin:0;padding:12px 20px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:8px}
+.page-presenter.presentation-mode #presenterControls{grid-row:1;display:grid;grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) repeat(3,auto);gap:10px;padding:10px 12px;align-items:end}
+.page-presenter.presentation-mode #presenterControls label{font-size:13px}
+.page-presenter.presentation-mode #presenterControls button,.page-presenter.presentation-mode #presenterControls select{font-size:15px;min-height:40px;padding:7px 10px}
+.page-presenter.presentation-mode #presenterStatus{grid-row:2;font-size:13px;margin:0;max-height:10dvh;overflow:auto}
+.page-presenter.presentation-mode #presenterSlide{grid-row:3;min-height:0;overflow:auto;overscroll-behavior:contain;margin:0;padding:24px;font-size:clamp(20px,2.1vw,32px);scrollbar-gutter:stable}
+.page-presenter.presentation-mode #presenterSlide h2{font-size:clamp(28px,3vw,44px);margin-top:0}
+.page-presenter.presentation-mode #presenterSlide pre{font-size:clamp(19px,2vw,30px)}
+.page-presenter.presentation-mode #presenterNavigation{grid-row:4;margin:0;padding:6px 0;gap:12px}
+.page-presenter.presentation-mode #presenterNavigation button{min-width:140px}
+.page-presenter.presentation-mode #presenterCounter{margin:0;font-size:18px}
+.page-presenter.presentation-mode #presenterSlide.has-visual{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.page-presenter .presenter-content,.page-presenter .presenter-visual{min-width:0}
+.page-presenter .presenter-lesson-meta,.page-presenter .presenter-command-place{font-size:16px;color:var(--site-muted)}
+.page-presenter.presentation-mode .presenter-visual>img{max-height:65dvh;object-fit:contain}
+.page-presenter.presentation-mode .operation-picture{margin:0}
+.page-presenter.presentation-mode .operation-picture img{max-height:48dvh}
+.page-presenter.presentation-mode.presenter-large #presenterSlide{font-size:clamp(26px,2.7vw,40px)}
+.page-presenter.presentation-mode.presenter-large #presenterSlide h2{font-size:clamp(34px,3.7vw,52px)}
+.page-presenter.presentation-mode.presenter-large #presenterSlide pre{font-size:clamp(24px,2.6vw,38px)}
+@media(max-width:900px){.page-presenter.presentation-mode main{padding:8px 12px}.page-presenter.presentation-mode #presenterControls{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.page-presenter.presentation-mode #presenterControls label{grid-column:span 3}.page-presenter.presentation-mode #presenterControls button{grid-column:span 2}.page-presenter.presentation-mode #presenterSlide.has-visual{display:block}.page-presenter.presentation-mode #presenterSlide{padding:16px}.page-presenter.presentation-mode #presenterNavigation button{min-width:0;flex:1}}
+@media(max-height:600px) and (min-width:901px){.page-presenter.presentation-mode main{gap:4px;padding:6px 12px}.page-presenter.presentation-mode #presenterControls{padding:6px 10px}.page-presenter.presentation-mode #presenterNavigation{padding:0}.page-presenter.presentation-mode #presenterSlide{padding:16px}}
+.x11-picture-tabs,.x11-picture-controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.x11-picture-tabs button{font-size:14px;flex:1 1 140px;padding:8px}
+.x11-picture-tabs button.selected{background:var(--site-green);color:white;border-color:var(--site-green)}
+.x11-picture-counter{font-weight:750;color:var(--site-green)}
+.x11-picture-instruction{padding:10px 12px;border-left:4px solid #b47b13;background:#fff5df;font-size:16px;font-weight:650}
+.x11-picture-controls button{font-size:14px;flex:1;min-height:44px}
+.page-presenter.presentation-mode .x11-picture-tabs button{font-size:13px;flex-basis:120px;min-height:40px}
+
+.presenter-picture-hint{display:none}
+.page-presenter.presentation-mode .presenter-picture-hint{display:block;padding:14px;border-left:4px solid #b47b13;background:#fff5df;border-radius:8px}
+.page-presenter.presentation-mode .presenter-content>.keyboard-guide{display:none}
+.page-presenter.presentation-mode .x11-picture-sequence>p:not(.x11-picture-counter){display:none}
+.page-presenter.presentation-mode .x11-picture-tabs{flex-wrap:nowrap;gap:6px}
+.page-presenter.presentation-mode .x11-picture-tabs button{flex:1 1 0;min-width:0;font-size:12px}
+.page-presenter.presentation-mode .x11-picture-sequence figcaption{font-size:12px}
