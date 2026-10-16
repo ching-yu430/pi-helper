@@ -14,11 +14,20 @@ create unique index if not exists workbench_account_name on pi_helper.workbench_
 alter table pi_helper.workbench_accounts enable row level security;
 revoke all on pi_helper.workbench_accounts from public,anon,authenticated;
 
+-- Preserve verification of legacy hashes while hashing all new passwords before bcrypt.
+create or replace function pi_helper.password_matches(p_password text,p_hash text)
+returns boolean language sql set search_path='' as $$
+ select case when p_password is null or p_password='' or p_hash is null then false
+ when left(p_hash,14)='sha256-bcrypt$' then
+ extensions.crypt(encode(extensions.digest(p_password,'sha256'),'hex'),substr(p_hash,15))=substr(p_hash,15)
+ when octet_length(p_password)>72 then false
+ else extensions.crypt(p_password,p_hash)=p_hash end;
+$$;
 create or replace function pi_helper.workbench_identity(p_room uuid,p_password text)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare r pi_helper.rooms%rowtype; a pi_helper.workbench_accounts%rowtype;
 begin
- if p_password is null or p_password='' or length(p_password)>1024 then return null; end if;
+ if p_password is null or p_password='' then return null; end if;
  select * into r from pi_helper.rooms where id=p_room;
  if not found then return null; end if;
  if pi_helper.password_matches(p_password,r.teacher_hash) then
@@ -75,7 +84,6 @@ begin
   if p_id is null then raise exception 'ACCOUNT_PASSWORD_REQUIRED'; end if;
   tag:=result.password_tag;hash:=result.password_hash;
  else
-  if length(p_new_password) not between 8 and 128 then raise exception 'ACCOUNT_PASSWORD_REQUIRED'; end if;
   tag:=encode(extensions.digest(r.id::text||':'||p_new_password,'sha256'),'hex');
   if pi_helper.password_matches(p_new_password,r.teacher_hash) or exists(select 1 from pi_helper.workbench_accounts where room_id=r.id and password_tag=tag and id<>target) then raise exception 'ACCOUNT_PASSWORD_USED'; end if;
   hash:='sha256-bcrypt$'||extensions.crypt(encode(extensions.digest(p_new_password,'sha256'),'hex'),extensions.gen_salt('bf',10));
@@ -145,7 +153,7 @@ begin
  select r.* into v_room from pi_helper.rooms r where r.join_hash=encode(extensions.digest(p_room_code,'sha256'),'hex') for update;
  if not found then raise exception 'TEACHER_DENIED'; end if;
  if not pi_helper.password_matches(p_teacher_code,v_room.teacher_hash) then raise exception 'TEACHER_DENIED'; end if;
- if p_new_password is null or length(p_new_password) not between 8 and 128 then raise exception 'ACCOUNT_PASSWORD_REQUIRED'; end if;
+ if p_new_password is null or p_new_password='' then raise exception 'ACCOUNT_PASSWORD_REQUIRED'; end if;
  if exists(select 1 from pi_helper.workbench_accounts where room_id=v_room.id and password_tag=encode(extensions.digest(v_room.id::text||':'||p_new_password,'sha256'),'hex')) then raise exception 'ACCOUNT_PASSWORD_USED'; end if;
  update pi_helper.rooms set teacher_hash='sha256-bcrypt$'||extensions.crypt(encode(extensions.digest(p_new_password,'sha256'),'hex'),extensions.gen_salt('bf',10)) where id=v_room.id;
  return true;
