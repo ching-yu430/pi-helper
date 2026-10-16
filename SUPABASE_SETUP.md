@@ -1,21 +1,11 @@
-# 課堂同步設定
+# 課堂同步與組數設定
 
-目前網站專案已完成 update-classroom-tools.sql 升級，本次精簡介面不用再次執行 SQL。
+目前專案已完成清除紀錄與組數設定升級；本版上傳網站後即可使用，不需重跑 SQL。
 
-config.js 保留原有公開 Supabase URL、publishable key 與課堂碼。不可填入 secret key、service_role、資料庫或助教密碼。
+課堂的 group_count 預設 9，支援 1～99。公開 pi_helper_group_settings 只回傳可開放課堂的組數；關閉／到期課堂需有效助教密碼才能讀取。pi_helper_teacher_set_group_count 在核對助教密碼後才修改組數。學生回報以資料庫目前組數驗證，不能只改前端就回報超出範圍的組別。
 
-## 新專案才需要初始化
+減少組數不刪歷史回報，也不重設課堂帳密、期限或開關。清除全部範圍仍會隱藏該課堂所有舊組別回報；學生繼續回報會重新顯示。
 
-先檢查並執行 supabase/setup.sql，再執行 create-classroom.sql 一次，將學生課堂碼填入 config.js，助教碼私下保管。既有課堂不要重建。
+新專案執行最新版 setup.sql，再建立一次課堂。既有其他專案先完成清除功能，再以 update-group-count.sql 作最後一步。不要在最新組數升級之後套用歷史 SQL，以免覆寫新函式。
 
-## 資料行為
-
-學生送出組別、步驟、選項、狀態與時間，不自動送出原始輸出與 AI 提示詞。前景操作後立即回報，另約每 15 秒同步；助教看板約每 5 秒更新，每組最多取最近 20 筆。超過一分鐘未更新會標示暫無更新。
-
-助教清除採 cleared_at 隱藏；之後學生持續回報會重新顯示。下課要清空可先關閉課堂再清除。清除不會修改 Pi 檔案、帳密或課堂設定。
-
-助教密碼只存於頁面記憶體，登出會清空。現有架構使用共享密碼與 RPC 驗證，未提供個人帳號或登入限流。
-
-## 升級歷史
-
-新部署已包含 update-classroom-tools.sql。歷史 update-expiry.sql、update-single-class.sql 不應在新版之後套用，以免覆蓋目前函式。
+config.js 只能放公開 URL、publishable key 與課堂碼，不可填 secret key、service_role 或任何密碼。
