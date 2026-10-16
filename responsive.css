@@ -115,3 +115,4 @@ body[data-assistant-view="settings"]>.flash-tab{display:none!important}
 .help-request-actions{display:flex;gap:10px;margin-top:20px}
 .help-request-actions button{flex:1;min-height:48px;text-align:center}
 @media(max-width:400px){.help-request-dialog{padding:18px 16px}.help-request-actions{flex-direction:column}}
+.entry-status,.entry-actions{max-width:660px;margin:24px auto;padding:0 16px}.entry-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}

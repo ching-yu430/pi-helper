@@ -19,7 +19,7 @@ const steps=[
   "where": "在網頁選組別；在 Windows 開 Imager",
   "items": [
    "在下方選自己的組別。每次都選同一組。",
-   "還沒做過刷機：關閉導覽後，按「① 尚未刷機：開始刷機圖解」。",
+   "還沒做過刷機：回課程首頁按「開始本組刷機圖解」。",
    "照圖解完成每一步，等寫入與驗證都成功，再取出 SD 卡。這就叫做「刷機」。"
   ],
   "example": ()=>host()+'（填入刷機主機名稱）',
@@ -41,7 +41,7 @@ const steps=[
   "where": "在 Windows 電腦操作",
   "items": [
    "按 Windows 開始鍵，輸入 PowerShell，開啟 Windows PowerShell。",
-   "回網頁按「② 已完成刷機：開始 SSH 連線」，再按「複製指令」。",
+   "回課程首頁按「開始本組 SSH 連線」，再按操作頁的「複製指令」。",
    "切回 PowerShell，按 Ctrl + V 貼上，再按 Enter。這就是用 SSH 登入樹莓派。"
   ],
   "example": ()=> 'ssh user@'+host()+'.local',
@@ -74,7 +74,7 @@ const steps=[
   "where": "回到網頁操作",
   "items": [
    "還沒刷機：按下方「尚未刷機」。",
-   "刷機完成：按「已完成刷機」，回首頁選組別，開始 SSH。",
+   "刷機完成：按下方「已完成刷機」，直接用本組設定開始 SSH。",
    "下課前先儲存，按完成頁的「正確關機」。執行後至少再等 30 秒，確認關機完成才拔電。",
    "中途卡住請助教幫忙。也可按「用 AI 協助」；不要貼密碼。"
   ],
@@ -83,19 +83,19 @@ const steps=[
  }
 ];
 function host(){return $('group').value||'pi5-01'}
-const opener=make('button','操作導覽');opener.type='button';document.querySelector('.top-links').prepend(opener);
+const opener=make('button','操作導覽');opener.type='button';opener.disabled=Boolean(document.getElementById('studentWorkspace')?.hidden);document.querySelector('.top-links').prepend(opener);
 const dialog=make('dialog',undefined,'guide-dialog');dialog.setAttribute('aria-labelledby','studentGuideTitle');
 const inner=make('div',undefined,'guide-inner'),top=make('div',undefined,'guide-top'),progress=make('p'),skip=make('button','關閉導覽','guide-skip');skip.type='button';top.append(progress,skip);
 const dots=make('div',undefined,'guide-count');dots.setAttribute('aria-hidden','true');const number=make('span',undefined,'guide-number'),title=make('h2');title.id='studentGuideTitle';title.tabIndex=-1;
 const where=make('p',undefined,'place'),list=make('ol',undefined,'guide-checklist'),example=make('pre',undefined,'guide-example'),tip=make('p',undefined,'guide-tip');
 const groupLabel=make('label','我的組別'),group=make('select');group.id='guideGroup';for(let i=1;i<=(window.PiGroups?.count||9);i++){const o=make('option','第 '+i+' 組 · pi5-'+String(i).padStart(2,'0'));o.value='pi5-'+String(i).padStart(2,'0');group.append(o)}groupLabel.append(group);
-const entries=make('div',undefined,'guide-entries'),flash=make('button','尚未刷機 → 開啟刷機圖解','primary'),ready=make('button','已完成刷機 → 回首頁開始 SSH');flash.type=ready.type='button';entries.append(flash,ready);
+const entries=make('div',undefined,'guide-entries'),flash=make('button','尚未刷機 → 開啟刷機圖解','primary'),ready=make('button','已完成刷機 → 開始本組 SSH');flash.type=ready.type='button';entries.append(flash,ready);
 const controls=make('div',undefined,'guide-controls'),back=make('button','← 上一步'),next=make('button','下一步 →','primary');back.type=next.type='button';controls.append(back,next);inner.append(top,dots,number,title,where,groupLabel,list,example,tip,entries,controls);dialog.append(inner);document.body.append(dialog);let index=0,previousFocus=null;
 function render(){const s=steps[index];progress.textContent='操作導覽 '+(index+1)+' / '+steps.length;number.textContent=String(index+1).padStart(2,'0');title.textContent=s.title;where.textContent=s.where;where.className='place'+(index===5?' pi':'');list.replaceChildren();for(const text of s.items)list.append(make('li',text));example.textContent=typeof s.example==='function'?s.example():s.example;tip.textContent=s.tip;groupLabel.hidden=index!==1;entries.hidden=index!==steps.length-1;back.disabled=index===0;next.hidden=index===steps.length-1;dots.replaceChildren();for(let i=0;i<steps.length;i++)dots.append(make('span',undefined,'guide-dot'+(i===index?' active':'')));inner.scrollTop=0;title.focus({preventScroll:true})}
 function open(){previousFocus=document.activeElement;group.value=host();index=0;if(typeof dialog.showModal!=='function')return;dialog.showModal();render()}
 function close(){try{localStorage.setItem(seenKey,'1')}catch{}dialog.close();previousFocus?.focus?.({preventScroll:true})}
-group.onchange=()=>{$('group').value=group.value;example.textContent=steps[index].example()};
+group.onchange=()=>{$('group').value=group.value;window.PiStudentGroup?.save(group.value);if($('flashGroup'))$('flashGroup').value=group.value;example.textContent=steps[index].example()};
 document.addEventListener('pi-helper-groups-changed',()=>{if(dialog.open)render()});
 back.onclick=()=>{if(index>0){index--;render()}};next.onclick=()=>{if(index<steps.length-1){index++;render()}};skip.onclick=close;opener.onclick=open;
-flash.onclick=()=>{close();$('openFlashHome').click()};ready.onclick=()=>{close();$('edit').click();$('setup').scrollIntoView({block:'start'});$('group').focus()};dialog.addEventListener('cancel',()=>{try{localStorage.setItem(seenKey,'1')}catch{}previousFocus?.focus?.({preventScroll:true})});try{if(localStorage.getItem(seenKey)!=='1')open()}catch{open()}
+flash.onclick=()=>{close();$('openFlashHome').click()};ready.onclick=()=>{close();if(window.PiStudentFlow)window.PiStudentFlow.enter(host(),'ssh');else $('edit').click()};dialog.addEventListener('cancel',()=>{try{localStorage.setItem(seenKey,'1')}catch{}previousFocus?.focus?.({preventScroll:true})});try{if(localStorage.getItem(seenKey)!=='1'&&!window.PiStudentGroup?.read())open()}catch{open()}
 })();

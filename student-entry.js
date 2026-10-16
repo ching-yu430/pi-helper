@@ -1,0 +1,6 @@
+(()=>{
+'use strict';
+const params=new URLSearchParams(location.search),lesson=['flash','ssh','desktop','shutdown'].includes(params.get('lesson'))?params.get('lesson'):'ssh',status=document.getElementById('entryStatus'),actions=document.getElementById('entryActions'),workspace=document.getElementById('studentWorkspace');let busy=false;document.getElementById('reset').hidden=true;for(const button of document.querySelectorAll('header button'))button.disabled=true;
+async function enter(){if(busy)return;const group=PiStudentGroup.read();if(!group){location.replace('index.html?lesson='+lesson);return}busy=true;actions.hidden=true;status.hidden=false;status.textContent='正在確認本組設定…';try{await PiGroups.refresh();if(Number(group.slice(-2))>PiGroups.count){PiStudentGroup.clear();status.textContent='這個組別目前未開放，請回課程首頁重新選擇。';actions.hidden=false;return}PiStudentGroup.save(group);workspace.hidden=false;status.hidden=true;document.getElementById('reset').hidden=false;for(const button of document.querySelectorAll('header button'))button.disabled=false;PiStudentFlow.enter(group,lesson)}catch{status.textContent='暫時無法確認課堂組別，請重試，或回課程首頁請助教協助。';actions.hidden=false}finally{busy=false}}
+document.getElementById('retryStudentEntry').onclick=enter;enter();
+})();

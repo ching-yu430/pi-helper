@@ -1,0 +1,12 @@
+(()=>{
+'use strict';
+const select=document.getElementById('courseGroup'),status=document.getElementById('courseGroupStatus'),retry=document.getElementById('retryCourseGroups'),links=Array.from(document.querySelectorAll('[data-lesson],[data-student-link]'));
+let preferred=PiStudentGroup.read(),loading=false;
+function selected(){return PiStudentGroup.valid(select.value)&&Number(select.value.slice(-2))<=PiGroups.count?select.value:''}
+function updateLinks(){const group=selected();for(const link of links){const lesson=link.dataset.lesson||'ssh',url=new URL('student.html',location.href);url.searchParams.set('lesson',lesson);if(group)url.searchParams.set('group',group);link.href=url.href;link.setAttribute('aria-disabled',String(!group))}for(const host of document.querySelectorAll('[data-group-host]'))host.textContent=group?group+'.local':'本組主機名稱';status.textContent=group?'本組：第 '+Number(group.slice(-2))+' 組 · '+group+'。下方課程會直接使用這個組別。':'請先選自己的組別，再開始下方課程。'}
+function populate(){const old=select.value||preferred;select.replaceChildren();const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='請選自己的組別';select.append(placeholder);for(let n=1;n<=PiGroups.count;n++){const option=document.createElement('option');option.value=PiGroups.host(n);option.textContent='第 '+n+' 組 · '+option.value;select.append(option)}select.value=PiStudentGroup.valid(old)&&Number(old.slice(-2))<=PiGroups.count?old:'';updateLinks()}
+async function load(){if(loading)return;loading=true;select.disabled=true;retry.hidden=true;status.textContent='正在讀取課堂組別…';try{await PiGroups.refresh();populate();select.disabled=false;if(preferred&&!selected()){PiStudentGroup.clear();preferred='';status.textContent='課堂組數已調整，請重新選擇自己的組別。'}}catch{status.textContent='暫時無法讀取課堂組別，請重試；仍無法讀取時請助教確認課堂狀態。';retry.hidden=false}finally{loading=false}}
+select.addEventListener('change',()=>{preferred=selected();if(preferred)PiStudentGroup.save(preferred);else PiStudentGroup.clear();updateLinks()});
+for(const link of links)link.addEventListener('click',event=>{if(select.disabled||!selected()){event.preventDefault();status.textContent=select.disabled?'請先完成讀取課堂組別，再開始課程。':'請先選自己的組別。';select.focus();select.reportValidity();return}PiStudentGroup.save(selected())});
+document.addEventListener('pi-helper-groups-changed',()=>{const old=select.value||preferred;populate();if(old&&!selected()){preferred='';PiStudentGroup.clear();status.textContent='課堂組數已調整，請重新選擇自己的組別。'}});retry.onclick=load;updateLinks();load();
+})();

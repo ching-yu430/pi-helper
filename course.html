@@ -1,27 +1,2 @@
 <!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#174b3c">
-<title>樹莓派課程首頁</title>
-<link rel="stylesheet" href="course.css">
-</head>
-<body>
-<header><div><nav aria-label="課堂入口"><a href="index.html">操作與排查</a><a href="assistant.html">助教工作臺</a></nav><p class="eyebrow">Raspberry Pi 5 · 課堂學習</p><h1>今天從哪裡開始？</h1><p>第一次接觸樹莓派也沒關係。照順序做，一次完成一件事。</p></div></header>
-<main>
-<section class="course-intro" aria-labelledby="todayTitle"><p class="eyebrow">目前可開始</p><h2 id="todayTitle">先讓樹莓派可以操作</h2><p>先刷機，再用 <strong>.local</strong> 登入，最後開啟遠端桌面。已做完的部分可以跳過；不確定就問助教。</p><p class="muted">這裡列的是課程順序，不會自動判定你已經做完。看板狀態仍以學生自行回報為準。</p></section>
-<ol class="lesson-list" aria-label="目前課程順序">
-<li><article class="lesson-card"><span class="lesson-number">01</span><div><span class="lesson-tag">準備與刷機</span><h2>把系統裝進 SD 卡</h2><p>準備 Windows 電腦、Pi 5、電源、SD 卡、讀卡機與手機熱點。先在操作頁選組別，再按「① 尚未刷機」。</p><p class="lesson-goal"><strong>做到這裡：</strong>寫入與驗證都成功，再把 SD 卡放進 Pi 開機。</p><a class="lesson-action" href="index.html#openFlashHome">前往選組與刷機圖解 →</a></div></article></li>
-<li><article class="lesson-card"><span class="lesson-number">02</span><div><span class="lesson-tag">SSH 連線</span><h2>從 Windows 登入本組 Pi</h2><p>Windows 與 Pi 連同組手機熱點。在操作頁選自己的組別，按「② 已完成刷機」，再把指令貼到 PowerShell。</p><p class="lesson-goal"><strong>做到這裡：</strong>用本組 pi5-XX.local 登入，確認組別與帳號正確。</p><a class="lesson-action" href="index.html#setupForm">前往選組與 SSH 連線 →</a></div></article></li>
-<li><article class="lesson-card"><span class="lesson-number">03</span><div><span class="lesson-tag">遠端桌面</span><h2>在 Windows 看見 Pi 的桌面</h2><p>先完成 SSH 登入，再按操作頁的「已登入 SSH，開始安裝與設定遠端桌面」。照步驟安裝、選 X11、重新開機，再連線。</p><p class="lesson-goal"><strong>做到這裡：</strong>遠端桌面的 Session 選 Xorg，成功進入本組 Pi 桌面。</p><a class="lesson-action" href="index.html#startDesktop">前往遠端桌面教學入口 →</a></div></article></li>
-<li><article class="lesson-card"><span class="lesson-number">04</span><div><span class="lesson-tag">每次下課都要做</span><h2>先關機，再拔電</h2><p>先儲存作業，再從操作頁的正確關機入口開始。關閉遠端桌面視窗不等於關機。</p><p class="lesson-goal"><strong>做到這裡：</strong>執行關機後至少再等 30 秒，確認關機完成才拔電；不確定就請助教確認。</p><a class="lesson-action" href="index.html#startShutdown">前往正確關機步驟 →</a></div></article></li>
-</ol>
-<section aria-labelledby="futureTitle" class="future-lessons"><p class="eyebrow">接下來會學</p><h2 id="futureTitle">Python、USB 相機與物品辨識</h2><p>後續會走向馬達與風扇零件等物品辨識，辨識操作在學生筆電進行。先了解方向，等老師公布教材再開始。</p><div class="future-grid">
-<article class="lesson-card upcoming"><span class="lesson-tag">教材待公布</span><h3>Python 環境與第一個程式</h3><p>預計練習在樹莓派執行 Python 程式，並準備後續課程用的環境。</p><p class="muted">Python 版本、工具、套件與練習內容待公布。現在不用自行安裝。</p></article>
-<article class="lesson-card upcoming"><span class="lesson-tag">教材待公布</span><h3>USB 相機與影像練習</h3><p>預計練習接上 USB 相機、確認設備，再取得第一張影像。</p><p class="muted">相機接在哪台設備、如何把影像送到筆電，以及測試方式，會依當次教材說明。先不用購買額外工具。</p></article>
-<article class="lesson-card upcoming"><span class="lesson-tag">教材待公布</span><h3>在筆電上辨識物品</h3><p>預計使用馬達、風扇零件等照片，練習整理圖片、標註物品，再用新照片測試辨識結果。</p><p class="muted">Roboflow 為候選工具。實際平台、物品種類與操作方式待公布，現在不用先註冊或安裝。</p></article>
-</div></section>
-<aside class="course-help"><h2>做到一半卡住了？</h2><p>回到操作頁，選你實際看到的結果；看不懂就保留畫面並請助教協助。求助時說明自己的組別、正在做哪一步，以及畫面上的錯誤。</p><a href="index.html">回操作頁，照結果繼續 →</a></aside>
-</main><footer>樹莓派課堂學習 · 繁體中文</footer>
-</body></html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>前往課程首頁</title></head><body><p><a href="index.html">前往課程首頁</a></p><script>location.replace('index.html'+location.search+location.hash);</script></body></html>
