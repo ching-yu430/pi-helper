@@ -21,7 +21,9 @@ body[data-assistant-view="board"] main { padding-bottom: max(36px,env(safe-area-
   header > div { display: flow-root; }
   .student-entry { float: none; width: fit-content; margin: 0 0 12px auto; }
   body[data-assistant-view="tools"] header { padding-bottom: 18px; }
-  body[data-assistant-view="tools"] .flash-tab { position: static; display: block; margin: 12px 12px 0 auto; border-radius: 12px; max-width: none; }
+  body[data-assistant-view="tools"] .flash-tab { position:fixed;display:block;right:0;top:40vh;bottom:auto;margin:0;border-radius:12px 0 0 12px;max-width:none;width:44px;min-height:112px;padding:12px 9px;writing-mode:vertical-rl;font-size:15px;z-index:40; }
+  body[data-assistant-view="tools"] .flash-tab span { display:none; }
+  body[data-assistant-view="tools"] main { padding-right:56px; }
   body[data-assistant-view="tools"] main { padding-bottom: calc(170px + env(safe-area-inset-bottom)); }
   .dashboard-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .stat-item:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
@@ -91,3 +93,8 @@ body[data-assistant-view="settings"]>.flash-tab{display:none!important}
 .flash-problems li{margin:12px 0}
 .flash-step>.flash-problems{margin:16px}
 @media(max-width:600px){.keyboard-guide{padding:14px}.keyboard-guide h3{font-size:20px}.keyboard-guide li{font-size:16px}.keyboard-guide kbd{font-size:18px}}
+
+.shutdown-reminder{border:2px solid #b76b0d;background:#fff5d9;color:#493213;border-radius:14px;padding:16px;margin:20px 0}
+.shutdown-reminder h3{font-size:20px;margin:0 0 10px}
+.shutdown-reminder p{margin:8px 0;line-height:1.8}
+.shutdown-reminder p:first-of-type{font-weight:800}

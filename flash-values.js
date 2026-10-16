@@ -25,6 +25,9 @@ const box=make('section',undefined,'flash-settings');box.setAttribute('aria-labe
 function displayImage(file){return 'assets/imager/'+file.replace(/\.png$/,'.webp')}
 const preloadImages=new Map();
 function preloadNext(index){const next=steps[index+1];if(!next?.image||preloadImages.has(next.image))return;const image=new Image();image.src=displayImage(next.image);preloadImages.set(next.image,image)}
+
+function shutdownReminder(){const box=make('section',undefined,'shutdown-reminder');box.setAttribute('aria-label','下課關機提醒');box.append(make('h3','下課前：先關機，再拔電'),make('p','儲存成果 → 執行關機 → 等關機完成 → 拔電。'),make('p','關閉遠端桌面視窗不等於關機。直接拔電可能損壞 SD 卡或作業。'));return box}
+
 function keyboardGuide(){const box=make('section',undefined,'keyboard-guide');box.setAttribute('aria-label','X11 鍵盤操作');box.append(make('h3','這個畫面請用鍵盤操作'),make('p','先點一下 PowerShell 視窗，再按鍵。不要用滑鼠點選單。','keyboard-alert'));const list=make('ol');for(const [keys,text] of [['↑ ↓','移到 Advanced Options，按 Enter。'],['↑ ↓','移到 Wayland，按 Enter。'],['↑ ↓','移到 X11，按 Enter；若出現 Ok，按 Enter。'],['Tab','移到 Finish，按 Enter；若還在子選單，先選 Back 回主選單。若詢問是否重新開機，選 No，下一步再重新開機。']]){const item=make('li');item.append(make('kbd',keys),document.createTextNode(' '+text));list.append(item)}box.append(list,make('p','找不到選項就停下，選「找不到選項或設定出錯」並請助教協助。'));return box}
 const problems={
 0:['下載失敗：確認 Windows 能上網，再從官方下載頁重試。','SD 卡沒有出現：拔下讀卡機再插回，換 USB 孔；仍看不到就請助教換讀卡機測試。'],
@@ -40,5 +43,5 @@ const problems={
 function problemGuide(index){if(!problems[index])return null;const detail=make('details',undefined,'flash-problems');detail.append(make('summary','這一步卡住了？'));const list=make('ul');for(const text of problems[index])list.append(make('li',text));detail.append(list);return detail}
 
 function renderGuide(container,hostname){container.replaceChildren();steps.forEach((step,i)=>{const detail=make('details',undefined,'flash-step'),summary=make('summary');summary.append(make('span',String(i+1).padStart(2,'0')),document.createTextNode(' '+step.title));detail.open=i===0;detail.append(summary);if(step.image){const image=make('img');image.dataset.src=displayImage(step.image);image.width=1100;image.height=728;image.decoding='async';const link=make('a');link.href='assets/imager/'+step.image;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label','放大'+step.title+'圖片');image.alt=step.title+'：Imager 介面範例';image.loading='lazy';image.onerror=()=>{image.onerror=null;image.src=link.href};link.append(image);detail.append(link);detail.addEventListener('toggle',()=>{if(detail.open&&!image.getAttribute('src')){image.loading='eager';image.src=image.dataset.src;preloadNext(i)}})}const settings=build(i,hostname);if(settings)detail.append(settings);const list=make('ol');for(const text of step.body)list.append(make('li',text));detail.append(list);if(step.download){const link=make('a','下載 Raspberry Pi Imager ↗');link.href='https://www.raspberrypi.com/software/';link.target='_blank';link.rel='noopener';detail.append(link)}if(i===13)detail.append(make('pre','ssh user@'+String(hostname).replace(/\.local$/,'')+'.local'));const problem=problemGuide(i);if(problem)detail.append(problem);container.append(detail)})}
-window.PiFlashSettings={build,steps,renderGuide,displayImage,preloadNext,keyboardGuide,problemGuide};
+window.PiFlashSettings={build,steps,renderGuide,displayImage,preloadNext,keyboardGuide,problemGuide,shutdownReminder};
 })();
