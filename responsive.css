@@ -78,3 +78,16 @@ body[data-assistant-view="settings"]>.flash-tab{display:none!important}
   .flash-head>button{flex-shrink:0;min-width:44px;min-height:44px}
   .flash-settings dd{word-break:normal;overflow-wrap:anywhere}
 }
+
+.keyboard-guide{border:3px solid #b76b0d;border-radius:14px;background:#fff5d9;padding:18px;margin:20px 0;color:#46300f}
+.keyboard-guide h3{font-size:22px;margin:0 0 10px}
+.keyboard-alert{font-weight:800;font-size:18px}
+.keyboard-guide ol,.action-checklist{padding-left:26px}
+.keyboard-guide li,.action-checklist li{margin:14px 0;line-height:1.8}
+.keyboard-guide kbd{display:inline-block;min-width:55px;padding:4px 10px;border:2px solid #795c28;border-bottom-width:4px;border-radius:7px;background:white;font:800 20px system-ui;text-align:center}
+.flash-step>a:has(img){display:block;margin:12px 0}
+.flash-step>a>img{display:block;max-width:100%;height:auto;margin:auto}
+.flash-problems{padding:12px 16px;border:1px solid #d6dfd2;border-radius:10px;background:#f4f7f1;margin:16px 0}
+.flash-problems li{margin:12px 0}
+.flash-step>.flash-problems{margin:16px}
+@media(max-width:600px){.keyboard-guide{padding:14px}.keyboard-guide h3{font-size:20px}.keyboard-guide li{font-size:16px}.keyboard-guide kbd{font-size:18px}}

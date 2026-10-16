@@ -8,3 +8,5 @@ https://www.raspberrypi.com/documentation/computers/getting-started.html
 課堂正確值由網頁圖片下方文字另外標示。圖片可點擊開啟原尺寸。
 
 device-tab.png、os-tab.png、storage-tab.png、hostname-subtab.png、localisation-subtab.png、user-subtab.png、wifi-subtab.png、ssh-subtab.png、connect-subtab.png、write.png、are-you-sure.png。
+
+效能版本：同名 .webp 為原始 PNG 的 1100px 寬、品質 88 顯示版本，保留畫面內容。網頁使用 WebP 減少下載量；點擊圖片仍開啟原始 PNG 供放大辨認。
