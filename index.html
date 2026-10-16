@@ -11,7 +11,7 @@
 <header><div><nav class="site-nav" aria-label="課堂入口"><a href="student.html" data-student-link>操作與排查</a><a href="assistant.html">工作台管理</a></nav><p class="eyebrow">Raspberry Pi 5 · 課堂學習</p><h1>今天從哪裡開始？</h1><p>第一次接觸樹莓派也沒關係。照順序做，一次完成一件事。</p></div></header>
 <main>
 <section class="course-group" aria-labelledby="groupTitle"><p class="eyebrow">第一步</p><h2 id="groupTitle">先選自己的組別</h2><label for="courseGroup">我的組別</label><select id="courseGroup" required disabled><option value="">正在讀取組別…</option></select><p id="courseGroupStatus" role="status">正在讀取課堂組別…</p><button id="retryCourseGroups" type="button" hidden>重新讀取組別</button></section>
-<section id="continueLesson" class="course-group" hidden><h2>繼續上次步驟</h2><p id="continueDescription"></p><a id="continueLink" class="lesson-action">繼續本組上次步驟 →</a><button id="clearLearning" type="button">清除本機課程進度</button></section>
+<section id="continueLesson" class="course-group" hidden><h2>繼續上次步驟</h2><p id="continueDescription"></p><div class="action-row"><a id="continueLink" class="lesson-action">繼續本組上次步驟 →</a><button id="clearLearning" type="button">清除本機課程進度</button></div></section>
 <details class="equipment-check"><summary>課前設備檢查<span class="equipment-hint">第一次刷機前，點這裡確認</span></summary><p>先選組別，再逐項確認。</p><div id="equipmentList"></div><p id="equipmentStatus" role="status"></p></details><p id="teachingNow" class="lesson-goal" hidden></p>
 <section class="course-intro" aria-labelledby="todayTitle"><p class="eyebrow">目前可開始</p><h2 id="todayTitle">先讓樹莓派可以操作</h2><p>先刷機，再用 <strong>.local</strong> 登入，最後開啟遠端桌面。已做完的部分可以跳過；不確定就問助教。</p></section>
 <ol class="lesson-list" aria-label="目前課程順序">
