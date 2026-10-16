@@ -1,0 +1,106 @@
+/* Shared appearance. Page-specific styles retain the lesson and troubleshooting layouts. */
+:root {
+  --site-ink: #203d33;
+  --site-muted: #5e7267;
+  --site-green: #205b45;
+  --site-header: #174b3c;
+  --site-background: #f1f5f0;
+  --site-surface: #fff;
+  --site-border: #d4e0d5;
+  --site-soft: #edf4ee;
+  --site-radius: 16px;
+  font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--site-ink);
+  background: var(--site-background);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+header { background: var(--site-header); color: #fff; padding: 24px 20px 28px; }
+header h1 { font-size: clamp(26px, 3.5vw, 32px); line-height: 1.4; margin: 8px 0; }
+header p { font-size: 14px; color: #dfebe2; margin: 4px 0; }
+header .eyebrow { color: #c2dfcf; font-size: 12px; letter-spacing: 1px; }
+.site-nav { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+header .site-nav a, header .site-nav button {
+  display: inline-flex; align-items: center; justify-content: center;
+  float: none; width: auto; min-height: 44px; margin: 0; padding: 8px 12px;
+  font-size: 14px; line-height: 1.5; border: 1px solid #79a38c; border-radius: 10px;
+  background: transparent; color: #ecf9ee; text-decoration: none;
+}
+h2 { font-size: 23px; line-height: 1.5; }
+h3 { font-size: 18px; line-height: 1.6; }
+p { line-height: 1.75; }
+a { color: var(--site-green); }
+.muted, .source-note, .version-note { color: var(--site-muted); font-size: 14px; }
+.card, .lesson-card, .course-group {
+  background: var(--site-surface); border: 1px solid var(--site-border);
+  border-radius: var(--site-radius); padding: 24px; box-shadow: none;
+}
+button, input, select, textarea { font: inherit; max-width: 100%; }
+button { min-height: 48px; padding: 10px 16px; border: 1px solid var(--site-border); border-radius: 10px; color: var(--site-ink); background: #fff; cursor: pointer; touch-action: manipulation; }
+button.primary, a.lesson-action { background: var(--site-green); border-color: var(--site-green); color: #fff; font-weight: 700; text-align: center; }
+button:disabled { cursor: default; opacity: .5; }
+input:not([type=checkbox]):not([type=radio]), select, textarea {
+  display: block; width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px;
+  margin: 6px 0 12px; font-size: 16px; line-height: 1.5;
+  border: 1px solid #afc4b6; border-radius: 10px; color: var(--site-ink); background: #fff;
+}
+input[type=checkbox], input[type=radio] { accent-color: var(--site-green); }
+label { font-size: 14px; line-height: 1.6; }
+textarea { resize: vertical; }
+summary { cursor: pointer; min-height: 44px; align-content: center; line-height: 1.6; }
+button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #b47b13; outline-offset: 3px; }
+button.danger, .danger { color: #8b2e22; border-color: #b8796a; background: #fff7f4; }
+pre { background: var(--site-header); color: #ecf9ee; border-radius: 10px; font-family: Consolas, ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lesson-goal, .prep, .target-panel { background: var(--site-soft); border-radius: 10px; }
+.lesson-action { border-radius: 10px; }
+.equipment-check, .course-help { border-color: var(--site-border); border-radius: var(--site-radius); }
+.page-student main, .page-student header>div { max-width: 760px; }
+.page-student main { padding-top: 12px; }
+.page-student #setup { margin-top: 16px; }
+.page-workbench .settings { margin-top: 16px; }
+.page-workbench .assistant-views button { border-radius: 10px; }
+.page-workbench .assistant-views button.selected { background: var(--site-green); border-color: var(--site-green); }
+.page-workbench .classroom-settings>.settings-section { border-radius: var(--site-radius); border-color: var(--site-border); }
+.page-workbench .classroom-settings>.settings-danger { border-color: #dfc9c3; }
+.page-workbench .group-card { border-radius: var(--site-radius); }
+.account-manage, .account-create { border-top: 1px solid var(--site-border); }
+.account-list { margin-top: 16px; }
+.account-create>p { font-size: 14px; color: var(--site-muted); }
+.page-setup .lesson-card + .lesson-card { margin-top: 20px; }
+.page-presenter #presenterLogin { max-width: 520px; padding: 24px; border: 1px solid var(--site-border); border-radius: var(--site-radius); background: #fff; }
+.page-presenter #presenterSlide { border-color: var(--site-border); border-radius: var(--site-radius); }
+.page-presenter #presenterControls { gap: 12px; align-items: end; padding: 20px; border: 1px solid var(--site-border); border-radius: var(--site-radius); background: #fff; }
+.page-presenter #presenterControls label { flex: 1 1 200px; }
+.page-presenter #presenterControls select { margin-bottom: 0; }
+.page-presenter #presenterControls button { flex: 0 1 auto; }
+.page-redirect { max-width: 760px; margin: 40px auto; padding: 20px; }
+dialog { width: min(92vw, 620px); max-height: calc(100dvh - 32px); overflow-y: auto; color: var(--site-ink); background: #fff; border: 1px solid var(--site-border); border-radius: var(--site-radius); box-shadow: 0 16px 60px #102c3340; }
+dialog::backdrop { background: #102c3399; }
+dialog:not(.guide-dialog) { padding: 24px; }
+.help-request-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+footer { color: var(--site-muted); font-size: 13px; line-height: 1.75; }
+@media (hover: hover) {
+  button:not(:disabled):not(.primary):not(.selected):not(.active):hover { border-color: #6c947b; }
+  a.lesson-action:not([aria-disabled=true]):hover, button.primary:not(:disabled):hover { background: #174b3c; }
+}
+@media (max-width: 600px) {
+  header { padding: 18px 16px 24px; }
+  header .site-nav { gap: 6px; }
+  header .site-nav a, header .site-nav button { font-size: 13px; padding: 8px 10px; }
+  .card, .lesson-card, .course-group { padding: 18px 16px; }
+  h2 { font-size: 21px; }
+  .page-presenter #presenterControls { padding: 16px; }
+  .page-presenter #presenterControls label { flex-basis: 100%; }
+  .page-presenter #presenterControls button { flex: 1 1 100px; }
+  .page-presenter #presenterLogin { padding: 18px 16px; }
+  dialog:not(.guide-dialog) { padding: 18px; }
+}
+
+/* Programmatic step focus should announce the heading without adding a form-like frame. */
+h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus { outline: none; }
+.page-student main { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+.page-student #reset { position: static; display: inline-flex; align-items: center; box-shadow: none; margin: 8px 0; }
