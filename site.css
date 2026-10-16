@@ -104,3 +104,8 @@ footer { color: var(--site-muted); font-size: 13px; line-height: 1.75; }
 h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus { outline: none; }
 .page-student main { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
 .page-student #reset { position: static; display: inline-flex; align-items: center; box-shadow: none; margin: 8px 0; }
+
+.student-help-followup{border-left:4px solid var(--site-green);margin:16px 0}.student-help-followup h2{font-size:20px;margin:0 0 8px}.help-current-status{font-weight:700;background:var(--site-soft);padding:10px 12px;border-radius:10px}.student-help-followup[data-state="waiting"]{border-left-color:#a87015}.help-refresh-error{color:#8b2e22}.help-status-refresh{font-size:14px;min-height:44px}.help-dialog-result .help-request-actions{margin-bottom:14px}
+.operation-picture{margin:20px 0;padding:16px;border:1px solid var(--site-border);border-radius:12px;background:#f8faf7}.operation-picture h3{font-size:18px;margin:0 0 12px}.operation-picture figure{margin:0}.operation-picture img{display:block;width:100%;height:auto;border:1px solid var(--site-border);border-radius:8px}.operation-picture figcaption{font-size:14px;margin:10px 0;line-height:1.7}.operation-values{padding:12px 14px;margin:12px 0;background:#fff5df;border:1px solid #d8bb78;border-radius:10px}.operation-values p{margin:4px 0}.operation-source{font-size:13px}.presenter-page .operation-picture img{max-height:45vh;object-fit:contain}.presenter-page .operation-values{font-size:20px}
+
+.student-help-followup{scroll-margin-top:16px}

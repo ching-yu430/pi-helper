@@ -1,0 +1,11 @@
+(()=>{
+'use strict';
+const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e};
+const images={
+ x11:{file:'raspi-config.webp',width:1568,height:954,title:'raspi-config 實際畫面',caption:'用方向鍵選 Advanced Options，再按 Enter。圖片中的其他選項不用修改。',source:'Raspberry Pi 官方文件',url:'https://github.com/raspberrypi/documentation/blob/ddea98e98dafe9419feb4fd82710c2fbdef7dc44/documentation/asciidoc/computers/configuration/images/raspi-config.png'},
+ rdpOpen:{file:'windows-rdp.webp',width:800,height:615,title:'手動開啟 Windows 遠端桌面時的畫面',caption:'執行上方指令會直接帶入目標。若手動開啟視窗，電腦（Computer）填下方本組目標，不要照抄圖片中的 IP。',source:'xrdp 官方連線示範',url:'https://github.com/neutrinolabs/xrdp/blob/572cbc4823a745f2f620cbcadf838ab67f00410f/xrdp_demo.gif'},
+ rdpLogin:{file:'xrdp-login.webp',width:1055,height:768,title:'xrdp 官方新版登入畫面',caption:'灰底或新版介面的配色不同，請找 Xorg、username 與 password，照下方資料填寫。',source:'xrdp 官方文件（LVGL 介面）',url:'https://github.com/neutrinolabs/xrdp/blob/5943357a546a24f3dc3781ccfd853e5dd24d6fcc/docs/lvgl.md'}
+};
+function build(key,{host='',user='user'}={}){const info=images[key];if(!info)return null;const section=make('section',undefined,'operation-picture'),heading=make('h3',info.title),figure=make('figure'),link=make('a'),image=make('img');link.href='assets/operations/'+info.file;link.target='_blank';link.rel='noopener';link.setAttribute('aria-label','放大查看'+info.title);image.src=link.href;image.alt=info.title+'，請依本頁文字操作';image.width=info.width;image.height=info.height;image.loading='lazy';image.decoding='async';link.append(image);const caption=make('figcaption',info.caption+'（點圖片可放大）');figure.append(link,caption);section.append(heading,figure);if(key==='rdpOpen'||key==='rdpLogin'){const values=make('div',undefined,'operation-values');values.append(make('strong','請照這裡填'));if(key==='rdpOpen')values.append(make('p','電腦（Computer）：'+host));else values.append(make('p','Session：Xorg'),make('p','username：'+user),make('p','password：目前 Pi 密碼（課堂預設為 123）'));section.append(values)}const source=make('a','圖片來源：'+info.source,'operation-source');source.href=info.url;source.target='_blank';source.rel='noopener';section.append(source);return section}
+window.PiOperationImages={build};
+})();
