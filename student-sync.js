@@ -22,5 +22,9 @@ const retryNow=()=>{if(room&&latest)publish(latest);else connect()};retry.onclic
 document.addEventListener('pi-helper-reset',()=>{if(!room)return;const group=latest?.groupNo;if(latest)publish({...latest,status:'ended',result:'此裝置已重新開始排查'});if(group){try{sessionStorage.removeItem(key(group))}catch{}sessions.delete(group)}latest=null;notify('排查已重設，課堂同步仍保留；下一步會建立新紀錄。')});
 setInterval(()=>{if(document.hidden)return;if(room){window.PiGroups?.refresh().catch(()=>{});if(latest)publish(latest)}else connect()},15000);
 document.addEventListener('pi-helper-groups-changed',()=>{if(latest&&latest.groupNo>PiGroups.count){latest=null;pending.clear();notify('組數已調整，請重新選擇組別。',true);q('edit').click()}});
-window.ClassSync={publish};connect();
+async function identity(group){if(!room)await connect();if(!room)throw Error('課堂尚未連接，請先重試同步。');const s=session(group);return {p_room_code:room,p_session_id:s.id,p_session_secret:s.secret,p_group_no:group}}
+async function requestHelp(snapshot,message,requestId){if(!room)await connect();if(!room)throw Error('課堂尚未連接，請先重試同步。');publish({...snapshot,status:'need_help'});const report={...latest};await PiSyncAPI.rpc('pi_helper_student_report',args(report));try{return await PiSyncAPI.rpc('pi_helper_request_help',{...await identity(snapshot.groupNo),p_request_id:requestId,p_stage:report.stage,p_step:report.step,p_message:String(message).replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g,'[IP 已隱藏]').slice(0,500)})}catch(e){e.reportDelivered=true;throw e}}
+async function helpStatus(group){return PiSyncAPI.rpc('pi_helper_student_help',await identity(group))}
+async function confirmHelp(group,id,resolved){return PiSyncAPI.rpc('pi_helper_student_confirm_help',{...await identity(group),p_id:id,p_resolved:resolved})}
+window.ClassSync={publish,requestHelp,helpStatus,confirmHelp};connect();
 })();

@@ -6,7 +6,7 @@
 - Python、USB 相機與在學生筆電上辨識物品先列為待公布。Roboflow 僅為候選工具，尚未提供未確認的安裝或註冊步驟。
 - 助教登入後，新的近期求助會在看板跳出對話框。使用排查工具、修改課堂設定或查看刷機圖解時會先保留提醒，回看板才顯示。
 - 同一個助教分頁會記住已提醒的求助；自動同步不重複跳出，新一輪求助會再次提醒。「稍後處理」不會改變學生回報狀態，也不代表其他助教已處理。
-- 求助識別與步驟時間沿用現有回報欄位傳送，不需要另跑 SQL。測試使用模擬課堂，不寫入正式課堂資料。
+- 基本求助通知沿用現有回報欄位；新增的共用接手清單需要執行下方升級 SQL。測試使用模擬課堂，不寫入正式課堂資料。
 
 ## 本版更新
 
@@ -24,7 +24,7 @@
 
 若儲存庫仍有更早版本的 course-guide.js、assets/handouts/ 或 TEACHING_REVIEW.md，請刪除。新版不再載入這些檔案。
 
-目前使用的 Supabase 專案已完成組數升級，預設維持 9 組。這次不必再執行 SQL、不必變更密碼。supabase/update-group-count.sql 僅供其他部署升級；新專案可用最新版 setup.sql。
+目前使用的 Supabase 專案已完成組數升級，預設維持 9 組。組數功能不必重跑 SQL、不必變更密碼；本次共用求助與教材控制另需執行下方升級 SQL。supabase/update-group-count.sql 僅供其他部署升級；新專案可用最新版 setup.sql。
 
 ## 操作
 
@@ -35,8 +35,28 @@
 
 ## 驗證
 
-執行 node tests/run-tests.cjs，無需安裝依賴。392 項程式與 DOM 模擬檢查通過，涵蓋兩端流程、組別幫助與返回、對應步驟接續、組數同步、清除範圍、刷機實際值與輸入限制。
+執行 node tests/run-tests.cjs，無需安裝依賴。550 項程式與 DOM 模擬檢查通過，涵蓋兩端流程、組別幫助與返回、對應步驟接續、組數同步、清除範圍、刷機實際值與輸入限制。
 
 正式 Supabase 已套用組數升級，並在臨時課堂以 anon 角色驗證設定讀取、教師驗證、1～99 組、減少組數保留歷史與回報範圍；測試已回滾。原有 2 筆課堂、7 筆回報、密碼與期限保留。
 
-尚未上傳 GitHub；本次沒有真實瀏覽器排版、實體手機或 Pi 驗證。看板顯示的是學生網站回報，不代表網站直接執行過 Pi 指令。
+本版另以真實 Chromium 驗證 320、390、768、1280 px 排版與多助教操作；未使用實體手機或 Pi 驗證。看板顯示的是學生網站回報，不代表網站直接執行過 Pi 指令。
+
+## 課堂功能（進度、求助與上課模式）
+
+- 課程首頁可依本組、本瀏覽器記住上次步驟、自行確認完成的課程與設備檢查；可繼續或清除，不保存貼上的命令輸出與密碼。
+- 每個步驟的「請助教幫忙」與 AI 整理分開。共用求助支援接手、待學生確認、仍有問題與已處理；接手衝突不會覆蓋其他助教的結果。升級前仍可用既有回報通知助教看板，但不假裝有共用接手狀態。
+- 助教版「課堂設定」可控制現有教材開放。關機教學保持開放；未公布教材仍不能開放。這是教學流程控制，不是靜態內容的保密機制。
+- `presenter.html` 為老師上課模式，助教密碼只保留在該頁記憶體。支援步驟切換、示範組別、文字放大與全螢幕，並同步老師指定階段到學生首頁。
+- **共用清單、教材開放與上課同步需管理員先執行 `supabase/update-learning-tools.sql`。** 目前只準備好升級檔，沒有代為執行正式資料庫升級。可從 `classroom-setup.html` 下載。
+
+開發檢查：`node tests/run-tests.cjs`。資料庫及完整瀏覽器流程可在 `/tmp` 安裝測試依賴後執行（不增加網站執行依賴）：
+
+```sh
+npm --cache /tmp/pi-npm-cache install --prefix /tmp/pi-pg --no-save @electric-sql/pglite
+PGLITE_ROOT=/tmp/pi-pg/node_modules/@electric-sql/pglite node tests/run-learning-sql.cjs
+# 先在另一個終端啟動 python3 -m http.server 8000 --bind 127.0.0.1
+# 需要已有 Playwright 與 /usr/bin/chromium，或在測試檔調整瀏覽器位置。
+PGLITE_ROOT=/tmp/pi-pg/node_modules/@electric-sql/pglite node tests/run-learning-browser.cjs
+```
+
+SQL 與瀏覽器整合測試使用隔離的 PostgreSQL（PGlite + pgcrypto）與測試課堂，不讀寫正式課堂。

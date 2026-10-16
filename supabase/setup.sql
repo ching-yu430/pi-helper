@@ -166,7 +166,7 @@ grant execute on function public.pi_helper_teacher_set_open(text,text,boolean) t
 revoke execute on function public.pi_helper_teacher_change_password(text,text,text) from public,anon,authenticated;
 grant execute on function public.pi_helper_teacher_change_password(text,text,text) to anon;
 create or replace function public.pi_helper_teacher_clear_reports(p_room_code text,p_teacher_code text,p_group_no smallint default null)
-returns bigint language plpgsql security definer set search_path='' as $
+returns bigint language plpgsql security definer set search_path='' as $$
 declare v_room pi_helper.rooms%rowtype; v_count bigint;
 begin
  if p_room_code is null or length(p_room_code)>80 or p_teacher_code is null then raise exception 'TEACHER_DENIED'; end if;
@@ -178,7 +178,7 @@ begin
  where r.room_id=v_room.id and r.cleared_at is null and (p_group_no is null or r.group_no=p_group_no);
  get diagnostics v_count=row_count;
  return v_count;
-end; $;
+end; $$;
 revoke execute on function public.pi_helper_teacher_clear_reports(text,text,smallint) from public,anon,authenticated;
 grant execute on function public.pi_helper_teacher_clear_reports(text,text,smallint) to anon;
 

@@ -10,7 +10,7 @@ function create({room,canOpen,onNavigate}){
  const group=make('p',undefined,'help-request-group'),stage=make('p'),step=make('h3'),result=make('p',undefined,'group-result'),notice=make('p',undefined,'muted'),actions=make('div',undefined,'help-request-actions'),open=make('button','前往本組排查','primary'),later=make('button','稍後處理');open.type=later.type='button';actions.append(open,later);dialog.append(title,description,group,stage,step,result,notice,actions);document.body.append(dialog);
  const source=row=>JSON.stringify([row.group_no,row.session_id||'legacy']);
  const fingerprint=row=>JSON.stringify([source(row),row.stage,row.step,row.result,row.stepChangedAt||null,row.helpId||null]);
- const fresh=row=>row?.state==='need_help'&&Number.isFinite(Date.parse(row.updated_at))&&Date.now()-Date.parse(row.updated_at)<60000;
+ const fresh=row=>row?.state==='need_help'&&(row.persistentHelp||(Number.isFinite(Date.parse(row.updated_at))&&Date.now()-Date.parse(row.updated_at)<60000));
  function save(){try{sessionStorage.setItem(storageKey,JSON.stringify([...acknowledged].slice(-2000)))}catch{}}
  function remember(key){acknowledged.add(key);while(acknowledged.size>2000)acknowledged.delete(acknowledged.values().next().value);save()}
  function showContent(row){group.textContent='第 '+String(row.group_no).padStart(2,'0')+' 組';stage.textContent='階段：'+row.stage;step.textContent=row.step;result.textContent='學生回報：'+row.result;open.textContent=row.stage==='刷機'?'前往本組刷機圖解':'前往本組排查';open.disabled=false;notice.textContent='這個助教分頁不會因自動同步重複提醒同一則求助。稍後可從看板的「幫助」查看。'}
