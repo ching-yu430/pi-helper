@@ -98,3 +98,8 @@ body[data-assistant-view="settings"]>.flash-tab{display:none!important}
 .shutdown-reminder h3{font-size:20px;margin:0 0 10px}
 .shutdown-reminder p{margin:8px 0;line-height:1.8}
 .shutdown-reminder p:first-of-type{font-weight:800}
+
+.report-disclosure{padding:14px 16px;border:1px solid #d2dfd1;border-radius:10px;background:#f1f6ee;font-size:14px;line-height:1.8;margin:0 0 18px}
+.group-card .badge{white-space:normal;overflow-wrap:anywhere;max-width:100%;line-height:1.6}
+.group-card .last-report-state{font-size:13px;color:#6c542c;font-weight:700}
+.group-card .report-progress,.group-card .report-received{line-height:1.7;margin:8px 0}
