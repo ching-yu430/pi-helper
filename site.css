@@ -200,3 +200,36 @@ body button, body a.lesson-action, body header .site-nav a, body .quick-nav a {
   .page-workbench .reset-button { bottom: calc(150px + env(safe-area-inset-bottom)) !important; }
   .page-workbench main { padding-bottom: calc(220px + env(safe-area-inset-bottom)); }
 }
+
+.course-next { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--site-border); }
+.course-next h3 { margin: 0 0 6px; }
+.course-next > .lesson-action { display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 14px; }
+.learning-options { margin-top: 14px; }
+.course-catalog { margin: 24px 0; padding: 18px; border: 1px solid var(--site-border); border-radius: var(--site-radius); background: #fff; }
+.course-catalog > summary { font-weight: 700; }
+.course-catalog[open] > summary { margin-bottom: 18px; }
+.x11-guided h3 { margin: 0 0 12px; font-size: 21px; }
+.x11-guide-counter { font-weight: 700; color: var(--site-green); }
+.x11-guided kbd { display: inline-block; padding: 2px 8px; border: 1px solid #b47b13; border-radius: 6px; background: #fff; font-family: inherit; font-size: 20px; font-weight: 700; line-height: 1.5; }
+.help-next-action { padding: 10px 12px; background: var(--site-soft); border-radius: 10px; }
+.help-other-actions { margin-top: 12px; border-top: 1px solid var(--site-border); }
+.resolved-help-history > article { margin-top: 12px; }
+.active-help-workflow > h2 { margin-top: 18px; }
+body[data-help-flow="true"] #connectionSettings,
+body[data-help-flow="true"] #problemSection,
+body[data-help-flow="true"] #result,
+body[data-help-flow="true"] #common,
+body[data-help-flow="true"] #summarySection,
+body[data-help-flow="true"] .quick-nav,
+body[data-help-flow="true"] .reset-button { display: none !important; }
+body[data-help-flow="true"] .group-support { border-top: 0; padding-top: 0; margin-top: 16px; }
+body[data-help-flow="true"] main { padding-bottom: 40px; }
+
+.help-troubleshooting { margin-top: 16px; }
+.help-troubleshooting .outcome-card { margin-top: 12px; }
+
+body[data-help-flow="true"] .flash-tab { display: none !important; }
+body[data-help-flow="true"] .group-support > h3 { display: none; }
+.group-support > label:has(input[readonly]) { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.group-support input[readonly] { min-height: 24px; flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-weight: 700; }
+@media(max-width:600px) { body[data-help-flow="true"] main { padding-right: 12px; } }
