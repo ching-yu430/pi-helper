@@ -23,12 +23,12 @@ function renderSlide(){
  if(step.command&&!x11)content.append(make('pre',step.command.replaceAll('{host}',host)));
  if(id==='flash'){const values=PiFlashSettings.build(index,host);if(values)content.append(values)}
  if(step.image){const button=make('button',undefined,'presenter-image-open'),image=make('img');button.type='button';button.setAttribute('aria-label','放大並標示：'+step.title);image.src=PiFlashSettings.displayImage(step.image);image.alt=step.title;image.decoding='async';button.append(image);visual.append(button,make('p','點圖片可放大、圈出重點。','muted'))}
- if(x11){const guide=PiOperationImages.build('x11',{guided:true,onStageChange:i=>{action.querySelector('p').textContent=['先在已登入本組 Pi 的視窗執行指令。','用方向鍵選 Advanced Options，再按 Enter。','用方向鍵選 Wayland，再按 Enter。','用方向鍵選 X11，再按 Enter。','按 Tab 選 Finish 離開；詢問重新開機時選 No。'][i]},onCopy:async command=>{try{await navigator.clipboard.writeText(command);setStatus('已複製指令，請在本組 Pi 的視窗執行。')}catch{setStatus('可選取畫面上的指令手動複製。',true)}},onComplete:()=>move('desktop',4)});visual.append(guide);const keys=make('details',undefined,'presenter-notes');keys.append(make('summary','完整鍵盤操作'),PiFlashSettings.keyboardGuide());visual.append(keys)}
- if(id==='desktop'&&!x11){const imageKey={6:'rdpOpen',7:'rdpLogin'}[index];if(imageKey)visual.append(PiOperationImages.build(imageKey,{host:host+'.local',user:'user'}))}
+ if(x11){const instructions=make('div',undefined,'presenter-x11-instructions');content.append(instructions);let guide;const arrange=()=>{instructions.replaceChildren(...[...guide.querySelector('.x11-guide-content').children].filter(node=>node.tagName!=='FIGURE'))};guide=PiOperationImages.build('x11',{guided:true,onStageChange:i=>{action.querySelector('p').textContent=['先在已登入本組 Pi 的視窗執行指令。','用方向鍵選 Advanced Options，再按 Enter。','用方向鍵選 Wayland，再按 Enter。','用方向鍵選 X11，再按 Enter。','按 Tab 選 Finish 離開；詢問重新開機時選 No。'][i];if(guide)arrange()},onCopy:async command=>{try{await navigator.clipboard.writeText(command);setStatus('已複製指令，請在本組 Pi 的視窗執行。')}catch{setStatus('可選取畫面上的指令手動複製。',true)}},onComplete:()=>move('desktop',4)});visual.append(guide);arrange();const keys=make('details',undefined,'presenter-notes');keys.append(make('summary','完整鍵盤操作'),PiFlashSettings.keyboardGuide());content.append(keys)}
+ if(id==='desktop'&&!x11){const imageKey={6:'rdpOpen',7:'rdpLogin'}[index];if(imageKey){const picture=PiOperationImages.build(imageKey,{host:host+'.local',user:'user'});for(const node of [...picture.children])if(node.tagName!=='FIGURE')content.append(node);visual.append(picture)}}
  const expected=make('section',undefined,'presenter-expected');expected.append(make('h3','完成後應看到'),make('p',step.expected));content.append(expected);
  if(id==='shutdown')content.append(make('p',index===2?'至少再等 30 秒，確認關機完成才拔電。':'先儲存成果，現在不要拔電。','presenter-shutdown-alert'));
  const notes=make('details',undefined,'presenter-notes');notes.append(make('summary','補充說明'),make('p',step.text));content.append(notes);
- const canvas=make('div',undefined,'presenter-canvas');canvas.append(content);if(visual.children.length)canvas.append(visual);slide.replaceChildren(canvas);slide.classList.toggle('has-visual',Boolean(visual.children.length));slide.scrollTop=0;
+ const copy=make('div',undefined,'presenter-copy');copy.append(...content.childNodes);content.append(copy);const canvas=make('div',undefined,'presenter-canvas');canvas.append(content);if(visual.children.length)canvas.append(visual);slide.replaceChildren(canvas);slide.classList.toggle('has-visual',Boolean(visual.children.length));slide.scrollTop=0;
 }
 function render(){
  if(!policy)return;const lesson=PiLessonCatalog[cursor.lesson];q('presenterLesson').value=cursor.lesson;
@@ -91,10 +91,11 @@ function closeHelp(){q('presenterHelpDialog').close();if(helpFocus?.isConnected)
 q('presenterHelp').onclick=()=>{helpFocus=q('presenterOptions').querySelector('summary');q('presenterOptions').open=false;q('presenterHelpDialog').showModal();renderHelp();refreshHelp()};q('presenterHelpClose').onclick=closeHelp;q('presenterHelpRefresh').onclick=refreshHelp;q('presenterHelpDialog').addEventListener('cancel',event=>{event.preventDefault();closeHelp()});
 function setZoom(value){zoom=Math.max(1,Math.min(4,value));q('presenterImageStage').style.width=(zoom*100)+'%';q('presenterZoomLevel').textContent=Math.round(zoom*100)+'%';q('presenterZoomOut').disabled=zoom===1;q('presenterZoomIn').disabled=zoom===4}
 function closeImage(){q('presenterImageDialog').close();if(imageFocus?.isConnected)imageFocus.focus({preventScroll:true})}
-function openImage(img,focus){imageFocus=focus;q('presenterZoomImage').src=img.currentSrc||img.src;q('presenterZoomImage').alt=img.alt;q('presenterImageTitle').textContent=img.alt||'圖片重點';q('presenterImageMarks').replaceChildren();setZoom(1);marking=true;q('presenterMark').setAttribute('aria-pressed','true');q('presenterImageDialog').showModal();q('presenterImageDialog').querySelector('.presenter-image-scroll').scrollTo(0,0)}
+function setMarking(value){marking=value;const button=q('presenterMark');button.setAttribute('aria-pressed',String(value));button.classList.toggle('primary',value);button.textContent=value?'標記中（點圖片）':'開始標記';q('presenterImageStage').classList.toggle('is-marking',value);q('presenterImageHint').textContent=value?'在圖片上點一下，加入編號圓圈；可放大或捲動後繼續標記。':'標記已暫停。按「開始標記」後，再點圖片加入圓圈。'}
+function openImage(img,focus){imageFocus=focus;q('presenterZoomImage').src=img.currentSrc||img.src;q('presenterZoomImage').alt=img.alt;q('presenterImageTitle').textContent=img.alt||'圖片重點';q('presenterImageMarks').replaceChildren();setZoom(1);setMarking(true);q('presenterImageDialog').showModal();q('presenterImageDialog').querySelector('.presenter-image-scroll').scrollTo(0,0)}
 q('presenterSlide').addEventListener('click',event=>{const trigger=event.target.closest('a,button'),img=event.target.closest('img')||trigger?.querySelector('img');if(!img||!q('presenterSlide').contains(img))return;event.preventDefault();openImage(img,trigger||img)});
 q('presenterImageClose').onclick=closeImage;q('presenterImageDialog').addEventListener('cancel',event=>{event.preventDefault();closeImage()});
-q('presenterZoomIn').onclick=()=>setZoom(zoom+.5);q('presenterZoomOut').onclick=()=>setZoom(zoom-.5);q('presenterZoomReset').onclick=()=>setZoom(1);q('presenterMark').onclick=()=>{marking=!marking;q('presenterMark').setAttribute('aria-pressed',String(marking))};q('presenterClearMarks').onclick=()=>q('presenterImageMarks').replaceChildren();
+q('presenterZoomIn').onclick=()=>setZoom(zoom+.5);q('presenterZoomOut').onclick=()=>setZoom(zoom-.5);q('presenterZoomReset').onclick=()=>setZoom(1);q('presenterMark').onclick=()=>setMarking(!marking);q('presenterClearMarks').onclick=()=>q('presenterImageMarks').replaceChildren();
 q('presenterImageStage').onclick=event=>{if(!marking)return;const bounds=q('presenterZoomImage').getBoundingClientRect();if(!bounds.width||!bounds.height)return;const x=(event.clientX-bounds.left)/bounds.width,y=(event.clientY-bounds.top)/bounds.height;if(x<0||x>1||y<0||y>1)return;const mark=make('span',String(q('presenterImageMarks').children.length+1),'presenter-image-mark');mark.style.left=(x*100)+'%';mark.style.top=(y*100)+'%';mark.setAttribute('aria-label','重點標示');q('presenterImageMarks').append(mark)};
 q('presenterLogin').onsubmit=async event=>{
  event.preventDefault();const token=++epoch;password=q('presenterPassword').value;q('presenterPassword').value='';setStatus('正在登入…');
@@ -110,16 +111,30 @@ let fitFrame=0;
 function scheduleFit(){if(!fitFrame)fitFrame=requestAnimationFrame(()=>{fitFrame=0;fitSlide()})}
 function fitSlide(){
  const slide=q('presenterSlide'),canvas=slide.querySelector('.presenter-canvas');if(!canvas)return;
- if(!presentation){canvas.style.removeProperty('transform');canvas.style.removeProperty('width');return}
+ const copy=canvas.querySelector('.presenter-copy'),visual=canvas.querySelector('.presenter-visual');
+ if(!presentation){canvas.style.cssText='';copy.style.cssText='';if(visual)for(const img of visual.querySelectorAll('img'))img.style.removeProperty('max-height');return}
  const style=getComputedStyle(slide),width=slide.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=slide.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
  if(width<=0||height<=0)return;
  canvas.style.width=width+'px';
+ if(visual){
+  canvas.style.height=height+'px';canvas.style.transform='translateX(-50%)';
+  const panel=canvas.querySelector('.presenter-content'),available=visual.clientHeight,images=[...visual.querySelectorAll('img')];
+  // Image size depends on its own panel, never on the amount of text on the left.
+  const top=visual.getBoundingClientRect().top,usedHeight=Math.max(0,...[...visual.children].map(node=>node.getBoundingClientRect().bottom-top+(parseFloat(getComputedStyle(node).marginBottom)||0)));
+  const overhead=usedHeight-images.reduce((sum,img)=>sum+img.offsetHeight,0);
+  for(const img of images)img.style.maxHeight=Math.max(24,(available-overhead-4)/images.length)+'px';
+  copy.style.width=panel.clientWidth+'px';
+  const textScale=Math.min(1,panel.clientWidth/Math.max(1,copy.scrollWidth),panel.clientHeight/Math.max(1,copy.scrollHeight,copy.offsetHeight));
+  copy.style.transform='scale('+textScale+')';panel.scrollTop=panel.scrollLeft=0;
+  slide.scrollTop=slide.scrollLeft=0;return;
+ }
+ canvas.style.removeProperty('height');copy.style.cssText='';
  const scale=Math.min(1,width/Math.max(width,canvas.scrollWidth),height/Math.max(1,canvas.offsetHeight,canvas.scrollHeight));
  canvas.style.transform='translateX(-50%) scale('+scale+')';slide.scrollTop=slide.scrollLeft=0;
 }
 if(typeof ResizeObserver==='function'){
  const observer=new ResizeObserver(scheduleFit);observer.observe(q('presenterSlide'));
- new MutationObserver(()=>{const canvas=q('presenterSlide').querySelector('.presenter-canvas');observer.disconnect();observer.observe(q('presenterSlide'));if(canvas)observer.observe(canvas);scheduleFit()}).observe(q('presenterSlide'),{childList:true,subtree:true,characterData:true});
+ new MutationObserver(()=>{const canvas=q('presenterSlide').querySelector('.presenter-canvas');observer.disconnect();observer.observe(q('presenterSlide'));if(canvas){observer.observe(canvas);observer.observe(canvas.querySelector('.presenter-copy'));const visual=canvas.querySelector('.presenter-visual');if(visual)observer.observe(visual)}scheduleFit()}).observe(q('presenterSlide'),{childList:true,subtree:true,characterData:true});
 }
 q('presenterSlide').addEventListener('load',scheduleFit,true);q('presenterSlide').addEventListener('toggle',scheduleFit,true);window.addEventListener('resize',scheduleFit);
 if(document.fonts)document.fonts.ready.then(scheduleFit);

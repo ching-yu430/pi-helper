@@ -400,3 +400,49 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 }
 @media (max-height:600px) and (min-width:901px) { .page-presenter.presentation-mode .presenter-canvas { top:16px; } }
 @media (max-width:600px) { .page-presenter.presentation-mode .presenter-canvas { top:12px; } }
+
+/* Keep illustrations independent of the text fitting scale. */
+.page-presenter.presentation-mode #presenterSlide.has-visual .presenter-canvas { grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); align-items:stretch; }
+.page-presenter.presentation-mode #presenterSlide.has-visual .presenter-content { position:relative; overflow:clip; height:100%; min-height:0; }
+.page-presenter.presentation-mode #presenterSlide.has-visual .presenter-copy { display:flow-root; transform-origin:top left; }
+.page-presenter.presentation-mode #presenterSlide.has-visual .presenter-visual { min-height:0; display:flow-root; }
+.presenter-image-stage { cursor:default; }
+.presenter-image-stage.is-marking { cursor:crosshair; }
+#presenterMark[aria-pressed="true"] { background:var(--site-green); color:#fff; font-weight:700; }
+.presenter-image-mark { min-width:42px; min-height:42px; padding:0; box-sizing:border-box; }
+@media(max-width:900px) {
+ .page-presenter.presentation-mode #presenterSlide.has-visual .presenter-canvas { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,.45fr) minmax(0,.55fr); gap:12px; }
+}
+@media(max-height:440px) and (min-width:600px) {
+ .page-presenter.presentation-mode #presenterSlide.has-visual .presenter-canvas { grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); grid-template-rows:minmax(0,1fr); }
+}
+@media(max-width:900px), (max-height:600px) {
+ .page-presenter.presentation-mode .presenter-visual .x11-guided,
+ .page-presenter.presentation-mode .presenter-visual .operation-picture { padding:6px; }
+ .page-presenter.presentation-mode .presenter-visual .x11-guide-content > h3 { font-size:16px; margin:0 0 4px; }
+ .page-presenter.presentation-mode .presenter-visual .x11-guide-content > p,
+ .page-presenter.presentation-mode .presenter-visual .operation-values { font-size:13px; line-height:1.3; margin:4px 0; }
+ .page-presenter.presentation-mode .presenter-visual .x11-guide-counter,
+ .page-presenter.presentation-mode .presenter-visual .presenter-notes,
+ .page-presenter.presentation-mode .presenter-visual .operation-picture h3 { font-size:12px; margin:4px 0; }
+ .page-presenter.presentation-mode .presenter-visual figure { margin:4px 0; }
+ .page-presenter.presentation-mode .presenter-visual figcaption,
+ .page-presenter.presentation-mode .presenter-visual .operation-source { font-size:10px; line-height:1.2; margin:2px 0; }
+ .page-presenter.presentation-mode .presenter-visual .action-row { margin-top:4px; }
+ .page-presenter.presentation-mode .presenter-visual .action-row button { font-size:12px; padding:4px; }
+}
+@media(max-width:900px), (max-height:600px) {
+ .page-presenter.presentation-mode .presenter-visual .action-row button { font-size:12px!important; padding:4px!important; }
+ .page-presenter.presentation-mode .presenter-visual .x11-guided kbd { font-size:13px; padding:1px 4px; line-height:1.3; }
+ .page-presenter.presentation-mode .presenter-visual .x11-picture-instruction,
+ .page-presenter.presentation-mode .presenter-visual .keyboard-alert { padding:4px; }
+}
+@media(max-width:900px) and (min-height:441px), (max-width:599px) {
+ .page-presenter.presentation-mode #presenterSlide.has-visual .presenter-canvas { grid-template-rows:minmax(0,.3fr) minmax(0,.7fr); }
+}
+
+.page-presenter.presentation-mode .presenter-visual { font-size:20px; }
+.presenter-x11-instructions > h3 { font-size:18px; margin:8px 0; }
+.presenter-x11-instructions .x11-picture-instruction { background:#fff3ce; padding:8px; border-left:4px solid #b47b13; }
+.presenter-x11-instructions kbd { display:inline-block; background:#fff; border:1px solid #b47b13; border-radius:4px; padding:0 6px; font-family:inherit; font-size:1em; line-height:1.5; font-weight:700; }
+@media(max-width:900px), (max-height:600px) { .page-presenter.presentation-mode .presenter-visual { font-size:13px; } }
