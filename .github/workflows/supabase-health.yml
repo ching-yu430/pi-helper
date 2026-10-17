@@ -1,0 +1,68 @@
+name: Supabase database health check
+
+on:
+  schedule:
+    # UTC 00:17, 08:17, 16:17 = Asia/Taipei 08:17, 16:17, 00:17.
+    - cron: '17 */8 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/supabase-health.yml'
+
+permissions: {}
+
+concurrency:
+  group: supabase-database-health
+  cancel-in-progress: false
+
+jobs:
+  health:
+    if: github.repository == 'ching-yu430/pi-helper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      # No checkout, third-party actions, admin credentials, or classroom RPCs.
+      - name: Query isolated read-only database RPC
+        env:
+          SUPABASE_URL: https://xqiyrqhqpiclvowmntsw.supabase.co
+          # Already public in config.js; this is NOT a service_role/secret key.
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_kvUAH-RjuaPq2LaMPxFRgA_SDKCsCij
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+          
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          
+          url = os.environ["SUPABASE_URL"] + "/rest/v1/rpc/pi_helper_health_check"
+          key = os.environ["SUPABASE_PUBLISHABLE_KEY"]
+          if url != "https://xqiyrqhqpiclvowmntsw.supabase.co/rest/v1/rpc/pi_helper_health_check":
+              raise SystemExit("Unexpected health-check endpoint")
+          if not key.startswith("sb_publishable_"):
+              raise SystemExit("Only a public publishable key is allowed")
+          opener = urllib.request.build_opener(NoRedirect())
+          for attempt in range(1, 4):
+              request = urllib.request.Request(
+                  url, data=b"{}", method="POST",
+                  headers={"apikey": key, "Content-Type": "application/json",
+                           "Cache-Control": "no-store", "User-Agent": "pi-helper-health-check"})
+              try:
+                  with opener.open(request, timeout=20) as response:
+                      if response.status != 200 or json.loads(response.read(64)) is not True:
+                          raise ValueError("Unexpected health response")
+                  print("Supabase database health check passed (HTTP 200, true).")
+                  break
+              except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+                  # Never print response bodies, headers, credentials, or exception details.
+                  print(f"Health check attempt {attempt}/3 failed.")
+                  if attempt == 3:
+                      raise SystemExit("Supabase database health check failed")
+                  time.sleep(5 * attempt)
+          PY
