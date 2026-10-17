@@ -17,5 +17,5 @@ async function enter(followTeacher=false){
  finally{busy=false;follow.disabled=workspace.hidden}
 }
 document.getElementById('retryStudentEntry').onclick=()=>enter(lastFollow);follow.onclick=()=>enter(true);enter(params.get('teacher')==='1');
-setInterval(async()=>{if(document.hidden)return;try{await PiLearning.loadPolicy();if(!workspace.hidden&&!PiLearning.allowed(PiStudentFlow.lesson())){workspace.hidden=true;document.getElementById('reset').hidden=true;for(const button of document.querySelectorAll('header button'))button.disabled=true;status.hidden=false;status.textContent='老師已暫停這一課，請回課程首頁。需要結束操作時仍可使用正確關機教學。';actions.hidden=false}}catch{}},15000);
+setInterval(async()=>{if(document.hidden)return;try{await PiLearning.loadPolicy();if(!workspace.hidden&&!PiLearning.allowed(PiStudentFlow.lesson())){workspace.hidden=true;document.getElementById('reset').hidden=true;for(const button of document.querySelectorAll('header button'))button.disabled=true;status.hidden=false;status.textContent='老師已關閉這一課，請回課程首頁。需要結束操作時仍可使用正確關機教學。';actions.hidden=false}}catch{}},5000);
 })();

@@ -1,0 +1,23 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const pkg=process.env.PGLITE_ROOT||'@electric-sql/pglite';const {PGlite}=require(pkg),{pgcrypto}=require(pkg.startsWith('/')?pkg+'/dist/contrib/pgcrypto.cjs':pkg+'/contrib/pgcrypto');
+(async()=>{
+ const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated');
+ for(const name of ['setup.sql','update-learning-tools.sql','update-workbench-accounts.sql','update-board-clear.sql','update-presenter-tools.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../supabase',name),'utf8'));
+ const migration=fs.readFileSync(path.join(__dirname,'../supabase/update-presenter-tools.sql'),'utf8');await db.exec(migration);
+ const room='test-teaching-room',teacher='test-teacher';await db.query("insert into pi_helper.rooms(title,join_hash,teacher_hash,ends_at) values('Test',encode(extensions.digest($1,'sha256'),'hex'),extensions.crypt($2,extensions.gen_salt('bf')),now()+interval '1 day')",[room,teacher]);
+ const get=async()=> (await db.query('select public.pi_helper_course_settings($1) value',[room])).rows[0].value;
+ const send=async(pass,lesson,index,paused,revision)=>(await db.query('select public.pi_helper_teacher_present_course($1,$2,$3,$4::integer,$5::boolean,$6::bigint) value',[room,pass,lesson,index,paused,revision])).rows[0].value;
+ let count=0;const pass=text=>{count++;console.log('PASS '+text)};
+ await db.exec('set role anon');await assert.rejects(()=>db.query('select * from pi_helper.course_settings'),/permission denied/);await assert.rejects(()=>send('wrong','desktop',3,true,0),/TEACHER_DENIED/);pass('public clients cannot write the table or use a wrong teacher password');
+ let policy=await get();assert.equal(policy.revision,0);assert.equal(policy.teaching_paused,false);assert.equal(policy.pause_supported,true);pass('new rooms have no published stage and advertise pause support');
+ policy=await send(teacher,'desktop',3,false,0);assert.equal(policy.current_lesson,'desktop');assert.equal(policy.current_step,3);assert.equal(policy.revision,1);
+ policy=await send(teacher,'desktop',3,true,1);assert.equal(policy.teaching_paused,true);assert.equal((await get()).teaching_paused,true);pass('authenticated stage and pause changes are shared through the public policy');
+ await assert.rejects(()=>send(teacher,'shutdown',0,false,1),/COURSE_CONFLICT/);assert.deepEqual(await get(),policy);pass('stale revisions cannot overwrite another teacher or partially clear a pause');
+ await assert.rejects(()=>send(teacher,'desktop',99,false,2),/INVALID_LESSON/);await assert.rejects(()=>send(teacher,'desktop',3,null,2),/INVALID_STATE/);assert.deepEqual(await get(),policy);pass('invalid steps and null pause values leave shared settings unchanged');
+ const open={...policy.open_lessons,flash:false};policy=(await db.query('select public.pi_helper_teacher_set_course($1,$2,$3::jsonb,\'desktop\',4::integer,$4::bigint) value',[room,teacher,JSON.stringify(open),policy.revision])).rows[0].value;assert.equal(policy.teaching_paused,true);assert.equal(policy.open_lessons.flash,false);pass('existing lesson settings remain compatible and preserve the pause');
+ policy=await send(teacher,'shutdown',0,false,policy.revision);assert.equal(policy.current_lesson,'shutdown');assert.equal(policy.current_step,0);assert.equal(policy.teaching_paused,false);assert.equal(policy.open_lessons.flash,false);assert.equal(policy.open_lessons.shutdown,true);pass('shutdown publishes its first step and clears pause atomically without changing lesson release');
+ await db.exec('reset role');const account=(await db.query("select public.pi_helper_workbench_save_account($1,$2,null,'老師乙','staff-password',true) value",[room,teacher])).rows[0].value;await db.exec('set role anon');policy=await send('staff-password','ssh',0,true,policy.revision);assert.equal(policy.teaching_paused,true);pass('independent teacher accounts use the same authorization');
+ await db.exec('reset role');await db.exec(migration);assert.deepEqual(await get(),policy);assert.equal((await db.query('select count(*)::int n from pi_helper.rooms')).rows[0].n,1);pass('reapplying the migration preserves classroom, account and published state');
+ await db.close();console.log(count+' presenter database checks passed.');
+})().catch(e=>{console.error(e);process.exit(1)});

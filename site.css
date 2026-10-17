@@ -278,3 +278,85 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .board-filter-bar button[aria-pressed="true"] { background: var(--site-green); color: #fff; }
 .board-filter-empty { padding: 20px; border: 1px dashed var(--site-border); border-radius: 12px; background: var(--site-soft); }
 .board-filter-hint { margin-bottom: 10px; }
+
+/* Teacher preview, live teaching, step strip and classroom controls. */
+.page-presenter #presenterControls { display: block; padding: 14px; }
+.presenter-selects { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.presenter-actions { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 8px; margin-top: 12px; align-items: stretch; }
+.page-presenter #presenterControls .presenter-actions > button { min-width: 0; width: 100%; }
+.presenter-options { position: relative; padding: 0; margin: 0; border: 0; min-width: 0; }
+.presenter-options > summary { list-style: none; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--site-border); border-radius: 10px; background: #fff; font-size: 16px; }
+.presenter-options > summary::-webkit-details-marker { display: none; }
+.presenter-options-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; display: grid; gap: 10px; width: min(310px,calc(100vw - 40px)); max-height: 65dvh; overflow: auto; padding: 16px; border: 1px solid var(--site-border); border-radius: 12px; background: #fff; box-shadow: 0 8px 30px #163d3520; }
+#presenterMode { margin: 0 0 6px; padding: 8px 12px; border-radius: 10px; background: #f4f2e9; font-size: 14px; line-height: 1.5; }
+#presenterMode.is-live { background: #e7f2e8; }
+#presenterMode.is-paused, .classroom-pause-notice { background: #fff3ce; border: 2px solid #b47b13; color: #654600; }
+.classroom-pause-notice { margin: 16px 0; padding: 16px; border-radius: 12px; font-size: 20px; font-weight: 700; }
+.presenter-stepbar { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; padding: 5px 4px 10px; min-width: 0; max-width: 100%; }
+.presenter-stepbar button { flex: 0 0 auto; white-space: nowrap; text-wrap: nowrap; }
+.presenter-stepbar button.selected { background: var(--site-green); color: #fff; border-color: var(--site-green); }
+.presenter-stepbar button[data-published="true"] { box-shadow: inset 0 -4px #b47b13; }
+.page-presenter #presenterSlide { min-width: 0; font-size: 20px; }
+.presenter-current-action > h3, .presenter-expected > h3 { font-size: 15px; margin: 0 0 4px; }
+.presenter-current-action > p, .presenter-expected > p { margin: 0; }
+.presenter-current-action { margin: 12px 0; }
+.presenter-expected { margin: 16px 0; padding: 12px 14px; background: var(--site-soft); border-radius: 10px; }
+.presenter-notes { font-size: 16px; color: var(--site-muted); margin-top: 16px; }
+.presenter-notes > p { white-space: pre-line; }
+.presenter-shutdown-alert { padding: 14px; border: 2px solid #b47b13; border-radius: 10px; background: #fff3ce; color: #654600; font-weight: 700; }
+.presenter-image-open { display: block; width: 100%; padding: 0 !important; border: 0 !important; overflow: hidden; background: transparent; cursor: zoom-in; }
+.presenter-image-open img { display: block; width: 100%; }
+.presenter-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.presenter-dialog-heading h2 { margin: 0; }
+.presenter-dialog-heading > button { flex: 0 0 auto; }
+.presenter-help-dialog { width: min(94vw,650px); max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--site-border); border-radius: 16px; }
+.presenter-help-group { border: 1px solid var(--site-border); border-radius: 12px; padding: 14px; margin: 12px 0; }
+.presenter-help-group h3 { margin: 0; }
+.presenter-image-dialog { width: min(96vw,1400px); max-height: calc(100dvh - 24px); overflow: auto; border: 1px solid var(--site-border); border-radius: 16px; }
+.presenter-image-dialog h2 { font-size: 18px; }
+.presenter-image-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.presenter-image-scroll { max-height: 64dvh; overflow: auto; background: #edf0ed; overscroll-behavior: contain; }
+.presenter-image-stage { position: relative; width: 100%; max-width: none; cursor: crosshair; }
+.presenter-image-stage > img { display: block; width: 100%; max-width: none; height: auto; }
+.presenter-image-marks { position: absolute; inset: 0; pointer-events: none; }
+.presenter-image-mark { position: absolute; transform: translate(-50%,-50%); display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border: 4px solid #ee3c24; border-radius: 50%; background: #fff6; color: #9b1d0c; font: 700 18px/1 system-ui,sans-serif; text-shadow: 0 1px #fff; }
+.page-presenter.presentation-mode main { grid-template-rows: auto auto auto minmax(0,1fr) auto; }
+.page-presenter.presentation-mode #presenterControls { display: block; grid-row: 1; padding: 8px 10px; }
+.page-presenter.presentation-mode #presenterStatus { grid-row: 2; max-height: 5dvh; }
+.page-presenter.presentation-mode #presenterStageArea { grid-row: 3; min-width: 0; }
+.page-presenter.presentation-mode #presenterMode { max-height: 8dvh; overflow: auto; margin: 0 0 4px; padding: 4px 8px; }
+.page-presenter.presentation-mode #presenterSlide { grid-row: 4; }
+.page-presenter.presentation-mode #presenterNavigation { grid-row: 5; }
+.page-presenter.presentation-mode .presenter-actions { margin-top: 6px; gap: 6px; }
+.page-presenter.presentation-mode .presenter-stepbar { padding-bottom: 5px; }
+.page-presenter.presentation-mode .presenter-selects label { font-size: 12px; }
+.page-presenter.presentation-mode #presenterControls .presenter-options-panel select { margin-bottom: 6px; }
+@media (max-width: 900px) { .presenter-actions { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-height: 440px) and (min-width: 600px) {
+ .page-presenter.presentation-mode main { padding: 4px 8px; gap: 3px; }
+ .page-presenter.presentation-mode .presenter-actions { grid-template-columns: repeat(6,minmax(0,1fr)); }
+ .page-presenter.presentation-mode .presenter-selects label { font-size: 11px; }
+ .page-presenter.presentation-mode #presenterMode { max-height: 24px; }
+}
+.page-presenter.presentation-mode #presenterControls .presenter-selects > label,
+.page-presenter.presentation-mode #presenterControls .presenter-options-panel > label { grid-column: auto; }
+@media (max-width: 600px) {
+ .page-presenter.presentation-mode .presenter-actions > button,
+ .page-presenter.presentation-mode .presenter-options > summary { font-size: 14px !important; padding: 8px 6px !important; }
+ .page-presenter.presentation-mode #presenterSlide { padding: 12px; }
+}
+.page-presenter.presentation-mode .presenter-visual .x11-guided { margin: 0; padding: 12px; }
+.page-presenter.presentation-mode .presenter-visual .x11-guide-counter { font-size: 14px; margin: 0 0 6px; }
+.page-presenter.presentation-mode .presenter-visual .x11-guide-content > h3 { font-size: 21px; margin: 0 0 8px; }
+.page-presenter.presentation-mode .presenter-visual .x11-guide-content > p { font-size: 18px; margin: 6px 0; line-height: 1.5; }
+.page-presenter.presentation-mode .presenter-visual .x11-guide-content figure { margin: 8px 0; }
+.page-presenter.presentation-mode .presenter-visual .x11-guide-content figcaption { font-size: 12px; }
+.page-presenter.presentation-mode .presenter-visual .x11-guided .action-row { margin-top: 8px; }
+.page-presenter.presentation-mode .presenter-image-open img { max-height: var(--presenter-image-room,55dvh); object-fit: contain; }
+@media (max-height: 440px) and (min-width: 600px) {
+ .page-presenter.presentation-mode #presenterControls { display: grid; grid-template-columns: minmax(160px,1fr) minmax(0,3fr); align-items: end; gap: 8px; }
+ .page-presenter.presentation-mode .presenter-selects { gap: 6px; }
+ .page-presenter.presentation-mode .presenter-actions { margin-top: 0; }
+ .page-presenter.presentation-mode .presenter-actions > button,
+ .page-presenter.presentation-mode .presenter-options > summary { font-size: 14px !important; padding: 8px 6px !important; }
+}

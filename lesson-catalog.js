@@ -10,5 +10,19 @@ shutdown:{title:'正確關機',steps:[step('先儲存成果','儲存程式與作
 // Each teacher slide opens the matching student operation, never a saved success page.
 const studentSteps={ssh:['login','trust','verify','sshDone'],desktop:['aptUpdate','installXrdp','enableXrdp','x11','rebootPi','rdpTcp','rdpOpen','rdpLogin','desktopDone'],shutdown:['shutdownSave','shutdown','shutdownWait']};
 for(const [id,nodes] of Object.entries(studentSteps))lessons[id].steps.forEach((item,i)=>item.studentStep=nodes[i]);
+const teaching={
+ ssh:{short:['登入','信任與密碼','核對組別','確認完成'],expected:['出現首次連線確認、密碼提示，或本組 Pi 的命令列。','輸入密碼後，出現 user@本組主機名稱的命令列。','hostname 是本組主機名稱，whoami 是 user。','學生核對正確後，自行確認 SSH 完成。']},
+ desktop:{short:['更新','安裝','啟動服務','X11','重開機','測試連線','開啟桌面','登入','確認完成'],expected:['更新結束，回到 Pi 的命令列，沒有錯誤。','安裝結束，回到命令列，沒有錯誤。','指令完成，沒有服務啟動錯誤。','依序選完 Advanced Options、Wayland、X11，並離開設定。','SSH 連線中斷，等候 Pi 重新開機。','TcpTestSucceeded 顯示 True。','出現本組 Pi 的 xrdp 登入畫面。','成功進入本組 Pi 的桌面。','學生看到實際桌面後，自行確認完成。']},
+ shutdown:{short:['儲存','執行關機','等候再拔電'],expected:['程式與作業已儲存。','SSH 或遠端桌面連線中斷；現在先不要拔電。','至少再等 30 秒並確認關機完成；不確定請助教看。']}
+};
+const flashExpected=['卡內資料已備份，Imager 已開啟。','裝置是 Raspberry Pi 5。','系統是 Raspberry Pi OS（64-bit）桌面版。','已核對本組 SD 卡的名稱與容量。','主機名稱是本組 pi5-XX，沒有加 .local。','國家為 TW，時區為 Asia/Taipei。','帳號 user，密碼與確認密碼一致。','熱點名稱與密碼和本組手機完全相同。','SSH 已開啟，選擇密碼驗證。','進入寫入摘要。','摘要內容正確，準備寫入本組 SD 卡。','確認清除的是本組 SD 卡，開始寫入。','Writing 與 Verifying 都成功完成。','Pi 插卡供電，Windows 連同組熱點，等候開機。'];
+for(const [id,lesson] of Object.entries(lessons))lesson.steps.forEach((item,i)=>{
+ item.short=teaching[id]?.short[i]||String(i+1)+'. '+item.title;
+ item.action=id==='flash'?item.body[0]:item.text.split('。')[0]+'。';
+ item.expected=id==='flash'?flashExpected[i]:teaching[id].expected[i];
+});
+lessons.flash.steps[13].where='手機、Windows 與桌上的 Pi';
+lessons.ssh.steps[3].where='核對本組登入結果';lessons.desktop.steps[8].where='Windows 遠端桌面';
+lessons.shutdown.steps[0].where='Pi 桌面或目前操作的視窗';lessons.shutdown.steps[2].where='桌上的樹莓派';
 window.PiLessonCatalog=lessons;
 })();

@@ -27,6 +27,7 @@ async function specify(lesson,index){
  await presenter.waitForFunction(id=>document.querySelector('#presenterStep').dataset.lesson===id&&!document.querySelector('#presenterStep').disabled,lesson);
  await presenter.locator('#presenterStep').selectOption(String(index));
  await presenter.waitForFunction(i=>document.querySelector('#presenterStep').value===String(i)&&!document.querySelector('#presenterStep').disabled,index);
+ if(await presenter.locator('#presenterPublish').innerText()==='開始帶課'){await presenter.locator('#presenterPublish').click();await presenter.waitForFunction(()=>document.querySelector('#presenterMode').textContent.includes('帶課中'))}
  const policy=(await db.query('select public.pi_helper_teacher_course_settings($1,$2) value',[room,teacher])).rows[0].value;
  assert.equal(policy.current_lesson,lesson);assert.equal(policy.current_step,index);
 }
