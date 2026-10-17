@@ -25,6 +25,9 @@ function renderLearning(){
  // A stored stage does not establish that the teacher has started this class.
  teacher.textContent=policy.managed&&policy.revision>0?'老師上次指定：'+PiLearning.names[policy.current_lesson]+' · 第 '+(policy.current_step+1)+' 步':policy.managed?'老師尚未指定課程，請依現場指示選擇下方課程。':'請依老師指示選擇下方課程。';
  if(!policyFresh)teacher.textContent+='（暫時無法更新）';
+ const follow=q('followTeacherLink'),canFollow=Boolean(group&&policyFresh&&policy.managed&&policy.revision>0&&PiLearning.allowed(policy.current_lesson));
+ follow.hidden=!canFollow;follow.setAttribute('aria-disabled',String(!canFollow||select.disabled));
+ if(canFollow)follow.href='student.html?group='+encodeURIComponent(group)+'&lesson='+encodeURIComponent(policy.current_lesson)+'&teacher=1';else follow.removeAttribute('href');
  description.hidden=!saved?.step;
  description.textContent=saved?.step?'本組上次進度：'+saved.step+(saved.completed?.[saved.lesson]?'（已自行確認完成）':''):'';
  link.hidden=!resume;link.setAttribute('aria-disabled',String(select.disabled||!resume));
@@ -55,6 +58,7 @@ for(const link of links)link.addEventListener('click',event=>{
 document.addEventListener('pi-helper-groups-changed',()=>{const old=select.value||preferred;populate();renderLearning();if(old&&!selected()){preferred='';PiStudentGroup.clear();status.textContent='課堂組數已調整，請重新選擇自己的組別。'}});
 q('clearLearning').onclick=()=>{if(selected()&&confirm('只清除此瀏覽器本組的課程進度，不影響助教回報或 Pi 檔案。確定清除？')){PiLearning.clear(selected());renderLearning()}};
 q('continueLink').addEventListener('click',event=>{const saved=selected()?PiLearning.read(selected()):null;if(select.disabled||!selected()||!saved?.step||!PiLearning.allowed(saved.lesson)){event.preventDefault();status.textContent='請先選自己的組別，再選擇下方課程。';select.focus();return}PiStudentGroup.save(selected())});
+q('followTeacherLink').addEventListener('click',event=>{if(select.disabled||!selected()||!policyFresh||!PiLearning.allowed(PiLearning.policy.current_lesson)){event.preventDefault();status.textContent='請先確認組別與老師指定階段。';return}PiStudentGroup.save(selected())});
 retry.onclick=load;updateLinks();renderLearning();load();
 const refreshVisible=()=>{if(!document.hidden){if(select.disabled)load();else syncPolicy()}};
 document.addEventListener('visibilitychange',refreshVisible);window.addEventListener('online',refreshVisible);setInterval(()=>{if(!document.hidden&&!select.disabled)return syncPolicy()},5000);

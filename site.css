@@ -247,3 +247,16 @@ body[data-help-flow="true"] .group-support > h3 { display: none; }
 .help-next-action { background: transparent; padding: 0; font-size: 14px; }
 .help-empty-state { padding: 14px; background: var(--site-soft); border-radius: 10px; }
 .group-support > .shared-tools-status:empty { display: none; }
+
+/* Shared operation guide on the home page and student pages. */
+.guide-dialog{width:min(92vw,480px);max-height:calc(100dvh - 32px);padding:0;border:0;border-radius:20px;color:#203d33;box-shadow:0 20px 80px #102c3355}.guide-dialog::backdrop{background:#102c33b3}.guide-inner{padding:24px;overflow-y:auto;max-height:calc(100dvh - 32px)}.guide-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.guide-top p{font-size:13px;color:#63756a}.guide-skip{min-height:44px;padding:6px 10px;font-size:14px}.guide-count{display:flex;gap:7px;margin:18px 0}.guide-dot{height:5px;flex:1;background:#e1e9de;border-radius:8px}.guide-dot.active{background:#286047}.guide-number{display:inline-flex;align-items:center;justify-content:center;background:#e4efdf;color:#245d48;width:50px;height:50px;font-weight:800;font-size:24px;border-radius:14px}.guide-dialog h2{margin-top:16px}.guide-body{line-height:1.9;min-height:130px;font-size:16px}.guide-controls{display:flex;gap:10px;margin-top:22px}.guide-controls button{flex:1;text-align:center}.guide-dialog .guide-tip{font-size:13px;background:#eef3e9;padding:12px;border-radius:10px}
+.guide-checklist { padding-left: 24px; line-height: 1.8; }
+.guide-checklist li { margin: 10px 0; }
+.guide-example { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; border-radius: 10px; background: #173d31; color: #ecf9ee; font-size: 14px; }
+.guide-entries .lesson-action { display: flex; align-items: center; justify-content: center; text-align: center; }
+.page-presenter.presentation-mode #presenterControls { grid-template-columns: repeat(3,minmax(0,1fr)) repeat(3,minmax(0,140px)); }
+@media (max-width: 900px) {
+ .page-presenter.presentation-mode #presenterControls { grid-template-columns: repeat(6,minmax(0,1fr)); }
+ .page-presenter.presentation-mode #presenterControls label { grid-column: span 2; min-width: 0; }
+}
+@media (max-width: 600px) { .guide-inner { padding: 20px; } }
