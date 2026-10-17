@@ -8,6 +8,5 @@ function key(group){return 'pi-helper-learning:'+room()+':'+group}
 function read(group){try{const value=JSON.parse(localStorage.getItem(key(group))||'null');return value?.version===1&&value.group===group?value:null}catch{return null}}
 function save(group,patch){if(!/^pi5-(?:0[1-9]|[1-9]\d)$/.test(group||''))return false;try{const old=read(group)||{},value={...old,...patch,version:1,group,completed:{...old.completed,...patch.completed}};localStorage.setItem(key(group),JSON.stringify(value));return true}catch{return false}}
 function clear(group){try{localStorage.removeItem(key(group))}catch{}}
-const equipment=[['computer','Windows 電腦與網路可使用'],['pi','本組 Raspberry Pi 5'],['power','Pi 5 適用的電源'],['card','microSD 卡與讀卡機'],['backup','SD 卡資料已備份，或確定可以清除'],['hotspot','本組手機熱點可使用，已確認名稱與密碼']];
-window.PiLearning={ids,names,equipment,read,save,clear,loadPolicy,get policy(){return policy},allowed(id){return policy.open_lessons[id]===true}};
+window.PiLearning={ids,names,read,save,clear,loadPolicy,get policy(){return policy},allowed(id){return policy.open_lessons[id]===true}};
 })();

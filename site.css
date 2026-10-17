@@ -205,9 +205,8 @@ body button, body a.lesson-action, body header .site-nav a, body .quick-nav a {
 .course-next h3 { margin: 0 0 6px; }
 .course-next > .lesson-action { display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 14px; }
 .learning-options { margin-top: 14px; }
-.course-catalog { margin: 24px 0; padding: 18px; border: 1px solid var(--site-border); border-radius: var(--site-radius); background: #fff; }
-.course-catalog > summary { font-weight: 700; }
-.course-catalog[open] > summary { margin-bottom: 18px; }
+.course-catalog { margin: 24px 0; padding: 0; border: 0; background: transparent; }
+
 .x11-guided h3 { margin: 0 0 12px; font-size: 21px; }
 .x11-guide-counter { font-weight: 700; color: var(--site-green); }
 .x11-guided kbd { display: inline-block; padding: 2px 8px; border: 1px solid #b47b13; border-radius: 6px; background: #fff; font-family: inherit; font-size: 20px; font-weight: 700; line-height: 1.5; }
@@ -233,3 +232,18 @@ body[data-help-flow="true"] .group-support > h3 { display: none; }
 .group-support > label:has(input[readonly]) { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
 .group-support input[readonly] { min-height: 24px; flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-weight: 700; }
 @media(max-width:600px) { body[data-help-flow="true"] main { padding-right: 12px; } }
+
+.teacher-stage { margin: 8px 0 14px; padding: 10px 12px; background: var(--site-soft); border-radius: 10px; }
+.course-next #continueDescription { margin: 14px 0 8px; }
+.group-help-toolbar { margin-top: 0; margin-bottom: 18px; }
+.group-help .group-support { border: 0; padding: 0; margin: 0; }
+.group-help .group-support > h3 { display: none; }
+.group-report-details { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--site-border); }
+.group-report-details > summary { color: var(--site-muted); }
+.group-report-body { padding: 8px 0; font-size: 14px; }
+.group-report-body > p, .group-report-body .muted { margin: 8px 0; font-size: 14px; }
+.group-report-details > button { margin-top: 12px; }
+.help-request-step { font-weight: 700; }
+.help-next-action { background: transparent; padding: 0; font-size: 14px; }
+.help-empty-state { padding: 14px; background: var(--site-soft); border-radius: 10px; }
+.group-support > .shared-tools-status:empty { display: none; }
