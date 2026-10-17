@@ -260,3 +260,21 @@ body[data-help-flow="true"] .group-support > h3 { display: none; }
  .page-presenter.presentation-mode #presenterControls label { grid-column: span 2; min-width: 0; }
 }
 @media (max-width: 600px) { .guide-inner { padding: 20px; } }
+
+/* Prioritize the teacher's entry while keeping local progress available. */
+header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !important; }
+.teacher-entry.is-ready { margin: 12px 0 18px; padding: 16px; border: 2px solid var(--site-green); border-radius: 12px; background: var(--site-soft); }
+.teacher-entry.is-ready .teacher-stage { margin: 0 0 12px; padding: 0; background: transparent; font-weight: 700; }
+.teacher-entry .lesson-action { display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; }
+.course-next[data-teacher-ready="true"] #continueLink { background: #fff; color: var(--site-green); border: 1px solid var(--site-border); }
+.dashboard-stats button.stat-item { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; min-width: 0; background: var(--site-soft); }
+.dashboard-stats button.stat-need_help { background: #fff5df; }
+.dashboard-stats button.stat-stale { background: #edf0f2; }
+.dashboard-stats button.stat-item:hover { border-color: var(--site-green); }
+.dashboard-stats button.stat-item[aria-pressed="true"] { outline: 3px solid var(--site-green); outline-offset: 2px; }
+.dashboard-stats button.stat-item:focus-visible { outline: 3px solid #b47b13; outline-offset: 2px; }
+.board-filter-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin: 18px 0; }
+.board-filter-summary { margin: 0; font-weight: 700; }
+.board-filter-bar button[aria-pressed="true"] { background: var(--site-green); color: #fff; }
+.board-filter-empty { padding: 20px; border: 1px dashed var(--site-border); border-radius: 12px; background: var(--site-soft); }
+.board-filter-hint { margin-bottom: 10px; }

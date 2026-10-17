@@ -26,6 +26,7 @@ function renderLearning(){
  teacher.textContent=policy.managed&&policy.revision>0?'老師上次指定：'+PiLearning.names[policy.current_lesson]+' · 第 '+(policy.current_step+1)+' 步':policy.managed?'老師尚未指定課程，請依現場指示選擇下方課程。':'請依老師指示選擇下方課程。';
  if(!policyFresh)teacher.textContent+='（暫時無法更新）';
  const follow=q('followTeacherLink'),canFollow=Boolean(group&&policyFresh&&policy.managed&&policy.revision>0&&PiLearning.allowed(policy.current_lesson));
+ q('continueLesson').dataset.teacherReady=String(canFollow);q('teacherEntry').classList.toggle('is-ready',canFollow);
  follow.hidden=!canFollow;follow.setAttribute('aria-disabled',String(!canFollow||select.disabled));
  if(canFollow)follow.href='student.html?group='+encodeURIComponent(group)+'&lesson='+encodeURIComponent(policy.current_lesson)+'&teacher=1';else follow.removeAttribute('href');
  description.hidden=!saved?.step;
