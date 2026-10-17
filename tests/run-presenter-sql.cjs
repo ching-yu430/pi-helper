@@ -3,8 +3,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const pkg=process.env.PGLITE_ROOT||'@electric-sql/pglite';const {PGlite}=require(pkg),{pgcrypto}=require(pkg.startsWith('/')?pkg+'/dist/contrib/pgcrypto.cjs':pkg+'/contrib/pgcrypto');
 (async()=>{
  const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated');
- for(const name of ['setup.sql','update-learning-tools.sql','update-workbench-accounts.sql','update-board-clear.sql','update-presenter-tools.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../supabase',name),'utf8'));
- const migration=fs.readFileSync(path.join(__dirname,'../supabase/update-presenter-tools.sql'),'utf8');await db.exec(migration);
+ for(const name of ['001_setup.sql','008_learning_tools.sql','009_workbench_accounts.sql','010_board_clear.sql','011_presenter_tools.sql'])await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/migrations',name),'utf8'));
+ const migration=fs.readFileSync(path.join(__dirname,'../supabase/migrations/011_presenter_tools.sql'),'utf8');await db.exec(migration);
  const room='test-teaching-room',teacher='test-teacher';await db.query("insert into pi_helper.rooms(title,join_hash,teacher_hash,ends_at) values('Test',encode(extensions.digest($1,'sha256'),'hex'),extensions.crypt($2,extensions.gen_salt('bf')),now()+interval '1 day')",[room,teacher]);
  const get=async()=> (await db.query('select public.pi_helper_course_settings($1) value',[room])).rows[0].value;
  const send=async(pass,lesson,index,paused,revision)=>(await db.query('select public.pi_helper_teacher_present_course($1,$2,$3,$4::integer,$5::boolean,$6::bigint) value',[room,pass,lesson,index,paused,revision])).rows[0].value;

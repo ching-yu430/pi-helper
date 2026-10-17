@@ -1,7 +1,7 @@
 -- Independent, read-only health RPC. Does not access classroom tables.
 begin;
 set local lock_timeout = '5s';
-create function public.pi_helper_health_check()
+create or replace function public.pi_helper_health_check()
 returns boolean
 language sql
 volatile

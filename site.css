@@ -446,3 +446,10 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .presenter-x11-instructions .x11-picture-instruction { background:#fff3ce; padding:8px; border-left:4px solid #b47b13; }
 .presenter-x11-instructions kbd { display:inline-block; background:#fff; border:1px solid #b47b13; border-radius:4px; padding:0 6px; font-family:inherit; font-size:1em; line-height:1.5; font-weight:700; }
 @media(max-width:900px), (max-height:600px) { .page-presenter.presentation-mode .presenter-visual { font-size:13px; } }
+
+.platform-note,.lesson-term { font-size:15px; line-height:1.6; color:var(--site-muted); }
+.shutdown-routine,.connection-help { margin:28px 0; padding:20px; border:1px solid #d4b46b; border-radius:16px; background:#fff8e7; }
+.shutdown-routine .shutdown-card { border-color:#d4b46b; background:#fffdf7; }
+.shutdown-routine .lesson-tag { background:#fff0c2; color:#674700; }
+.connection-help { background:#fff; border-color:var(--site-border); scroll-margin-top:20px; }
+.connection-help li { margin:12px 0; }

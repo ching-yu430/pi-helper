@@ -1,0 +1,37 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const pkg=process.env.PGLITE_ROOT||'@electric-sql/pglite', {PGlite}=require(pkg),{pgcrypto}=require(pkg+'/dist/contrib/pgcrypto.cjs');
+const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
+(async()=>{
+ const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated;create role service_role');
+ const install=read('supabase/install.sql');await db.exec(install);
+ assert.equal((await db.query('select count(*)::integer n from pi_helper.schema_migrations')).rows[0].n,12);
+ const created=(await db.query(read('supabase/create-classroom.sql'))).rows[0];
+ const room=created['課堂加入碼_給學生'],password=created['助教管理碼_僅助教保管'];
+ const identity=async()=> (await db.query('select public.pi_helper_workbench_identity($1,$2) v',[room,password])).rows[0].v;
+ assert.equal((await identity()).admin,true);
+ await db.query("select public.pi_helper_workbench_save_account($1,$2,null,'測試助教','test-staff',true)",[room,password]);
+ const snapshot=await db.query('select * from pi_helper.rooms');
+ await db.exec(install);assert.deepEqual((await db.query('select * from pi_helper.rooms')).rows,snapshot.rows);assert.equal((await identity()).admin,true);
+ assert((await db.query('select public.pi_helper_workbench_identity($1,\'test-staff\') v',[room])).rows[0].v.name==='測試助教');
+ console.log('PASS ordered installation, valid classroom creation, admin/member login and safe repeated installation');
+ await db.query("update pi_helper.schema_migrations set sha256='tampered' where version=8");
+ await assert.rejects(()=>db.exec(install),/differs from the applied version/);await db.exec('rollback');
+ assert.deepEqual((await db.query('select * from pi_helper.rooms')).rows,snapshot.rows);
+ await db.close();
+ // Existing deployed projects have no ledger: bootstrap all sources atomically.
+ const legacy=new PGlite({extensions:{pgcrypto}});await legacy.exec('create role anon;create role authenticated;create role service_role');
+ for(const name of ['001_setup.sql','008_learning_tools.sql','009_workbench_accounts.sql','010_board_clear.sql','011_presenter_tools.sql','012_health_check.sql'])await legacy.exec(read('supabase/migrations/'+name));
+ const old=(await legacy.query(read('supabase/create-classroom.sql'))).rows[0],code=old['課堂加入碼_給學生'],pw=old['助教管理碼_僅助教保管'];
+ await legacy.query("select public.pi_helper_workbench_save_account($1,$2,null,'既有助教','legacy-staff',true)",[code,pw]);
+ await legacy.query("select public.pi_helper_student_report($1,'11111111-1111-4111-8111-111111111111'::uuid,$2,5::smallint,'SSH','登入','需要協助','need_help',1::bigint)",[code,'a'.repeat(48)]);
+ await legacy.query("select public.pi_helper_request_help($1,'11111111-1111-4111-8111-111111111111'::uuid,$2,5::smallint,'22222222-2222-4222-8222-222222222222'::uuid,'SSH','登入','請助教確認')",[code,'a'.repeat(48)]);
+ const current=(await legacy.query('select public.pi_helper_teacher_course_settings($1,$2) v',[code,pw])).rows[0].v;
+ await legacy.query("select public.pi_helper_teacher_present_course($1,$2,'desktop',3::integer,true,$3::bigint)",[code,pw,current.revision]);
+ const data={};for(const table of ['reports','help_requests','course_settings'])data[table]=(await legacy.query('select * from pi_helper.'+table)).rows;
+ const before=(await legacy.query('select * from pi_helper.rooms')).rows;
+ await legacy.exec(install);assert.deepEqual((await legacy.query('select * from pi_helper.rooms')).rows,before);for(const table of Object.keys(data))assert.deepEqual((await legacy.query('select * from pi_helper.'+table)).rows,data[table]);
+ assert.equal((await legacy.query("select public.pi_helper_workbench_identity($1,'legacy-staff') v",[code])).rows[0].v.name,'既有助教');
+ await legacy.exec('set role anon');await assert.rejects(()=>legacy.query('select * from pi_helper.schema_migrations'),/permission denied/);await legacy.exec('reset role');
+ await legacy.close();console.log('PASS checksum rejection rolls back and existing projects preserve classrooms and account access; migration history is private');
+})().catch(e=>{console.error(e);process.exit(1)});

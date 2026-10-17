@@ -1,10 +1,10 @@
--- Apply after update-learning-tools.sql and update-workbench-accounts.sql.
+-- Apply after 008_learning_tools.sql and 009_workbench_accounts.sql.
 -- Does not clear any records until a teacher explicitly uses the clear action.
 begin;
 set local lock_timeout='5s';
 do $$ begin
  if to_regprocedure('pi_helper.workbench_identity(uuid,text)') is null then
-  raise exception 'Apply update-workbench-accounts.sql before update-board-clear.sql';
+  raise exception 'Apply 009_workbench_accounts.sql before 010_board_clear.sql';
  end if;
 end; $$;
 alter table pi_helper.help_requests add column if not exists cleared_at timestamptz;

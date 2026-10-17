@@ -40,10 +40,10 @@ function renderLearning(){
  }
 }
 async function load(){
- if(loading)return;loading=true;select.disabled=true;retry.hidden=true;status.textContent='正在讀取課堂組別…';
- try{await Promise.all([PiGroups.refresh(),PiLearning.loadPolicy()]);policyFresh=true;populate();select.disabled=false;renderLearning();if(preferred&&!selected()){PiStudentGroup.clear();preferred='';status.textContent='課堂組數已調整，請重新選擇自己的組別。'}}
- catch{policyFresh=false;renderLearning();status.textContent='暫時無法讀取課堂組別，請重試；仍無法讀取時請助教確認課堂狀態。';retry.hidden=false}
- finally{loading=false}
+ if(loading)return;loading=true;select.disabled=true;retry.hidden=true;status.textContent='正在讀取課堂組別…';select.replaceChildren(new Option('正在讀取組別…',''));let timeout;
+ try{await Promise.race([Promise.all([PiGroups.refresh(),PiLearning.loadPolicy()]),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('連線逾時')),10000)})]);policyFresh=true;populate();select.disabled=false;renderLearning();if(preferred&&!selected()){PiStudentGroup.clear();preferred='';status.textContent='課堂組數已調整，請重新選擇自己的組別。'}}
+ catch{policyFresh=false;renderLearning();status.textContent='組別讀取失敗或連線逾時。請確認筆電已連上網路，再按「重新讀取組別」；還是不行，請找助教。';select.replaceChildren(new Option('讀取失敗，請按下方按鈕重試',''));retry.hidden=false}
+ finally{clearTimeout(timeout);loading=false}
 }
 async function syncPolicy(){
  if(loading||syncing)return;syncing=true;
@@ -56,7 +56,7 @@ for(const link of links)link.addEventListener('click',event=>{
  if(select.disabled||!selected()){event.preventDefault();status.textContent=select.disabled?'請先完成讀取課堂組別，再開始課程。':'請先選自己的組別。';select.focus();select.reportValidity();return}
  if(!PiLearning.allowed(link.dataset.lesson||'ssh')){event.preventDefault();status.textContent='老師尚未開放這一課，請先繼續已開放的課程。';return}PiStudentGroup.save(selected());
 });
-document.addEventListener('pi-helper-groups-changed',()=>{const old=select.value||preferred;populate();renderLearning();if(old&&!selected()){preferred='';PiStudentGroup.clear();status.textContent='課堂組數已調整，請重新選擇自己的組別。'}});
+document.addEventListener('pi-helper-groups-changed',()=>{if(select.disabled)return;const old=select.value||preferred;populate();renderLearning();if(old&&!selected()){preferred='';PiStudentGroup.clear();status.textContent='課堂組數已調整，請重新選擇自己的組別。'}});
 q('clearLearning').onclick=()=>{if(selected()&&confirm('只清除此瀏覽器本組的課程進度，不影響助教回報或 Pi 檔案。確定清除？')){PiLearning.clear(selected());renderLearning()}};
 q('continueLink').addEventListener('click',event=>{const saved=selected()?PiLearning.read(selected()):null;if(select.disabled||!selected()||!saved?.step||!PiLearning.allowed(saved.lesson)){event.preventDefault();status.textContent='請先選自己的組別，再選擇下方課程。';select.focus();return}PiStudentGroup.save(selected())});
 q('followTeacherLink').addEventListener('click',event=>{if(select.disabled||!selected()||!policyFresh||!PiLearning.allowed(PiLearning.policy.current_lesson)){event.preventDefault();status.textContent='請先確認組別與老師指定階段。';return}PiStudentGroup.save(selected())});

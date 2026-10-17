@@ -1,4 +1,4 @@
--- Run after update-learning-tools.sql and update-workbench-accounts.sql.
+-- Run after 008_learning_tools.sql and 009_workbench_accounts.sql.
 -- Additive and repeatable. Keeps existing classrooms, accounts, reports and course settings.
 begin;
 set local lock_timeout='5s';

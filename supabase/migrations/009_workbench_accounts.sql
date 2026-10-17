@@ -1,4 +1,4 @@
--- Run after update-learning-tools.sql. Preserves existing administrator password and classroom data.
+-- Run after 008_learning_tools.sql. Preserves existing administrator password and classroom data.
 begin;
 set local lock_timeout='5s';
 alter table pi_helper.rooms add column if not exists manager_name text not null default '管理員';

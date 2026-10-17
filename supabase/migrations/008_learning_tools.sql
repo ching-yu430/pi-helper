@@ -1,4 +1,4 @@
--- Run once in the project's Supabase SQL Editor after update-group-count.sql.
+-- Run once in the project's Supabase SQL Editor after 007_group_count.sql.
 -- Additive: existing classrooms, passwords, reports and expiry dates are preserved.
 begin;
 set local lock_timeout='5s';

@@ -23,7 +23,7 @@ GitHub Actions：`.github/workflows/supabase-health.yml`。
 ## 資料庫部署與移除
 
 此專案已透過 Supabase migration `add_isolated_health_check` 部署。
-`supabase/health-check.sql` 是該單次 migration 的來源，不需要重跑 setup.sql。
+`supabase/migrations/012_health_check.sql` 是該單次 migration 的來源，不需要重跑 001_setup.sql。
 移到其他專案時必須重新檢查 URL、key 與函式權限。
 
 停用：在 Actions 中停用 workflow，或刪除 workflow 檔。
