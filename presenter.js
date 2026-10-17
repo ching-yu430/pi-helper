@@ -7,18 +7,12 @@ let helpRows=[],helpError='',helpChecked='',helpReading=false,helpKey='',imageFo
 const request=(name,extra={})=>PiSyncAPI.rpc(name,{p_room_code:room,p_teacher_code:password,...extra});
 const valid=(lesson,index)=>Boolean(PiLessonCatalog[lesson]?.steps[index])&&Number.isInteger(index);
 const knownPolicy=value=>value?.open_lessons&&valid(value.current_lesson,value.current_step)&&Number.isSafeInteger(value.revision);
-const setStatus=text=>q('presenterStatus').textContent=text;
+const setStatus=(text,important=false)=>{const status=q('presenterStatus');status.textContent=text;status.classList.toggle('is-quiet',Boolean(policy)&&!important)};
 const paused=()=>policy?.teaching_paused===true;
 const supportsPause=()=>policy?.pause_supported===true;
 for(const [id,lesson] of Object.entries(PiLessonCatalog)){const option=make('option',lesson.title);option.value=id;q('presenterLesson').append(option)}
 function acceptPolicy(next){if(!knownPolicy(next))throw Error('課堂設定格式不符，請重新登入。');if(!policy||next.revision>=policy.revision)policy=next}
-function setVisible(on){for(const id of ['presenterControls','presenterStageArea','presenterSlide','presenterNavigation'])q(id).hidden=!on;q('presenterLogin').hidden=on}
-function renderStepbar(){
- const bar=q('presenterStepbar'),lesson=PiLessonCatalog[cursor.lesson];
- if(bar.dataset.lesson!==cursor.lesson){bar.replaceChildren();lesson.steps.forEach((item,i)=>{const button=make('button',item.short);button.type='button';button.dataset.index=String(i);button.title='第 '+(i+1)+' 步：'+item.title;button.onclick=()=>move(cursor.lesson,i);bar.append(button)});bar.dataset.lesson=cursor.lesson}
- for(const button of bar.children){const i=Number(button.dataset.index),current=i===cursor.index;button.disabled=busy;button.classList.toggle('selected',current);if(current)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');button.dataset.published=String(policy.revision>0&&policy.current_lesson===cursor.lesson&&policy.current_step===i)}
- const current=bar.children[cursor.index];if(current){const left=current.offsetLeft-bar.offsetLeft;if(left<bar.scrollLeft||left+current.offsetWidth>bar.scrollLeft+bar.clientWidth)bar.scrollLeft=Math.max(0,left-bar.clientWidth/2+current.offsetWidth/2)}
-}
+function setVisible(on){for(const id of ['presenterControls','presenterSlide','presenterNavigation'])q(id).hidden=!on;q('presenterLogin').hidden=on;document.body.classList.toggle('presenter-ready',on)}
 function renderSlide(){
  const {lesson:id,index}=cursor,lesson=PiLessonCatalog[id],step=lesson.steps[index],host=(q('presenterGroup').value||'pi5-01.local').replace(/\.local$/,'');
  const key=JSON.stringify([id,index,host]);if(key===rendered)return;rendered=key;
@@ -29,7 +23,7 @@ function renderSlide(){
  if(step.command&&!x11)content.append(make('pre',step.command.replaceAll('{host}',host)));
  if(id==='flash'){const values=PiFlashSettings.build(index,host);if(values)content.append(values)}
  if(step.image){const button=make('button',undefined,'presenter-image-open'),image=make('img');button.type='button';button.setAttribute('aria-label','放大並標示：'+step.title);image.src=PiFlashSettings.displayImage(step.image);image.alt=step.title;image.decoding='async';button.append(image);visual.append(button,make('p','點圖片可放大、圈出重點。','muted'))}
- if(x11){const guide=PiOperationImages.build('x11',{guided:true,onStageChange:i=>{action.querySelector('p').textContent=['先在已登入本組 Pi 的視窗執行指令。','用方向鍵選 Advanced Options，再按 Enter。','用方向鍵選 Wayland，再按 Enter。','用方向鍵選 X11，再按 Enter。','按 Tab 選 Finish 離開；詢問重新開機時選 No。'][i]},onCopy:async command=>{try{await navigator.clipboard.writeText(command);setStatus('已複製指令，請在本組 Pi 的視窗執行。')}catch{setStatus('可選取畫面上的指令手動複製。')}},onComplete:()=>move('desktop',4)});visual.append(guide);const keys=make('details',undefined,'presenter-notes');keys.append(make('summary','完整鍵盤操作'),PiFlashSettings.keyboardGuide());visual.append(keys)}
+ if(x11){const guide=PiOperationImages.build('x11',{guided:true,onStageChange:i=>{action.querySelector('p').textContent=['先在已登入本組 Pi 的視窗執行指令。','用方向鍵選 Advanced Options，再按 Enter。','用方向鍵選 Wayland，再按 Enter。','用方向鍵選 X11，再按 Enter。','按 Tab 選 Finish 離開；詢問重新開機時選 No。'][i]},onCopy:async command=>{try{await navigator.clipboard.writeText(command);setStatus('已複製指令，請在本組 Pi 的視窗執行。')}catch{setStatus('可選取畫面上的指令手動複製。',true)}},onComplete:()=>move('desktop',4)});visual.append(guide);const keys=make('details',undefined,'presenter-notes');keys.append(make('summary','完整鍵盤操作'),PiFlashSettings.keyboardGuide());visual.append(keys)}
  if(id==='desktop'&&!x11){const imageKey={6:'rdpOpen',7:'rdpLogin'}[index];if(imageKey)visual.append(PiOperationImages.build(imageKey,{host:host+'.local',user:'user'}))}
  const expected=make('section',undefined,'presenter-expected');expected.append(make('h3','完成後應看到'),make('p',step.expected));content.append(expected);
  if(id==='shutdown')content.append(make('p',index===2?'至少再等 30 秒，確認關機完成才拔電。':'先儲存成果，現在不要拔電。','presenter-shutdown-alert'));
@@ -43,10 +37,11 @@ function render(){
  const publish=q('presenterPublish');publish.textContent=live?'改為預覽':'開始帶課';publish.classList.toggle('primary',!live);publish.disabled=busy||!roomReady||(!live&&!policy.open_lessons[cursor.lesson]);
  q('presenterPause').textContent=paused()?'繼續上課':'先停在這裡';q('presenterPause').setAttribute('aria-pressed',String(paused()));q('presenterPause').disabled=busy||!supportsPause()||policy.revision===0||!roomReady;q('presenterPause').title=supportsPause()?'提示學生保留目前步驟，仍可閱讀與求助':'請先完成全班暫停提示的資料庫升級';q('presenterShutdown').disabled=busy||!roomReady;
  const published=policy.revision>0?PiLessonCatalog[policy.current_lesson].title+' · 第 '+(policy.current_step+1)+' 步':'尚未指定';
- let mode=live?'帶課中：'+published:'預覽中，尚未指定這一步｜全班上次指定：'+published;
- if(paused())mode+='｜學生提示：先完成目前步驟，等老師說明';if(!policy.open_lessons[cursor.lesson])mode+='｜此課尚未開放，請至工作台管理開放教材';
- const box=q('presenterMode');box.classList.toggle('is-live',live);box.classList.toggle('is-paused',paused());if(box.dataset.text!==mode){box.dataset.text=mode;box.replaceChildren(document.createTextNode(mode));if(!supportsPause()){const link=make('a','啟用全班暫停 ↗');link.href='classroom-setup.html#presenterUpgrade';link.target='_blank';link.rel='noopener';box.append(document.createTextNode(' · '),link)}}
- q('presenterCounter').textContent=(cursor.index+1)+' / '+lesson.steps.length;renderStepbar();renderSlide();
+ const mode=live?'帶課中':'預覽中',box=q('presenterMode');box.classList.toggle('is-live',live);box.classList.toggle('is-paused',paused());
+ if(box.textContent!==mode)box.textContent=mode;
+ box.title=(live?'正在同步指定步驟':'預覽不會變更學生指定步驟')+'｜全班上次指定：'+published+(paused()?'｜學生正在等老師說明':'');
+ q('presenterPublished').textContent='全班上次指定：'+published+(paused()?'（等候老師說明）':'');q('presenterPauseSetup').hidden=supportsPause();
+ q('presenterCounter').textContent=(cursor.index+1)+' / '+lesson.steps.length;renderSlide();
 }
 async function publishStage(lesson,index,pauseValue=paused(),activate=true){
  if(!policy||busy||!valid(lesson,index)||!roomReady)return false;
@@ -54,16 +49,16 @@ async function publishStage(lesson,index,pauseValue=paused(),activate=true){
  try{
   const next=supportsPause()?await request('pi_helper_teacher_present_course',{p_current_lesson:lesson,p_current_step:index,p_paused:pauseValue,p_revision:policy.revision}):await request('pi_helper_teacher_set_course',{p_open_lessons:policy.open_lessons,p_current_lesson:lesson,p_current_step:index,p_revision:policy.revision});
   if(token!==epoch)return false;acceptPolicy(next);if(activate){cursor={lesson:policy.current_lesson,index:policy.current_step};live=true;setStatus('已指定給學生；學生可按「跟上老師進度」開啟。')}return true;
- }catch(e){if(token!==epoch)return false;if(activate)live=false;setStatus((activate?'尚未指定：':'提示未更新：')+e.message);try{const next=await request('pi_helper_teacher_course_settings');if(token===epoch)acceptPolicy(next)}catch{}return false}
+ }catch(e){if(token!==epoch)return false;if(activate)live=false;setStatus((activate?'尚未指定：':'提示未更新：')+e.message,true);try{const next=await request('pi_helper_teacher_course_settings');if(token===epoch)acceptPolicy(next)}catch{}return false}
  finally{if(token===epoch){busy=false;render()}}
 }
-async function move(lesson,index){if(!policy||busy||!valid(lesson,index))return;cursor={lesson,index};if(live&&!policy.open_lessons[lesson]){live=false;setStatus('此課尚未開放，已切換預覽；請先在工作台開放教材。');render();return}if(live)await publishStage(lesson,index);else{setStatus('正在預覽，準備好後按「開始帶課」。');render()}}
+async function move(lesson,index){if(!policy||busy||!valid(lesson,index))return;cursor={lesson,index};if(live&&!policy.open_lessons[lesson]){live=false;setStatus('此課尚未開放，請先在工作台開放教材。',true);render();return}if(live)await publishStage(lesson,index);else{setStatus('正在預覽，準備好後按「開始帶課」。');render()}}
 q('presenterPublish').onclick=()=>{if(live){live=false;setStatus('已切換預覽；保留學生原本的指定階段。');render()}else publishStage(cursor.lesson,cursor.index)};
 q('presenterPause').onclick=async()=>{
- if(!supportsPause()||busy||!policy.revision)return;const target=!paused();
+ if(!supportsPause()||busy||!policy.revision)return;q('presenterOptions').open=false;const target=!paused();
  const ok=await publishStage(policy.current_lesson,policy.current_step,target,false);if(ok){setStatus(target?'已通知學生：先完成目前步驟，等老師說明。':'已解除提示，學生可以繼續上課。');render()}
 };
-q('presenterShutdown').onclick=async()=>{if(await publishStage('shutdown',0,false))setStatus('已指定正確關機：先儲存，再執行關機，確認完成才拔電。')};
+q('presenterShutdown').onclick=async()=>{q('presenterOptions').open=false;if(await publishStage('shutdown',0,false))setStatus('已指定正確關機：先儲存，再執行關機，確認完成才拔電。')};
 function setPresentation(value){presentation=value;document.body.classList.toggle('presentation-mode',value);q('presenterFullscreen').textContent=value?(document.fullscreenElement?'離開全螢幕':'結束投影'):'全螢幕';q('presenterFullscreen').setAttribute('aria-pressed',String(value))}
 async function togglePresentation(){
  if(!policy)return;const token=epoch;
@@ -76,6 +71,7 @@ function renderHelp(){
  const rows=helpGroups(),count=rows.filter(row=>row.status!=='waiting').length,initial=!helpChecked&&!helpError;
  q('presenterHelp').textContent=initial?'讀取求助中…':helpError?'求助待更新':'待協助 '+count+' 組';
  q('presenterHelpStatus').textContent=initial?'正在讀取求助狀態…':helpError||('上次更新：'+(helpChecked||'正在讀取')+'；待學生確認 '+rows.filter(row=>row.status==='waiting').length+' 組。');
+ const badge=q('presenterHelpBadge');badge.hidden=initial||(!helpError&&count===0);badge.textContent=helpError?'!':String(count);badge.title=helpError?'求助待更新':'待協助 '+count+' 組';q('presenterOptions').querySelector('summary').setAttribute('aria-label','教學工具'+(initial?'，正在讀取求助':helpError?'，求助待更新':count?'，待協助 '+count+' 組':''));
  const key=JSON.stringify([rows,helpError,initial]);if(key===helpKey)return;helpKey=key;const list=q('presenterHelpGroups');list.replaceChildren();
  if(!rows.length)list.append(make('p',initial?'正在讀取求助狀態…':helpError?'目前無法確認求助狀態，請重試或到工作台查看。':'目前沒有待協助或待學生確認的組別。'));
  for(const row of rows){const card=make('article',undefined,'presenter-help-group');card.append(make('h3','第 '+String(row.group_no).padStart(2,'0')+' 組 · '+({open:'等候接手',claimed:'助教處理中',waiting:'待學生確認'})[row.status]),make('p',row.step));const link=make('a','到工作台協助此組 ↗');link.href='assistant.html?assist='+row.group_no;link.target='_blank';link.rel='noopener';card.append(link);list.append(card)}
@@ -89,10 +85,10 @@ async function refreshHelp(){
 async function refreshClass(){
  if(!policy||reading||busy||document.hidden)return;const token=epoch;reading=true;
  try{const next=await request('pi_helper_teacher_course_settings');if(token!==epoch||busy)return;const changed=next.revision>policy.revision;acceptPolicy(next);if(changed&&live){cursor={lesson:policy.current_lesson,index:policy.current_step};setStatus('課堂設定已更新，顯示最新指定階段。')}render()}
- catch(e){if(token===epoch)setStatus('課堂設定暫時無法更新：'+e.message)}finally{if(token===epoch)reading=false}
+ catch(e){if(token===epoch)setStatus('課堂設定暫時無法更新：'+e.message,true)}finally{if(token===epoch)reading=false}
 }
 function closeHelp(){q('presenterHelpDialog').close();if(helpFocus?.isConnected)helpFocus.focus({preventScroll:true})}
-q('presenterHelp').onclick=()=>{helpFocus=document.activeElement;q('presenterHelpDialog').showModal();renderHelp();refreshHelp()};q('presenterHelpClose').onclick=closeHelp;q('presenterHelpRefresh').onclick=refreshHelp;q('presenterHelpDialog').addEventListener('cancel',event=>{event.preventDefault();closeHelp()});
+q('presenterHelp').onclick=()=>{helpFocus=q('presenterOptions').querySelector('summary');q('presenterOptions').open=false;q('presenterHelpDialog').showModal();renderHelp();refreshHelp()};q('presenterHelpClose').onclick=closeHelp;q('presenterHelpRefresh').onclick=refreshHelp;q('presenterHelpDialog').addEventListener('cancel',event=>{event.preventDefault();closeHelp()});
 function setZoom(value){zoom=Math.max(1,Math.min(4,value));q('presenterImageStage').style.width=(zoom*100)+'%';q('presenterZoomLevel').textContent=Math.round(zoom*100)+'%';q('presenterZoomOut').disabled=zoom===1;q('presenterZoomIn').disabled=zoom===4}
 function closeImage(){q('presenterImageDialog').close();if(imageFocus?.isConnected)imageFocus.focus({preventScroll:true})}
 function openImage(img,focus){imageFocus=focus;q('presenterZoomImage').src=img.currentSrc||img.src;q('presenterZoomImage').alt=img.alt;q('presenterImageTitle').textContent=img.alt||'圖片重點';q('presenterImageMarks').replaceChildren();setZoom(1);marking=true;q('presenterMark').setAttribute('aria-pressed','true');q('presenterImageDialog').showModal();q('presenterImageDialog').querySelector('.presenter-image-scroll').scrollTo(0,0)}
@@ -102,12 +98,12 @@ q('presenterZoomIn').onclick=()=>setZoom(zoom+.5);q('presenterZoomOut').onclick=
 q('presenterImageStage').onclick=event=>{if(!marking)return;const bounds=q('presenterZoomImage').getBoundingClientRect();if(!bounds.width||!bounds.height)return;const x=(event.clientX-bounds.left)/bounds.width,y=(event.clientY-bounds.top)/bounds.height;if(x<0||x>1||y<0||y>1)return;const mark=make('span',String(q('presenterImageMarks').children.length+1),'presenter-image-mark');mark.style.left=(x*100)+'%';mark.style.top=(y*100)+'%';mark.setAttribute('aria-label','重點標示');q('presenterImageMarks').append(mark)};
 q('presenterLogin').onsubmit=async event=>{
  event.preventDefault();const token=++epoch;password=q('presenterPassword').value;q('presenterPassword').value='';setStatus('正在登入…');
- try{const info=await request('pi_helper_teacher_room_info');if(token!==epoch)return;if(!info?.[0])throw Error('無法確認課堂狀態。');roomReady=info[0].active&&Date.parse(info[0].ends_at)>Date.now();await PiGroups.refresh(password);if(token!==epoch)return;PiGroups.populate(q('presenterGroup'),true);const next=await request('pi_helper_teacher_course_settings');if(token!==epoch)return;acceptPolicy(next);cursor={lesson:policy.current_lesson,index:policy.current_step};live=false;rendered='';setVisible(true);setStatus(roomReady?'目前是預覽；按「開始帶課」才會指定給學生。':'課堂已關閉或到期，請先在工作台管理開放。');render();await refreshHelp()}
+ try{const info=await request('pi_helper_teacher_room_info');if(token!==epoch)return;if(!info?.[0])throw Error('無法確認課堂狀態。');roomReady=info[0].active&&Date.parse(info[0].ends_at)>Date.now();await PiGroups.refresh(password);if(token!==epoch)return;PiGroups.populate(q('presenterGroup'),true);const next=await request('pi_helper_teacher_course_settings');if(token!==epoch)return;acceptPolicy(next);cursor={lesson:policy.current_lesson,index:policy.current_step};live=false;rendered='';setVisible(true);setStatus(roomReady?'目前是預覽；按「開始帶課」才會指定給學生。':'課堂已關閉或到期，請先在工作台管理開放。',!roomReady);render();await refreshHelp()}
  catch(e){if(token!==epoch)return;password='';policy=null;setVisible(false);setStatus(e.code==='FEATURE_UNAVAILABLE'?'上課同步尚未啟用，請先完成資料庫升級。':e.message)}
 };
 q('presenterStep').onchange=()=>move(cursor.lesson,Number(q('presenterStep').value));q('presenterLesson').onchange=()=>move(q('presenterLesson').value,0);q('presenterGroup').onchange=render;q('presenterBack').onclick=()=>move(cursor.lesson,cursor.index-1);q('presenterNext').onclick=()=>move(cursor.lesson,cursor.index+1);q('presenterFullscreen').onclick=togglePresentation;q('presenterFullscreen').setAttribute('aria-pressed','false');
 q('presenterLarger').onclick=()=>{large=!large;document.body.classList.toggle('presenter-large',large);q('presenterLarger').textContent=large?'還原文字大小':'放大文字';q('presenterLarger').setAttribute('aria-pressed',String(large));q('presenterOptions').open=false};
-q('presenterLogout').onclick=async()=>{epoch++;password='';policy=null;busy=reading=helpReading=false;roomReady=false;live=false;rendered='';helpRows=[];helpError=helpChecked=helpKey='';fallback=false;q('presenterOptions').open=false;for(const id of ['presenterHelpDialog','presenterImageDialog'])if(q(id).open)q(id).close();q('presenterImageMarks').replaceChildren();q('presenterZoomImage').removeAttribute('src');q('presenterHelpGroups').replaceChildren();setPresentation(false);setVisible(false);q('presenterSlide').replaceChildren();q('presenterStepbar').replaceChildren();delete q('presenterStepbar').dataset.lesson;setStatus('已登出。');if(document.fullscreenElement)try{await document.exitFullscreen()}catch{}};
+q('presenterLogout').onclick=async()=>{epoch++;password='';policy=null;busy=reading=helpReading=false;roomReady=false;live=false;rendered='';helpRows=[];helpError=helpChecked=helpKey='';fallback=false;q('presenterOptions').open=false;for(const id of ['presenterHelpDialog','presenterImageDialog'])if(q(id).open)q(id).close();q('presenterImageMarks').replaceChildren();q('presenterZoomImage').removeAttribute('src');q('presenterHelpGroups').replaceChildren();setPresentation(false);setVisible(false);q('presenterSlide').replaceChildren();q('presenterHelpBadge').hidden=true;setStatus('已登出。');if(document.fullscreenElement)try{await document.exitFullscreen()}catch{}};
 document.addEventListener('keydown',event=>{if(!policy||event.defaultPrevented||q('presenterHelpDialog').open||q('presenterImageDialog').open||event.altKey||event.ctrlKey||event.metaKey||/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName))return;if(event.key==='Escape'&&presentation){fallback=false;if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else setPresentation(false)}if(event.key==='ArrowRight'){event.preventDefault();q('presenterNext').click()}if(event.key==='ArrowLeft'){event.preventDefault();q('presenterBack').click()}});
 if(typeof ResizeObserver==='function')new ResizeObserver(entries=>{q('presenterSlide').style.setProperty('--presenter-image-room',Math.max(72,entries[0].contentRect.height-20)+'px')}).observe(q('presenterSlide'));
 setInterval(()=>{if(policy&&!document.hidden){refreshClass();refreshHelp()}},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshClass();refreshHelp()}});window.addEventListener('online',()=>{refreshClass();refreshHelp()});

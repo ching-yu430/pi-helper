@@ -288,14 +288,9 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .presenter-options > summary { list-style: none; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--site-border); border-radius: 10px; background: #fff; font-size: 16px; }
 .presenter-options > summary::-webkit-details-marker { display: none; }
 .presenter-options-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; display: grid; gap: 10px; width: min(310px,calc(100vw - 40px)); max-height: 65dvh; overflow: auto; padding: 16px; border: 1px solid var(--site-border); border-radius: 12px; background: #fff; box-shadow: 0 8px 30px #163d3520; }
-#presenterMode { margin: 0 0 6px; padding: 8px 12px; border-radius: 10px; background: #f4f2e9; font-size: 14px; line-height: 1.5; }
 #presenterMode.is-live { background: #e7f2e8; }
 #presenterMode.is-paused, .classroom-pause-notice { background: #fff3ce; border: 2px solid #b47b13; color: #654600; }
 .classroom-pause-notice { margin: 16px 0; padding: 16px; border-radius: 12px; font-size: 20px; font-weight: 700; }
-.presenter-stepbar { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; padding: 5px 4px 10px; min-width: 0; max-width: 100%; }
-.presenter-stepbar button { flex: 0 0 auto; white-space: nowrap; text-wrap: nowrap; }
-.presenter-stepbar button.selected { background: var(--site-green); color: #fff; border-color: var(--site-green); }
-.presenter-stepbar button[data-published="true"] { box-shadow: inset 0 -4px #b47b13; }
 .page-presenter #presenterSlide { min-width: 0; font-size: 20px; }
 .presenter-current-action > h3, .presenter-expected > h3 { font-size: 15px; margin: 0 0 4px; }
 .presenter-current-action > p, .presenter-expected > p { margin: 0; }
@@ -323,12 +318,9 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .page-presenter.presentation-mode main { grid-template-rows: auto auto auto minmax(0,1fr) auto; }
 .page-presenter.presentation-mode #presenterControls { display: block; grid-row: 1; padding: 8px 10px; }
 .page-presenter.presentation-mode #presenterStatus { grid-row: 2; max-height: 5dvh; }
-.page-presenter.presentation-mode #presenterStageArea { grid-row: 3; min-width: 0; }
-.page-presenter.presentation-mode #presenterMode { max-height: 8dvh; overflow: auto; margin: 0 0 4px; padding: 4px 8px; }
 .page-presenter.presentation-mode #presenterSlide { grid-row: 4; }
 .page-presenter.presentation-mode #presenterNavigation { grid-row: 5; }
 .page-presenter.presentation-mode .presenter-actions { margin-top: 6px; gap: 6px; }
-.page-presenter.presentation-mode .presenter-stepbar { padding-bottom: 5px; }
 .page-presenter.presentation-mode .presenter-selects label { font-size: 12px; }
 .page-presenter.presentation-mode #presenterControls .presenter-options-panel select { margin-bottom: 6px; }
 @media (max-width: 900px) { .presenter-actions { grid-template-columns: repeat(3,minmax(0,1fr)); } }
@@ -336,7 +328,6 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
  .page-presenter.presentation-mode main { padding: 4px 8px; gap: 3px; }
  .page-presenter.presentation-mode .presenter-actions { grid-template-columns: repeat(6,minmax(0,1fr)); }
  .page-presenter.presentation-mode .presenter-selects label { font-size: 11px; }
- .page-presenter.presentation-mode #presenterMode { max-height: 24px; }
 }
 .page-presenter.presentation-mode #presenterControls .presenter-selects > label,
 .page-presenter.presentation-mode #presenterControls .presenter-options-panel > label { grid-column: auto; }
@@ -360,3 +351,38 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
  .page-presenter.presentation-mode .presenter-actions > button,
  .page-presenter.presentation-mode .presenter-options > summary { font-size: 14px !important; padding: 8px 6px !important; }
 }
+
+/* Keep teacher controls compact so the lesson owns the screen. */
+.page-presenter.presenter-ready > header { padding: 8px 20px; }
+.page-presenter.presenter-ready > header > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.page-presenter.presenter-ready > header h1 { font-size: 20px; margin: 0; }
+.page-presenter.presenter-ready > header p { display: none; }
+.page-presenter.presenter-ready > header .site-nav { order: 2; margin: 0; }
+.page-presenter #presenterControls,
+.page-presenter.presentation-mode #presenterControls { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 12px; align-items: end; padding: 8px 10px; }
+.presenter-selects { grid-template-columns: minmax(110px,.65fr) minmax(0,1.35fr); gap: 8px; }
+.presenter-actions,
+.page-presenter.presentation-mode .presenter-actions { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0; align-items: end; }
+.presenter-publish { min-width: 0; }
+.presenter-publish > button { width: 100%; }
+#presenterMode { display: inline-block; margin: 0 0 4px; padding: 0 6px; border: 0; border-radius: 5px; font-size: 12px; line-height: 18px; background: #f4f2e9; }
+#presenterStatus.is-quiet { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.presenter-options > summary { position: relative; }
+.presenter-help-badge { position: absolute; top: -7px; right: -6px; min-width: 22px; padding: 2px 5px; border-radius: 20px; background: #b47b13; color: white; font-size: 12px; line-height: 18px; text-align: center; }
+.presenter-options-panel #presenterPublished { margin: 0; }
+.page-presenter.presentation-mode main { grid-template-rows: auto auto minmax(0,1fr) auto; gap: 6px; }
+.page-presenter.presentation-mode #presenterSlide { grid-row: 3; }
+.page-presenter.presentation-mode #presenterNavigation { grid-row: 4; }
+@media (max-width: 900px) {
+ .page-presenter #presenterControls,
+ .page-presenter.presentation-mode #presenterControls { grid-template-columns: minmax(0,1fr); gap: 8px; }
+}
+@media (max-height: 440px) and (min-width: 600px) {
+ .page-presenter.presentation-mode #presenterControls { grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap: 8px; }
+}
+@media (max-width: 600px) {
+ .page-presenter.presenter-ready > header h1 { display: none; }
+ .page-presenter.presenter-ready > header > div { justify-content: flex-end; }
+}
+.page-presenter.presentation-mode #presenterControls .presenter-actions > button,
+.page-presenter.presentation-mode #presenterControls .presenter-options-panel > button { grid-column: auto; }
