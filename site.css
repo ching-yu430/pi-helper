@@ -386,3 +386,17 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 }
 .page-presenter.presentation-mode #presenterControls .presenter-actions > button,
 .page-presenter.presentation-mode #presenterControls .presenter-options-panel > button { grid-column: auto; }
+
+/* Fit the entire teaching canvas rather than hiding content behind a scrollbar. */
+.page-presenter.presentation-mode #presenterSlide,
+.page-presenter.presentation-mode #presenterSlide.has-visual { display: block; position: relative; overflow: hidden; scrollbar-gutter: auto; }
+.page-presenter.presentation-mode .presenter-canvas { position: absolute; top: 24px; left: 50%; transform-origin: top center; display: flow-root; }
+.page-presenter.presentation-mode #presenterSlide.has-visual .presenter-canvas { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
+.page-presenter.presentation-mode .presenter-canvas .presenter-content,
+.page-presenter.presentation-mode .presenter-canvas .presenter-visual { min-width: 0; }
+@media (max-width:900px) {
+ .page-presenter.presentation-mode .presenter-canvas { top:16px; }
+ .page-presenter.presentation-mode #presenterSlide.has-visual .presenter-canvas { display: flow-root; }
+}
+@media (max-height:600px) and (min-width:901px) { .page-presenter.presentation-mode .presenter-canvas { top:16px; } }
+@media (max-width:600px) { .page-presenter.presentation-mode .presenter-canvas { top:12px; } }

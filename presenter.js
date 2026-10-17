@@ -28,7 +28,7 @@ function renderSlide(){
  const expected=make('section',undefined,'presenter-expected');expected.append(make('h3','完成後應看到'),make('p',step.expected));content.append(expected);
  if(id==='shutdown')content.append(make('p',index===2?'至少再等 30 秒，確認關機完成才拔電。':'先儲存成果，現在不要拔電。','presenter-shutdown-alert'));
  const notes=make('details',undefined,'presenter-notes');notes.append(make('summary','補充說明'),make('p',step.text));content.append(notes);
- slide.replaceChildren(content);if(visual.children.length)slide.append(visual);slide.classList.toggle('has-visual',Boolean(visual.children.length));slide.scrollTop=0;
+ const canvas=make('div',undefined,'presenter-canvas');canvas.append(content);if(visual.children.length)canvas.append(visual);slide.replaceChildren(canvas);slide.classList.toggle('has-visual',Boolean(visual.children.length));slide.scrollTop=0;
 }
 function render(){
  if(!policy)return;const lesson=PiLessonCatalog[cursor.lesson];q('presenterLesson').value=cursor.lesson;
@@ -37,7 +37,7 @@ function render(){
  const publish=q('presenterPublish');publish.textContent=live?'改為預覽':'開始帶課';publish.classList.toggle('primary',!live);publish.disabled=busy||!roomReady||(!live&&!policy.open_lessons[cursor.lesson]);
  q('presenterPause').textContent=paused()?'繼續上課':'先停在這裡';q('presenterPause').setAttribute('aria-pressed',String(paused()));q('presenterPause').disabled=busy||!supportsPause()||policy.revision===0||!roomReady;q('presenterPause').title=supportsPause()?'提示學生保留目前步驟，仍可閱讀與求助':'請先完成全班暫停提示的資料庫升級';q('presenterShutdown').disabled=busy||!roomReady;
  const published=policy.revision>0?PiLessonCatalog[policy.current_lesson].title+' · 第 '+(policy.current_step+1)+' 步':'尚未指定';
- const mode=live?'帶課中':'預覽中',box=q('presenterMode');box.classList.toggle('is-live',live);box.classList.toggle('is-paused',paused());
+ const mode=paused()?'暫停中':live?'帶課中':'預覽中',box=q('presenterMode');box.classList.toggle('is-live',live);box.classList.toggle('is-paused',paused());
  if(box.textContent!==mode)box.textContent=mode;
  box.title=(live?'正在同步指定步驟':'預覽不會變更學生指定步驟')+'｜全班上次指定：'+published+(paused()?'｜學生正在等老師說明':'');
  q('presenterPublished').textContent='全班上次指定：'+published+(paused()?'（等候老師說明）':'');q('presenterPauseSetup').hidden=supportsPause();
@@ -59,7 +59,7 @@ q('presenterPause').onclick=async()=>{
  const ok=await publishStage(policy.current_lesson,policy.current_step,target,false);if(ok){setStatus(target?'已通知學生：先完成目前步驟，等老師說明。':'已解除提示，學生可以繼續上課。');render()}
 };
 q('presenterShutdown').onclick=async()=>{q('presenterOptions').open=false;if(await publishStage('shutdown',0,false))setStatus('已指定正確關機：先儲存，再執行關機，確認完成才拔電。')};
-function setPresentation(value){presentation=value;document.body.classList.toggle('presentation-mode',value);q('presenterFullscreen').textContent=value?(document.fullscreenElement?'離開全螢幕':'結束投影'):'全螢幕';q('presenterFullscreen').setAttribute('aria-pressed',String(value))}
+function setPresentation(value){presentation=value;document.body.classList.toggle('presentation-mode',value);q('presenterFullscreen').textContent=value?(document.fullscreenElement?'離開全螢幕':'結束投影'):'全螢幕';q('presenterFullscreen').setAttribute('aria-pressed',String(value));scheduleFit()}
 async function togglePresentation(){
  if(!policy)return;const token=epoch;
  if(presentation){fallback=false;setPresentation(false);if(document.fullscreenElement)try{await document.exitFullscreen()}catch{}return}
@@ -105,6 +105,23 @@ q('presenterStep').onchange=()=>move(cursor.lesson,Number(q('presenterStep').val
 q('presenterLarger').onclick=()=>{large=!large;document.body.classList.toggle('presenter-large',large);q('presenterLarger').textContent=large?'還原文字大小':'放大文字';q('presenterLarger').setAttribute('aria-pressed',String(large));q('presenterOptions').open=false};
 q('presenterLogout').onclick=async()=>{epoch++;password='';policy=null;busy=reading=helpReading=false;roomReady=false;live=false;rendered='';helpRows=[];helpError=helpChecked=helpKey='';fallback=false;q('presenterOptions').open=false;for(const id of ['presenterHelpDialog','presenterImageDialog'])if(q(id).open)q(id).close();q('presenterImageMarks').replaceChildren();q('presenterZoomImage').removeAttribute('src');q('presenterHelpGroups').replaceChildren();setPresentation(false);setVisible(false);q('presenterSlide').replaceChildren();q('presenterHelpBadge').hidden=true;setStatus('已登出。');if(document.fullscreenElement)try{await document.exitFullscreen()}catch{}};
 document.addEventListener('keydown',event=>{if(!policy||event.defaultPrevented||q('presenterHelpDialog').open||q('presenterImageDialog').open||event.altKey||event.ctrlKey||event.metaKey||/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName))return;if(event.key==='Escape'&&presentation){fallback=false;if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else setPresentation(false)}if(event.key==='ArrowRight'){event.preventDefault();q('presenterNext').click()}if(event.key==='ArrowLeft'){event.preventDefault();q('presenterBack').click()}});
-if(typeof ResizeObserver==='function')new ResizeObserver(entries=>{q('presenterSlide').style.setProperty('--presenter-image-room',Math.max(72,entries[0].contentRect.height-20)+'px')}).observe(q('presenterSlide'));
+// Fit the complete lesson, including late-loading images and expanded notes.
+let fitFrame=0;
+function scheduleFit(){if(!fitFrame)fitFrame=requestAnimationFrame(()=>{fitFrame=0;fitSlide()})}
+function fitSlide(){
+ const slide=q('presenterSlide'),canvas=slide.querySelector('.presenter-canvas');if(!canvas)return;
+ if(!presentation){canvas.style.removeProperty('transform');canvas.style.removeProperty('width');return}
+ const style=getComputedStyle(slide),width=slide.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=slide.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
+ if(width<=0||height<=0)return;
+ canvas.style.width=width+'px';
+ const scale=Math.min(1,width/Math.max(width,canvas.scrollWidth),height/Math.max(1,canvas.offsetHeight,canvas.scrollHeight));
+ canvas.style.transform='translateX(-50%) scale('+scale+')';slide.scrollTop=slide.scrollLeft=0;
+}
+if(typeof ResizeObserver==='function'){
+ const observer=new ResizeObserver(scheduleFit);observer.observe(q('presenterSlide'));
+ new MutationObserver(()=>{const canvas=q('presenterSlide').querySelector('.presenter-canvas');observer.disconnect();observer.observe(q('presenterSlide'));if(canvas)observer.observe(canvas);scheduleFit()}).observe(q('presenterSlide'),{childList:true,subtree:true,characterData:true});
+}
+q('presenterSlide').addEventListener('load',scheduleFit,true);q('presenterSlide').addEventListener('toggle',scheduleFit,true);window.addEventListener('resize',scheduleFit);
+if(document.fonts)document.fonts.ready.then(scheduleFit);
 setInterval(()=>{if(policy&&!document.hidden){refreshClass();refreshHelp()}},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshClass();refreshHelp()}});window.addEventListener('online',()=>{refreshClass();refreshHelp()});
 })();
