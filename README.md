@@ -2,7 +2,7 @@
 
 給第一次接觸 Raspberry Pi 的學生使用的繁體中文教學網站。先選組別，再跟著刷機、SSH 與遠端桌面的步驟操作；每次下課前另做正確關機。老師可指定教學階段，助教可接收、接手並追蹤求助。
 
-[開啟課程首頁](https://ching-yu430.github.io/pi-helper/) · [更新紀錄](CHANGELOG.md) · [課前實機驗收](docs/CLASSROOM_CHECKLIST.md)
+[開啟課程首頁](https://ching-yu430.github.io/pi-helper/) · [教師功能介紹 PDF](docs/teacher-guide.pdf) · [更新紀錄](CHANGELOG.md) · [課前實機驗收](docs/CLASSROOM_CHECKLIST.md)
 
 ![課程首頁與組別選擇](assets/screenshots/course-home.png)
 
