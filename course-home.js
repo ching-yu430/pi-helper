@@ -10,7 +10,7 @@ function updateLinks(){
   if(link.dataset.lesson){link.dataset.label ||= link.textContent;link.textContent=PiLearning.allowed(lesson)?link.dataset.label:'尚未開放：'+PiLearning.names[lesson]}
   link.setAttribute('aria-disabled',String(!group||!PiLearning.allowed(lesson)));
  }
- for(const host of document.querySelectorAll('[data-group-host]'))host.textContent=group?group+'.local':'本組主機名稱';
+ for(const host of document.querySelectorAll('[data-group-host]'))host.textContent=group?group+'.local':'（選好組別後會顯示，例如 pi5-01.local）';
  status.textContent=group?'本組：第 '+Number(group.slice(-2))+' 組 · '+group+'。下方課程會直接使用這個組別。':'請先選自己的組別，再選擇下方課程。';
 }
 function populate(){

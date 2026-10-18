@@ -51,7 +51,10 @@ node scripts/build-sql.cjs --check
 ```sh
 node tests/run-tests.cjs
 node scripts/build-sql.cjs --check
+node scripts/version-assets.cjs --check
 ```
+
+本機 CSS／JavaScript 在每個 HTML 頁面使用同一個依內容產生的版本號。修改這些資源後執行 `node scripts/version-assets.cjs`，再提交更新後的 HTML；CI 會檢查有沒有漏更新。
 
 資料庫測試使用隔離的 PGlite，不寫入正式課堂：
 

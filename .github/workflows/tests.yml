@@ -13,6 +13,7 @@ jobs:
           node-version: '22'
       - run: node tests/run-tests.cjs
       - run: node scripts/build-sql.cjs --check
+      - run: node scripts/version-assets.cjs --check
       - run: npm install --prefix /tmp/pi-test --no-audit --no-fund @electric-sql/pglite@0.5.10
       - run: node tests/run-install-sql.cjs
         env:

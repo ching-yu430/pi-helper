@@ -3,16 +3,16 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.clock.install();let mode='hang';const held=[];
+ page.setDefaultTimeout(15000);let mode='hang';const held=[];
  const policy={open_lessons:{flash:true,ssh:true,desktop:true,shutdown:true},current_lesson:'ssh',current_step:0,revision:1};
  await page.route('https://*.supabase.co/**',async route=>{
   if(mode==='hang'){held.push(route);return}
   if(mode==='fail')return route.abort();
   await route.fulfill({json:route.request().url().endsWith('pi_helper_group_settings')?{group_count:9}:policy});
  });
- await page.goto((process.env.PI_HELPER_TEST_URL||'http://127.0.0.1:8002/')+'index.html');
- await page.waitForFunction(()=>document.querySelector('#courseGroup').disabled);
- await page.clock.fastForward(10001);await page.locator('#retryCourseGroups').waitFor({state:'visible'});
+ const started=Date.now();await page.goto((process.env.PI_HELPER_TEST_URL||'http://127.0.0.1:8002/')+'index.html');
+ await page.waitForFunction(()=>document.querySelector('#courseGroup').disabled);assert((await page.locator('[data-group-host]').first().innerText()).includes('選好組別後會顯示'));
+ await page.locator('#retryCourseGroups').waitFor({state:'visible'});assert(held.length>=2);assert(Date.now()-started>=9000,'hung requests must exercise the real timeout');await page.screenshot({path:'/tmp/pi-home-hung-timeout.png'});console.log('Observed retry after '+(Date.now()-started)+' ms with requests still held and no response');
  assert((await page.locator('#courseGroupStatus').innerText()).includes('請找助教'));
  assert(!(await page.locator('#courseGroup').innerText()).includes('正在讀取'));
  await page.locator('footer a').first().click();assert(await page.locator('#connectionHelpTitle').isVisible());
@@ -26,12 +26,28 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
  for(const route of held)await route.fulfill({json:route.request().url().endsWith('pi_helper_group_settings')?{group_count:2}:policy}).catch(()=>{});
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  assert.equal(await page.locator('#courseGroup').inputValue(),'pi5-05');
- assert.equal(await page.locator('#courseGroup option').count(),10);
+ assert.equal(await page.locator('#courseGroup option').count(),10);assert.equal(await page.locator('[data-group-host]').first().innerText(),'pi5-05.local');
  console.log('PASS retry recovers after a network error and late expired responses cannot replace the successful group selection');
  assert.equal(await page.locator('.course-catalog [data-lesson]').count(),3);
  assert.equal(await page.locator('.shutdown-routine [data-lesson="shutdown"]').count(),1);
  assert((await page.locator('.platform-note').innerText()).includes('Mac 或 Linux'));
  assert.equal(await page.locator('#openStudentGuide').innerText(),'使用說明');
+ assert.equal(await page.locator('.lesson-card h2').count(),0);assert.equal(await page.locator('.lesson-card h3').count(),7);
+ assert.equal(await page.locator('[aria-labelledby="todayTitle"]').count(),1);
+ assert(await page.locator('[data-lesson="ssh"]').evaluate(link=>{const elements=[...link.parentElement.children],title=elements.findIndex(e=>e.tagName==='H3'),term=elements.findIndex(e=>e.classList.contains('lesson-term'));return title>=0&&term>title&&elements[title+1].tagName==='P'}));
+ assert(!(await page.locator('footer').innerText()).includes('樹莓派課堂學習 · 繁體中文'));
+ console.log('PASS all lesson headings use level 3, SSH text follows the heading, the group placeholder updates and the duplicate region label/footer text are removed');
+ // Exercise Chromium's real network-offline mode, with no intercepted response.
+ const offline=await browser.newPage();await offline.route('https://*.supabase.co/**',route=>route.abort());
+ await offline.goto((process.env.PI_HELPER_TEST_URL||'http://127.0.0.1:8002/')+'index.html');
+ await offline.locator('#retryCourseGroups').waitFor({state:'visible'});
+ await offline.context().setOffline(true);await offline.unroute('https://*.supabase.co/**');
+ await offline.locator('#retryCourseGroups').click();await offline.locator('#retryCourseGroups').waitFor({state:'visible'});
+ assert.equal(await offline.evaluate(()=>navigator.onLine),false);assert((await offline.locator('#courseGroupStatus').innerText()).includes('請找助教'));assert(await offline.locator('#courseGroup').isDisabled());
+ await offline.screenshot({path:'/tmp/pi-home-offline-retry.png'});
+ await offline.route('https://*.supabase.co/**',route=>route.fulfill({json:route.request().url().endsWith('pi_helper_group_settings')?{group_count:9}:policy}));
+ await offline.context().setOffline(false);await offline.waitForFunction(()=>!document.querySelector('#courseGroup').disabled);await offline.close();
+ console.log('PASS browser network-offline mode exposes retry and assistance; restoring network recovers group selection');
  for(const width of [320,390,768,1280]){await page.setViewportSize({width,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))}
  await page.setViewportSize({width:1280,height:960});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:'/tmp/pi-course-home-current.png'});
  assert.deepEqual(errors,[]);await browser.close();
