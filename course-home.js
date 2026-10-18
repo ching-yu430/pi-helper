@@ -10,7 +10,7 @@ function updateLinks(){
   if(link.dataset.lesson){link.dataset.label ||= link.textContent;link.textContent=PiLearning.allowed(lesson)?link.dataset.label:'尚未開放：'+PiLearning.names[lesson]}
   link.setAttribute('aria-disabled',String(!group||!PiLearning.allowed(lesson)));
  }
- for(const host of document.querySelectorAll('[data-group-host]'))host.textContent=group?group+'.local':'（選好組別後會顯示，例如 pi5-01.local）';
+ for(const host of document.querySelectorAll('[data-group-host]'))host.textContent=group?group+'.local':host.dataset.groupHostPlaceholder||'（選好組別後會顯示，例如 pi5-01.local）';
  status.textContent=group?'本組：第 '+Number(group.slice(-2))+' 組 · '+group+'。下方課程會直接使用這個組別。':'請先選自己的組別，再選擇下方課程。';
 }
 function populate(){
@@ -40,7 +40,7 @@ function renderLearning(){
  }
 }
 async function load(){
- if(loading)return;loading=true;select.disabled=true;retry.hidden=true;status.textContent='正在讀取課堂組別…';select.replaceChildren(new Option('正在讀取組別…',''));let timeout;
+ if(loading)return;loading=true;select.disabled=true;retry.hidden=true;status.textContent='正在讀取課堂組別…';select.replaceChildren(new Option('請選自己的組別',''));let timeout;
  try{await Promise.race([Promise.all([PiGroups.refresh(),PiLearning.loadPolicy()]),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('連線逾時')),10000)})]);policyFresh=true;populate();select.disabled=false;renderLearning();if(preferred&&!selected()){PiStudentGroup.clear();preferred='';status.textContent='課堂組數已調整，請重新選擇自己的組別。'}}
  catch{policyFresh=false;renderLearning();status.textContent='組別讀取失敗或連線逾時。請確認筆電已連上網路，再按「重新讀取組別」；還是不行，請找助教。';select.replaceChildren(new Option('讀取失敗，請按下方按鈕重試',''));retry.hidden=false}
  finally{clearTimeout(timeout);loading=false}
