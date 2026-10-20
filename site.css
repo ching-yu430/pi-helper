@@ -453,3 +453,14 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .shutdown-routine .lesson-tag { background:#fff0c2; color:#674700; }
 .connection-help { background:#fff; border-color:var(--site-border); scroll-margin-top:20px; }
 .connection-help li { margin:12px 0; }
+
+.command-steps { display:grid; gap:12px; margin:14px 0; min-width:0; }
+.command-steps-intro { margin:0; font-size:14px; line-height:1.7; }
+.command-step { min-width:0; padding:12px; border:1px solid var(--site-border); border-radius:12px; background:var(--site-soft); }
+.command-step-label { margin:0 0 6px; font-size:15px; font-weight:700; line-height:1.6; }
+.command-step pre { margin:0 0 10px; }
+.command-step button { width:100%; min-height:48px; }
+@media (min-width:800px) {
+  .page-presenter .command-steps { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .page-presenter .command-steps-intro { grid-column:1/-1; }
+}

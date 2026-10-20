@@ -78,6 +78,7 @@ node tests/run-clear-board.cjs
 node tests/run-teacher-follow-browser.cjs
 node tests/run-projection-browser.cjs
 node tests/run-presenter-tools-browser.cjs
+node tests/run-command-copy-browser.cjs
 ```
 
 瀏覽器腳本預設 `/usr/bin/chromium`；新入口測試也接受 `CHROMIUM_PATH`。可由系統套件管理員安裝 Chromium。測試涵蓋斷線／逾時／重試、組別延遲回應、老師指定步驟、求助流程、圖片標記和全螢幕版面。每次 push 與 PR 都會由 [Website checks](.github/workflows/tests.yml) 執行快速檢查、SQL bundle 檢查及隔離安裝測試。
