@@ -60,6 +60,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 button.danger, .danger { color: #8b2e22; border-color: #b8796a; background: #fff7f4; }
 pre { background: var(--site-code-background); color: var(--site-code-ink); border: 1px solid var(--site-code-border); border-radius: 8px; font-family: Consolas, ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
 button.command-copy { background: #fff; color: var(--site-code-ink); border-color: #8a99a8; font-weight: 600; }
+.command-step button.command-copy { background: var(--site-green); color: #fff; border-color: var(--site-green); font-weight: 700; }
 .lesson-goal, .prep, .target-panel { background: var(--site-soft); border-radius: 10px; }
 .lesson-action { border-radius: 10px; }
 .equipment-check, .course-help { border-color: var(--site-border); border-radius: var(--site-radius); }
@@ -92,6 +93,7 @@ footer { color: var(--site-muted); font-size: 13px; line-height: 1.75; }
   button:not(:disabled):not(.primary):not(.selected):not(.active):hover { border-color: #6c947b; }
   a.lesson-action:not([aria-disabled=true]):hover, button.primary:not(:disabled):hover { background: #245b46; }
   button.command-copy:not(:disabled):hover { background: #e9edf2; border-color: #6c7c8a; }
+  .command-step button.command-copy:not(:disabled):hover { background: var(--site-header); border-color: var(--site-header); }
 }
 @media (max-width: 600px) {
   header { padding: 18px 16px 24px; }
