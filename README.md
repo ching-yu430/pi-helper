@@ -1,6 +1,6 @@
 # 樹莓派 5 課堂小幫手
 
-給第一次接觸 Raspberry Pi 的學生使用的繁體中文教學網站。先選組別，再跟著刷機、SSH 與遠端桌面的步驟操作；每次下課前另做正確關機。老師可指定教學階段，助教可接收、接手並追蹤求助。
+給第一次接觸 Raspberry Pi 的學生使用的繁體中文教學網站。先選組別，再跟著刷機、SSH 與遠端桌面的步驟操作；每次下課前另做正確關機。老師可指定教學階段，助教可接收、接手並追蹤求助。學生操作頁先標示操作視窗、當前動作及預期結果；另可安裝 Pi 設備回報程式，讓助教查看實際服務與環境檢查。
 
 [開啟課程首頁](https://ching-yu430.github.io/pi-helper/) · [教師功能介紹 PDF](docs/teacher-guide.pdf) · [更新紀錄](CHANGELOG.md) · [課前實機驗收](docs/CLASSROOM_CHECKLIST.md)
 
@@ -33,7 +33,7 @@ python3 -m http.server 8001 --bind 127.0.0.1
 
 只在**建立新課堂**時，接著執行 [supabase/create-classroom.sql](supabase/create-classroom.sql) 一次，保存輸出的管理員密碼，將學生課堂碼填入設定。升級既有課堂時不要執行建課檔。
 
-來源集中在 [supabase/migrations/](supabase/migrations/)，編號為唯一順序：001 基礎 → 002 期限 → 003 課堂開關 → 004 回報 → 005 密碼 → 006 清除 → 007 組數 → 008 課堂功能 → 009 個人帳號 → 010 看板清除 → 011 暫停提示 → 012 健康檢查。
+來源集中在 [supabase/migrations/](supabase/migrations/)，編號為唯一順序：001 基礎 → 002 期限 → 003 課堂開關 → 004 回報 → 005 密碼 → 006 清除 → 007 組數 → 008 課堂功能 → 009 個人帳號 → 010 看板清除 → 011 暫停提示 → 012 健康檢查 → 013 設備回報。
 
 安裝檔會記錄版本及 SHA-256 校驗碼，重跑會跳過已完成的版本，拒絕內容不符或較舊的安裝檔。日後以**新增編號 migration**升級，不修改已發布的來源。產生與檢查安裝檔：
 
@@ -43,6 +43,12 @@ node scripts/build-sql.cjs --check
 ```
 
 [完整資料庫說明](docs/SUPABASE_SETUP.md) · [健康檢查排程](docs/SUPABASE_HEALTH_CHECK.md)。本次檔案整理沒有替正式資料庫執行 SQL。
+
+## Pi 設備回報
+
+執行最新 SQL 升級後，在工作台「課堂設定 → 樹莓派設備回報」逐組產生安裝設定碼，依畫面指示在該組 Pi 的 SSH 視窗下載、安裝程式。Pi 每 30 秒回報主機名稱、SSH／xrdp、套件、X11 設定、Python、USB 相機及可用空間，與學生自行回報的學習進度分開顯示。
+
+超過 90 秒未收到資料只顯示「暫無回報」，不判定關機或故障；尚未安裝時可繼續原本教學。不收集畫面、檔案、Wi-Fi 密碼或完整日誌，也不提供遠端執行指令。正式資料庫升級與真實 Pi 安裝需由課堂管理者完成，詳見 [設備回報安裝與排查](docs/DEVICE_MONITOR.md)。
 
 ## 測試
 
@@ -65,6 +71,8 @@ node tests/run-install-sql.cjs
 node tests/run-learning-sql.cjs
 node tests/run-workbench-sql.cjs
 node tests/run-presenter-sql.cjs
+node tests/run-device-sql.cjs
+python3 -m unittest discover -s tests -p test_device_agent.py -v
 ```
 
 瀏覽器測試另需 Playwright 與 Chromium，並保持本機伺服器運行：
@@ -79,6 +87,7 @@ node tests/run-teacher-follow-browser.cjs
 node tests/run-projection-browser.cjs
 node tests/run-presenter-tools-browser.cjs
 node tests/run-command-copy-browser.cjs
+node tests/run-device-browser.cjs
 ```
 
 瀏覽器腳本預設 `/usr/bin/chromium`；新入口測試也接受 `CHROMIUM_PATH`。可由系統套件管理員安裝 Chromium。測試涵蓋斷線／逾時／重試、組別延遲回應、老師指定步驟、求助流程、圖片標記和全螢幕版面。每次 push 與 PR 都會由 [Website checks](.github/workflows/tests.yml) 執行快速檢查、SQL bundle 檢查及隔離安裝測試。

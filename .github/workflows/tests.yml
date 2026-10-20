@@ -18,3 +18,7 @@ jobs:
       - run: node tests/run-install-sql.cjs
         env:
           PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
+      - run: node tests/run-device-sql.cjs
+        env:
+          PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
+      - run: python3 -m unittest discover -s tests -p test_device_agent.py

@@ -460,6 +460,33 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .command-step-label { margin:0 0 6px; font-size:15px; font-weight:700; line-height:1.6; }
 .command-step pre { margin:0 0 10px; }
 .command-step button { width:100%; min-height:48px; }
+.page-student .task-label { margin:18px 0 6px; font-size:15px; color:var(--site-green); }
+.page-student .task-action { font-size:17px; line-height:1.8; }
+.student-expected { padding:12px 14px; margin:16px 0; border:1px solid var(--site-border); border-radius:12px; background:var(--site-soft); }
+.page-student .student-expected .task-label { margin-top:0; }
+.student-expected p { margin-bottom:0; }
+.page-student .other-results { border:1px solid var(--site-border); border-radius:12px; padding:8px 12px; }
+.page-student .other-results summary { min-height:44px; display:flex; align-items:center; }
+.page-student .student-extra-help { margin:0; border:0; padding:0; }
+.page-student .student-extra-help summary { padding:12px 4px; min-height:44px; }
+.device-status { margin-top:14px; padding:12px; border:1px solid var(--site-border); border-radius:12px; background:var(--site-soft); }
+.device-status p { margin:5px 0; }
+.device-status-title { font-weight:700; font-size:15px; }
+.device-service-summary { font-size:14px; }
+.device-status[data-device-state="fresh"] { border-color:#92b09a; }
+.device-warning,.device-status[data-device-state="stale"] .device-status-title { color:#8a5111; }
+.device-check-list { display:grid; grid-template-columns:minmax(110px,.8fr) minmax(0,1.2fr); gap:8px 12px; font-size:14px; }
+.device-check-list dt { font-weight:700; }
+.device-check-list dd { margin:0; overflow-wrap:anywhere; }
+.device-check-result { padding:10px; border-radius:8px; background:#e9f5e8; }
+.device-settings .action-row { margin:12px 0; }
+.device-installation { margin:16px 0; min-width:0; padding:12px; border:1px solid var(--site-border); border-radius:12px; }
+.device-installation textarea { width:100%; font-size:14px; overflow-wrap:anywhere; word-break:break-all; }
+.device-installation pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.student-device-check { font-size:14px; }
+.student-device-check summary { min-height:44px; }
+.student-device-check > button { width:100%; }
+.student-device-check .device-check-list { font-size:13px; }
 @media (min-width:800px) {
   .page-presenter .command-steps { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .page-presenter .command-steps-intro { grid-column:1/-1; }

@@ -1,0 +1,40 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const pkg=process.env.PGLITE_ROOT||'@electric-sql/pglite', {PGlite}=require(pkg),{pgcrypto}=require(pkg+'/dist/contrib/pgcrypto.cjs');
+const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
+const snapshot={hostname:'pi5-03',ssh:'active',xrdp:'inactive',display:'wayland',xrdp_installed:true,xorgxrdp_installed:true,python_version:'Python 3.11.2',usb_cameras:0,free_mb:4096,uptime_seconds:60};
+(async()=>{
+ const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated;create role service_role');await db.exec(read('supabase/install.sql'));
+ const created=(await db.query(read('supabase/create-classroom.sql'))).rows[0],room=created['課堂加入碼_給學生'],password=created['助教管理碼_僅助教保管'];
+ const query=async(sql,args)=>(await db.query(sql,args)).rows[0]?.v;
+ const pair=(group=3,pw=password)=>query('select public.pi_helper_teacher_pair_device($1,$2,$3::smallint) v',[room,pw,group]);
+ const report=(token,data=snapshot)=>query('select public.pi_helper_device_report($1,$2::jsonb) v',[token,JSON.stringify(data)]);
+ const student=(group=3,code=room)=>query('select public.pi_helper_student_device($1,$2::smallint) v',[code,group]);
+ const teacher=()=>query('select public.pi_helper_teacher_devices($1,$2) v',[room,password]);
+ await db.exec('set role anon');
+ await assert.rejects(()=>db.query('select * from pi_helper.devices'),/permission denied/);
+ await assert.rejects(()=>pair(3,'bad'),/TEACHER_DENIED/);await assert.rejects(()=>pair(0),/INVALID_GROUP/);await assert.rejects(()=>pair(99),/INVALID_GROUP/);
+ assert.equal((await student()).enabled,false);
+ const first=await pair();assert.match(first.device_token,/^[a-f0-9]{64}$/);assert.equal(first.expected_hostname,'pi5-03');
+ assert.equal((await student()).received_at,null);assert.equal((await student()).enabled,true);
+ await assert.rejects(()=>report('a'.repeat(64)),/DEVICE_DENIED/);
+ assert.equal(await report(first.device_token,{...snapshot,device_token:'ignore',wifi_password:'never-store',command:'sudo bad',received_at:'2100-01-01'}),true);
+ const row=await student();assert.equal(row.snapshot.hostname,'pi5-03');assert.equal(row.snapshot.xrdp,'inactive');assert.equal(row.snapshot.wifi_password,undefined);assert.equal(row.snapshot.command,undefined);assert.equal(row.snapshot.device_token,undefined);assert(row.age_seconds<5);assert(new Date(row.received_at)<new Date('2100-01-01'));
+ const list=await teacher();assert.equal(list.length,9);assert(!JSON.stringify(list).includes(first.device_token));assert(!JSON.stringify(list).includes('token_hash'));
+ assert.equal((await student(4)).snapshot,null);await assert.rejects(()=>student(3,'wrong-room'),/ROOM_NOT_FOUND/);await assert.rejects(()=>student(99),/ROOM_NOT_FOUND/);
+ await assert.rejects(()=>report(first.device_token),/DEVICE_TOO_FREQUENT/);
+ await db.exec('reset role');await db.exec("update pi_helper.devices set received_at=now()-interval '2 minutes'");await db.exec('set role anon');
+ assert((await student()).age_seconds>=119);
+ for(const data of [null,[],{...snapshot,hostname:'<script>'},{...snapshot,display:null},{...snapshot,ssh:'invented'},{...snapshot,xrdp_installed:'yes'},{...snapshot,usb_cameras:-1},{...snapshot,usb_cameras:65},{...snapshot,free_mb:1.5},{...snapshot,uptime_seconds:1e12},{...snapshot,python_version:'arbitrary text'},{...snapshot,extra:'x'.repeat(5000)}])await assert.rejects(()=>report(first.device_token,data),/INVALID_DEVICE_REPORT/);
+ // Concurrent writes serialize on the credential row; only one wins the interval.
+ const race=await Promise.allSettled([report(first.device_token),report(first.device_token)]);assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+ const rotated=await pair();assert.notEqual(rotated.device_token,first.device_token);await assert.rejects(()=>report(first.device_token),/DEVICE_DENIED/);assert.equal((await student()).snapshot,null);
+ assert.equal(await report(rotated.device_token,{...snapshot,hostname:'pi5-04',display:'unknown',python_version:null,usb_cameras:null,free_mb:null,uptime_seconds:null,xrdp_installed:null}),true);
+ assert.equal((await student()).snapshot.hostname,'pi5-04'); // UI must flag a renamed or moved device.
+ await query('select public.pi_helper_teacher_disable_device($1,$2,3::smallint) v',[room,password]);assert.equal((await student()).enabled,false);await assert.rejects(()=>report(rotated.device_token),/DEVICE_DENIED/);
+ const next=await pair();await db.exec('reset role');await db.exec('update pi_helper.rooms set active=false');await db.exec('set role anon');await assert.rejects(()=>report(next.device_token),/ROOM_NOT_FOUND/);await assert.rejects(()=>student(),/ROOM_NOT_FOUND/);assert.equal((await teacher())[2].enabled,true);
+ await db.exec('reset role');await db.exec("update pi_helper.rooms set active=true,ends_at=now()-interval '1 minute'");await db.exec('set role anon');await assert.rejects(()=>report(next.device_token),/ROOM_NOT_FOUND/);
+ await db.exec('reset role');await db.exec("update pi_helper.rooms set ends_at=now()+interval '1 day',group_count=2");await db.exec('set role anon');await assert.rejects(()=>report(next.device_token),/ROOM_NOT_FOUND/);
+ await db.exec('reset role');const stored=(await db.query('select token_hash from pi_helper.devices')).rows[0].token_hash;assert.notEqual(stored,next.device_token);assert.equal(stored.length,64);
+ await db.close();console.log('PASS device credentials, anonymous RLS boundaries, rotation/revocation, room limits, server freshness, input validation, field allowlist and concurrent report limits');
+})().catch(e=>{console.error(e);process.exit(1)});
