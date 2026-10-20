@@ -3,6 +3,10 @@
   --site-ink: #203d33;
   --site-muted: #5e7267;
   --site-green: #205b45;
+  --site-action: #2f7055;
+  --site-code-background: #f4f6f8;
+  --site-code-ink: #263442;
+  --site-code-border: #c5ced7;
   --site-header: #174b3c;
   --site-background: #f1f5f0;
   --site-surface: #fff;
@@ -41,7 +45,7 @@ a { color: var(--site-green); }
 }
 button, input, select, textarea { font: inherit; max-width: 100%; }
 button { min-height: 48px; padding: 10px 16px; border: 1px solid var(--site-border); border-radius: 10px; color: var(--site-ink); background: #fff; cursor: pointer; touch-action: manipulation; }
-button.primary, a.lesson-action { background: var(--site-green); border-color: var(--site-green); color: #fff; font-weight: 700; text-align: center; }
+button.primary, a.lesson-action { background: var(--site-action); border-color: var(--site-action); color: #fff; font-weight: 700; text-align: center; }
 button:disabled { cursor: default; opacity: .5; }
 input:not([type=checkbox]):not([type=radio]), select, textarea {
   display: block; width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px;
@@ -54,7 +58,8 @@ textarea { resize: vertical; }
 summary { cursor: pointer; min-height: 44px; align-content: center; line-height: 1.6; }
 button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #b47b13; outline-offset: 3px; }
 button.danger, .danger { color: #8b2e22; border-color: #b8796a; background: #fff7f4; }
-pre { background: var(--site-header); color: #ecf9ee; border-radius: 10px; font-family: Consolas, ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre { background: var(--site-code-background); color: var(--site-code-ink); border: 1px solid var(--site-code-border); border-radius: 8px; font-family: Consolas, ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
+button.command-copy { background: #fff; color: var(--site-code-ink); border-color: #8a99a8; font-weight: 600; }
 .lesson-goal, .prep, .target-panel { background: var(--site-soft); border-radius: 10px; }
 .lesson-action { border-radius: 10px; }
 .equipment-check, .course-help { border-color: var(--site-border); border-radius: var(--site-radius); }
@@ -85,7 +90,8 @@ dialog:not(.guide-dialog) { padding: 24px; }
 footer { color: var(--site-muted); font-size: 13px; line-height: 1.75; }
 @media (hover: hover) {
   button:not(:disabled):not(.primary):not(.selected):not(.active):hover { border-color: #6c947b; }
-  a.lesson-action:not([aria-disabled=true]):hover, button.primary:not(:disabled):hover { background: #174b3c; }
+  a.lesson-action:not([aria-disabled=true]):hover, button.primary:not(:disabled):hover { background: #245b46; }
+  button.command-copy:not(:disabled):hover { background: #e9edf2; border-color: #6c7c8a; }
 }
 @media (max-width: 600px) {
   header { padding: 18px 16px 24px; }
@@ -252,7 +258,7 @@ body[data-help-flow="true"] .group-support > h3 { display: none; }
 .guide-dialog{width:min(92vw,480px);max-height:calc(100dvh - 32px);padding:0;border:0;border-radius:20px;color:#203d33;box-shadow:0 20px 80px #102c3355}.guide-dialog::backdrop{background:#102c33b3}.guide-inner{padding:24px;overflow-y:auto;max-height:calc(100dvh - 32px)}.guide-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.guide-top p{font-size:13px;color:#63756a}.guide-skip{min-height:44px;padding:6px 10px;font-size:14px}.guide-count{display:flex;gap:7px;margin:18px 0}.guide-dot{height:5px;flex:1;background:#e1e9de;border-radius:8px}.guide-dot.active{background:#286047}.guide-number{display:inline-flex;align-items:center;justify-content:center;background:#e4efdf;color:#245d48;width:50px;height:50px;font-weight:800;font-size:24px;border-radius:14px}.guide-dialog h2{margin-top:16px}.guide-body{line-height:1.9;min-height:130px;font-size:16px}.guide-controls{display:flex;gap:10px;margin-top:22px}.guide-controls button{flex:1;text-align:center}.guide-dialog .guide-tip{font-size:13px;background:#eef3e9;padding:12px;border-radius:10px}
 .guide-checklist { padding-left: 24px; line-height: 1.8; }
 .guide-checklist li { margin: 10px 0; }
-.guide-example { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; border-radius: 10px; background: #173d31; color: #ecf9ee; font-size: 14px; }
+.guide-example { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; border-radius: 8px; background: var(--site-code-background); color: var(--site-code-ink); font-size: 14px; }
 .guide-entries .lesson-action { display: flex; align-items: center; justify-content: center; text-align: center; }
 .page-presenter.presentation-mode #presenterControls { grid-template-columns: repeat(3,minmax(0,1fr)) repeat(3,minmax(0,140px)); }
 @media (max-width: 900px) {
@@ -456,10 +462,14 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 
 .command-steps { display:grid; gap:12px; margin:14px 0; min-width:0; }
 .command-steps-intro { margin:0; font-size:14px; line-height:1.7; }
-.command-step { min-width:0; padding:12px; border:1px solid var(--site-border); border-radius:12px; background:var(--site-soft); }
-.command-step-label { margin:0 0 6px; font-size:15px; font-weight:700; line-height:1.6; }
-.command-step pre { margin:0 0 10px; }
-.command-step button { width:100%; min-height:48px; }
+.command-step { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 12px; min-width:0; padding:12px; border:1px solid var(--site-border); border-radius:12px; background:#fff; }
+.command-step-label { grid-column:1/-1; margin:0; font-size:15px; font-weight:700; line-height:1.6; }
+.command-step pre { margin:0; }
+.command-step button { width:auto; min-height:48px; align-self:stretch; }
+@media(max-width:600px) {
+  .command-step { grid-template-columns:minmax(0,1fr); }
+  .command-step button { width:100%; }
+}
 .camera-course-card { border:2px solid var(--site-green); margin-bottom:24px; }
 .page-student .task-label { margin:18px 0 6px; font-size:15px; color:var(--site-green); }
 .page-student .task-action { font-size:17px; line-height:1.8; }

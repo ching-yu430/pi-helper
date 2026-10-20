@@ -11,7 +11,7 @@
 .page-camera .sync-banner { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; margin:12px 0; background:var(--site-soft); border:1px solid var(--site-border); border-radius:10px; font-size:14px; }
 .page-camera .sync-banner.sync-error { background:#fff5e9; }
 .page-camera .sync-banner button { min-height:44px; flex-shrink:0; }
-.page-camera pre { padding:16px; background:#173d31; color:#f2faf4; border-radius:12px; white-space:pre-wrap; overflow-wrap:anywhere; font:15px/1.7 Consolas,monospace; }
+.page-camera pre { padding:16px; background:var(--site-code-background); color:var(--site-code-ink); border-radius:8px; white-space:pre-wrap; overflow-wrap:anywhere; font:15px/1.7 Consolas,monospace; }
 .camera-code-example { background:var(--site-soft); border:1px solid var(--site-border); border-radius:12px; padding:12px; }
 .camera-check { padding:12px; margin:10px 0; border:1px solid var(--site-border); border-radius:10px; }
 .camera-check p { margin:4px 0; }
