@@ -6,7 +6,7 @@
 
 ![課程首頁與組別選擇](assets/screenshots/course-home.png)
 
-教學使用 Windows 筆電、Raspberry Pi 5 與各組手機熱點。Mac／Linux 使用者先請助教確認工具。Python、USB 相機及辨識課程目前僅提供待公布入口。
+教學使用 Windows 筆電、Raspberry Pi 5 與各組手機熱點。Mac／Linux 使用者先請助教確認工具。Python 與 USB 拍照新增八階段教材及課程驗證；筆電辨識環境、相機串流與物品辨識仍待公布。
 
 ## 本機啟動
 
@@ -33,7 +33,7 @@ python3 -m http.server 8001 --bind 127.0.0.1
 
 只在**建立新課堂**時，接著執行 [supabase/create-classroom.sql](supabase/create-classroom.sql) 一次，保存輸出的管理員密碼，將學生課堂碼填入設定。升級既有課堂時不要執行建課檔。
 
-來源集中在 [supabase/migrations/](supabase/migrations/)，編號為唯一順序：001 基礎 → 002 期限 → 003 課堂開關 → 004 回報 → 005 密碼 → 006 清除 → 007 組數 → 008 課堂功能 → 009 個人帳號 → 010 看板清除 → 011 暫停提示 → 012 健康檢查 → 013 設備回報。
+來源集中在 [supabase/migrations/](supabase/migrations/)，編號為唯一順序：001 基礎 → 002 期限 → 003 課堂開關 → 004 回報 → 005 密碼 → 006 清除 → 007 組數 → 008 課堂功能 → 009 個人帳號 → 010 看板清除 → 011 暫停提示 → 012 健康檢查 → 013 設備回報 → 014 Python 與拍照課程。
 
 安裝檔會記錄版本及 SHA-256 校驗碼，重跑會跳過已完成的版本，拒絕內容不符或較舊的安裝檔。日後以**新增編號 migration**升級，不修改已發布的來源。產生與檢查安裝檔：
 
@@ -51,6 +51,8 @@ node scripts/build-sql.cjs --check
 超過 90 秒未收到資料只顯示「暫無回報」，不判定關機或故障；尚未安裝時可繼續原本教學。不收集畫面、檔案、Wi-Fi 密碼或完整日誌，也不提供遠端執行指令。正式資料庫升級與真實 Pi 安裝需由課堂管理者完成，詳見 [設備回報安裝與排查](docs/DEVICE_MONITOR.md)。
 
 ## 測試
+
+新課程的設定、已驗證範圍與現場驗收項目見 [Python 與拍照課程說明](docs/CAMERA_COURSE.md)。執行最新 SQL、在 Pi 的 user 帳號設定課程工具後，會建立短指令 `~/pi-course`。拍照程式維持 720P 預覽、拍照切換 1080P；新介面與 Windows 下載仍需實機驗收。新課程預設關閉，由老師驗收後開放。
 
 快速檢查不需額外套件：
 
@@ -72,7 +74,15 @@ node tests/run-learning-sql.cjs
 node tests/run-workbench-sql.cjs
 node tests/run-presenter-sql.cjs
 node tests/run-device-sql.cjs
+node tests/run-camera-sql.cjs
 python3 -m unittest discover -s tests -p test_device_agent.py -v
+```
+
+拍照程式測試使用合成影像做真正 JPG 編解碼，開發測試相依套件不安裝到 Pi：
+
+```sh
+python3 -m pip install --target /tmp/pi-camera-python -r tests/requirements-camera.txt
+PYTHONPATH=/tmp/pi-camera-python python3 -m unittest discover -s tests -p test_camera_course.py -v
 ```
 
 瀏覽器測試另需 Playwright 與 Chromium，並保持本機伺服器運行：
@@ -88,6 +98,7 @@ node tests/run-projection-browser.cjs
 node tests/run-presenter-tools-browser.cjs
 node tests/run-command-copy-browser.cjs
 node tests/run-device-browser.cjs
+node tests/run-camera-browser.cjs
 ```
 
 瀏覽器腳本預設 `/usr/bin/chromium`；新入口測試也接受 `CHROMIUM_PATH`。可由系統套件管理員安裝 Chromium。測試涵蓋斷線／逾時／重試、組別延遲回應、老師指定步驟、求助流程、圖片標記和全螢幕版面。每次 push 與 PR 都會由 [Website checks](.github/workflows/tests.yml) 執行快速檢查、SQL bundle 檢查及隔離安裝測試。

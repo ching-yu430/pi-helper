@@ -1,17 +1,18 @@
 (()=>{
 'use strict';
+if(document.body.classList.contains('page-camera')&&new URLSearchParams(location.search).get('staff')==='1')return;
 const q=id=>document.getElementById(id),make=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e};
 try{sessionStorage.removeItem('pi-helper-sync-paused');sessionStorage.removeItem('pi-helper-room')}catch{}
 const defaultRoom=(window.PI_HELPER_CONFIG?.defaultRoomCode||'').trim();
 let room='',sessions=new Map(),latest=null,pending=new Map(),busy=false,generation=0,joining=false,joinTask=null;
 const box=make('div');box.className='sync-box';const title=make('strong','課堂同步'),hint=make('p','開始排查後會自動回報組別、目前步驟與回報選項，讓助教看到進度；不會上傳你貼上的原始輸出、帳密或熱點資料。');hint.className='muted';
 const retry=make('button','重試同步');retry.type='button';retry.hidden=true;const status=make('p','正在連線至課堂…');status.id='syncStatus';status.className='sync-line';status.setAttribute('role','status');box.append(title,hint,status,retry);
-q('setupForm').querySelector('.prep').before(box);
+if(q('setupForm'))q('setupForm').querySelector('.prep').before(box);else q('cameraSync')?.append(box);if(document.body.classList.contains('page-camera'))box.hidden=true;
 const floating=make('div');floating.className='sync-banner';const floatText=make('span');floatText.setAttribute('role','status');const floatRetry=make('button','重試同步');floatRetry.type='button';floatRetry.hidden=true;floating.append(floatText,floatRetry);q('status').after(floating);
 function notify(text,bad=false){status.textContent=text;floatText.textContent=text;status.className='sync-line'+(bad?' sync-error':'');floating.className='sync-banner'+(bad?' sync-error':'');retry.hidden=!bad;floatRetry.hidden=!bad}
 function key(group){return 'pi-helper-session:'+room+':'+group}
 function session(group){if(!sessions.has(group)){let saved;try{saved=JSON.parse(sessionStorage.getItem(key(group))||'null')}catch{}if(!saved||!saved.id||!saved.secret||!Number.isSafeInteger(saved.revision)) {const bytes=new Uint8Array(24);crypto.getRandomValues(bytes);saved={id:crypto.randomUUID(),secret:Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join(''),revision:0}}sessions.set(group,saved)}return sessions.get(group)}
-function reportResult(snapshot){const report={_pi:1,text:snapshot.result,step_at:snapshot.stepChangedAt||null,help_id:snapshot.helpId||null,completion:['ssh','desktop','shutdown'].includes(snapshot.completion)?snapshot.completion:null};let encoded=JSON.stringify(report);while(encoded.length>500&&report.text.length){report.text=report.text.slice(0,Math.max(0,report.text.length-(encoded.length-500)));encoded=JSON.stringify(report)}return encoded}
+function reportResult(snapshot){const report={_pi:1,text:snapshot.result,step_at:snapshot.stepChangedAt||null,help_id:snapshot.helpId||null,completion:['ssh','desktop','shutdown','camera'].includes(snapshot.completion)?snapshot.completion:null};let encoded=JSON.stringify(report);while(encoded.length>500&&report.text.length){report.text=report.text.slice(0,Math.max(0,report.text.length-(encoded.length-500)));encoded=JSON.stringify(report)}return encoded}
 function args(snapshot){const s=session(snapshot.groupNo);s.revision++;try{sessionStorage.setItem(key(snapshot.groupNo),JSON.stringify(s))}catch{}return {p_room_code:room,p_session_id:s.id,p_session_secret:s.secret,p_group_no:snapshot.groupNo,p_stage:snapshot.stage,p_step:snapshot.step,p_result:reportResult(snapshot),p_status:snapshot.status,p_revision:s.revision}}
 function isCurrent(task){const a=task.args;return task.generation===generation&&latest?.groupNo===a.p_group_no&&sessions.get(a.p_group_no)?.revision===a.p_revision}
 async function deliver(task){try{await PiSyncAPI.rpc('pi_helper_student_report',task.args);if(isCurrent(task))notify('已回報至助教看板｜'+new Date().toLocaleTimeString('zh-TW',{timeZone:'Asia/Taipei'}))}catch(e){if(isCurrent(task))notify('尚未回報成功｜'+e.message,true);throw e}}
@@ -24,7 +25,7 @@ const retryNow=()=>{if(room&&latest)publish(latest);else connect()};retry.onclic
 window.addEventListener('online',retryNow);document.addEventListener('visibilitychange',()=>{if(!document.hidden)retryNow()});
 document.addEventListener('pi-helper-reset',()=>{if(!room)return;const group=latest?.groupNo;if(latest)publish({...latest,status:'ended',result:'此裝置已重新開始排查'});if(group){try{sessionStorage.removeItem(key(group))}catch{}sessions.delete(group)}latest=null;notify('排查已重設，課堂同步仍保留；下一步會建立新紀錄。')});
 setInterval(()=>{if(document.hidden)return;if(room){window.PiGroups?.refresh().catch(()=>{});if(latest)publish(latest)}else connect()},15000);
-document.addEventListener('pi-helper-groups-changed',()=>{if(latest&&latest.groupNo>PiGroups.count){latest=null;pending.clear();notify('組數已調整，請重新選擇組別。',true);q('edit').click()}});
+document.addEventListener('pi-helper-groups-changed',()=>{if(latest&&latest.groupNo>PiGroups.count){latest=null;pending.clear();notify('組數已調整，請重新選擇組別。',true);q('edit')?.click()}});
 async function identity(group){if(!room)await connect();if(!room)throw Error('尚未連上課堂，請先重試同步。');const s=session(group);return {p_room_code:room,p_session_id:s.id,p_session_secret:s.secret,p_group_no:group}}
 async function requestHelp(snapshot,message,requestId){if(!room)await connect();if(!room)throw Error('尚未連上課堂，請先重試同步。');const delivery=publish({...snapshot,status:'need_help'},true),report={...latest};await delivery;try{return await PiSyncAPI.rpc('pi_helper_request_help',{...await identity(snapshot.groupNo),p_request_id:requestId,p_stage:report.stage,p_step:report.step,p_message:String(message).replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g,'[IP 已隱藏]').slice(0,500)})}catch(e){e.reportDelivered=true;throw e}}
 async function helpStatus(group){return PiSyncAPI.rpc('pi_helper_student_help',await identity(group))}

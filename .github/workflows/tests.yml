@@ -22,3 +22,13 @@ jobs:
         env:
           PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
       - run: python3 -m unittest discover -s tests -p test_device_agent.py
+      - run: node tests/run-camera-sql.cjs
+        env:
+          PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python3 -m pip install --target /tmp/pi-camera-python -r tests/requirements-camera.txt
+      - run: python3 -m unittest discover -s tests -p test_camera_course.py -v
+        env:
+          PYTHONPATH: /tmp/pi-camera-python

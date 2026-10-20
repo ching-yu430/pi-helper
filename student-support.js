@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+if(document.body.classList.contains('page-camera')&&new URLSearchParams(location.search).get('staff')==='1')return;
 const make=(tag,text,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el};
 const dialog=make('dialog',undefined,'help-request-dialog');dialog.id='studentTeacherHelpDialog';dialog.setAttribute('aria-labelledby','studentTeacherHelpTitle');
 const title=make('h2','請助教幫忙');title.id='studentTeacherHelpTitle';const context=make('p'),label=make('label','哪裡卡住了？（不填也可以）'),message=make('textarea');message.maxLength=300;message.placeholder='例如：按 Enter 後一直出現錯誤。請勿貼密碼。';label.append(message);

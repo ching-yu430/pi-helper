@@ -6,7 +6,7 @@ function selected(){return PiStudentGroup.valid(select.value)&&Number(select.val
 function updateLinks(){
  const group=selected();
  for(const link of links){
-  const lesson=link.dataset.lesson||'ssh',url=new URL('student.html',location.href);url.searchParams.set('lesson',lesson);if(group)url.searchParams.set('group',group);link.href=url.href;
+  const lesson=link.dataset.lesson||'ssh',url=new URL(lesson==='camera'?'camera.html':'student.html',location.href);url.searchParams.set('lesson',lesson);if(group)url.searchParams.set('group',group);link.href=url.href;
   if(link.dataset.lesson){link.dataset.label ||= link.textContent;link.textContent=PiLearning.allowed(lesson)?link.dataset.label:'尚未開放：'+PiLearning.names[lesson]}
   link.setAttribute('aria-disabled',String(!group||!PiLearning.allowed(lesson)));
  }
@@ -28,11 +28,11 @@ function renderLearning(){
  const follow=q('followTeacherLink'),canFollow=Boolean(group&&policyFresh&&policy.managed&&policy.revision>0&&PiLearning.allowed(policy.current_lesson));
  q('continueLesson').dataset.teacherReady=String(canFollow);q('teacherEntry').classList.toggle('is-ready',canFollow);
  follow.hidden=!canFollow;follow.setAttribute('aria-disabled',String(!canFollow||select.disabled));
- if(canFollow)follow.href='student.html?group='+encodeURIComponent(group)+'&lesson='+encodeURIComponent(policy.current_lesson)+'&teacher=1';else follow.removeAttribute('href');
+ if(canFollow)follow.href=PiLearning.url(policy.current_lesson,group,{teacher:1});else follow.removeAttribute('href');
  description.hidden=!saved?.step;
  description.textContent=saved?.step?'本組上次進度：'+saved.step+(saved.completed?.[saved.lesson]?'（已自行確認完成）':''):'';
  link.hidden=!resume;link.setAttribute('aria-disabled',String(select.disabled||!resume));
- if(resume)link.href='student.html?group='+encodeURIComponent(group)+'&lesson='+encodeURIComponent(saved.lesson)+'&resume=1';else link.removeAttribute('href');
+ if(resume)link.href=PiLearning.url(saved.lesson,group,{resume:1});else link.removeAttribute('href');
  q('clearLearning').hidden=!saved;q('clearLearning').closest('.learning-options').hidden=!saved;
  for(const lessonLink of links.filter(a=>a.dataset.lesson)){
   let badge=lessonLink.parentElement.querySelector('.lesson-local-progress');if(!badge){badge=document.createElement('p');badge.className='lesson-local-progress muted';lessonLink.before(badge)}

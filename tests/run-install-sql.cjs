@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 (async()=>{
  const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated;create role service_role');
  const install=read('supabase/install.sql');await db.exec(install);
- assert.equal((await db.query('select count(*)::integer n from pi_helper.schema_migrations')).rows[0].n,13);
+ assert.equal((await db.query('select count(*)::integer n from pi_helper.schema_migrations')).rows[0].n,14);
  const created=(await db.query(read('supabase/create-classroom.sql'))).rows[0];
  const room=created['課堂加入碼_給學生'],password=created['助教管理碼_僅助教保管'];
  const identity=async()=> (await db.query('select public.pi_helper_workbench_identity($1,$2) v',[room,password])).rows[0].v;

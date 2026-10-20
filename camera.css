@@ -1,0 +1,32 @@
+.page-camera main { max-width:1000px; }
+.page-camera #status { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:20px 0; }
+.camera-stage-nav { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:center; padding:16px; background:#fff; border:1px solid var(--site-border); border-radius:16px; }
+.camera-stage-nav select,.camera-stage-nav p { margin:0; }
+.camera-task-card,.camera-verification { display:block; }
+.camera-task-card > div,.camera-verification > div { min-width:0; width:100%; }
+.camera-task-card h3 { font-size:16px; margin:20px 0 8px; }
+.camera-task-action { font-size:18px; line-height:1.8; }
+.page-camera .place { padding:12px 14px; border:1px solid #b9d4bc; border-radius:10px; background:#edf6ea; color:#285b35; font-weight:700; }
+.page-camera .camera-task-card h3 { color:var(--site-green); }
+.page-camera .sync-banner { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; margin:12px 0; background:var(--site-soft); border:1px solid var(--site-border); border-radius:10px; font-size:14px; }
+.page-camera .sync-banner.sync-error { background:#fff5e9; }
+.page-camera .sync-banner button { min-height:44px; flex-shrink:0; }
+.page-camera pre { padding:16px; background:#173d31; color:#f2faf4; border-radius:12px; white-space:pre-wrap; overflow-wrap:anywhere; font:15px/1.7 Consolas,monospace; }
+.camera-code-example { background:var(--site-soft); border:1px solid var(--site-border); border-radius:12px; padding:12px; }
+.camera-check { padding:12px; margin:10px 0; border:1px solid var(--site-border); border-radius:10px; }
+.camera-check p { margin:4px 0; }
+.camera-check[data-status="passed"] { background:#edf6ea; border-color:#9abc9e; }
+.camera-check[data-status="failed"],.camera-check[data-status="cancelled"] { background:#fff5e9; border-color:#d2a672; }
+.camera-check[data-status="running"] { background:#edf4fd; }
+.camera-navigation { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0; }
+.camera-navigation button,.camera-help-actions > * { min-height:48px; }
+.camera-help-actions { margin-bottom:28px; }
+.page-camera input[type="checkbox"] { width:22px; height:22px; flex:0 0 auto; margin:0; }
+.page-camera #cameraManual label,.page-camera #cameraFallback label { display:flex; gap:10px; align-items:flex-start; line-height:1.8; padding:12px 0; }
+.page-camera .sync-box { margin:12px 0; }
+.page-camera #refreshCameraChecks { width:100%; }
+.course-task-result { border-top:1px solid var(--site-border); padding:8px 0; }
+.course-private-network button { width:100%; }
+.page-camera #cameraToast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); max-width:90vw; background:#173d31; color:#fff; padding:12px 18px; border-radius:12px; z-index:30; }
+.camera-course-card { border:2px solid var(--site-green); margin-bottom:24px; }
+@media(max-width:600px) { .camera-stage-nav { grid-template-columns:1fr auto; padding:12px; } .camera-stage-nav label { grid-column:1/-1; } .camera-task-action { font-size:17px; } .page-camera main { padding-left:12px; padding-right:12px; } .camera-navigation { gap:8px; } .page-camera .lesson-card { padding:18px 16px; } }

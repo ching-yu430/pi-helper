@@ -18,16 +18,17 @@ function renderSlide(){
  const key=JSON.stringify([id,index,host]);if(key===rendered)return;rendered=key;
  const slide=q('presenterSlide'),content=make('div',undefined,'presenter-content'),visual=make('div',undefined,'presenter-visual');
  content.append(make('p',lesson.title+' · 示範 '+host,'presenter-lesson-meta'),make('h2',step.title),make('p','操作位置：'+(step.where==='Pi'?'已登入本組 Pi 的 SSH 或桌面終端機':step.where),'presenter-command-place'));
- const action=make('section',undefined,'presenter-current-action');action.append(make('h3','現在做什麼'),make('p',step.action));content.append(action);
+ const action=make('section',undefined,'presenter-current-action');action.append(make('h3','現在做什麼'),make('p',id==='camera'?PiCameraCourse.fill(step.action,host):step.action));content.append(action);
  const x11=id==='desktop'&&index===3;
  if(step.command&&!x11){const text=step.command.replaceAll('{host}',host);content.append(PiCommandSteps.lines(text).length>1?PiCommandSteps.build(text,{onCopy:async(command,pre)=>{try{await navigator.clipboard.writeText(command);setStatus('已複製這一行，請貼上後按 Enter。',true)}catch{const range=document.createRange();range.selectNodeContents(pre);getSelection().removeAllRanges();getSelection().addRange(range);setStatus('請複製已選取的這一行指令。',true)}}}):make('pre',text));}
+ if(id==='camera')content.append(PiCameraSlides.build(index,host,setStatus));
  if(id==='flash'){const values=PiFlashSettings.build(index,host);if(values)content.append(values)}
  if(step.image){const button=make('button',undefined,'presenter-image-open'),image=make('img');button.type='button';button.setAttribute('aria-label','放大並標示：'+step.title);image.src=PiFlashSettings.displayImage(step.image);image.alt=step.title;image.decoding='async';button.append(image);visual.append(button,make('p','點圖片可放大、圈出重點。','muted'))}
  if(x11){const instructions=make('div',undefined,'presenter-x11-instructions');content.append(instructions);let guide;const arrange=()=>{instructions.replaceChildren(...[...guide.querySelector('.x11-guide-content').children].filter(node=>node.tagName!=='FIGURE'))};guide=PiOperationImages.build('x11',{guided:true,onStageChange:i=>{action.querySelector('p').textContent=['先在已登入本組 Pi 的視窗執行指令。','用方向鍵選 Advanced Options，再按 Enter。','用方向鍵選 Wayland，再按 Enter。','用方向鍵選 X11，再按 Enter。','按 Tab 選 Finish 離開；詢問重新開機時選 No。'][i];if(guide)arrange()},onCopy:async command=>{try{await navigator.clipboard.writeText(command);setStatus('已複製指令，請在本組 Pi 的視窗執行。')}catch{setStatus('可選取畫面上的指令手動複製。',true)}},onComplete:()=>move('desktop',4)});visual.append(guide);arrange();const keys=make('details',undefined,'presenter-notes');keys.append(make('summary','完整鍵盤操作'),PiFlashSettings.keyboardGuide());content.append(keys)}
  if(id==='desktop'&&!x11){const imageKey={6:'rdpOpen',7:'rdpLogin'}[index];if(imageKey){const picture=PiOperationImages.build(imageKey,{host:host+'.local',user:'user'});for(const node of [...picture.children])if(node.tagName!=='FIGURE')content.append(node);visual.append(picture)}}
- const expected=make('section',undefined,'presenter-expected');expected.append(make('h3','完成後應看到'),make('p',step.expected));content.append(expected);
+ const expected=make('section',undefined,'presenter-expected');expected.append(make('h3','完成後應看到'),make('p',id==='camera'?PiCameraCourse.fill(step.expected,host):step.expected));content.append(expected);
  if(id==='shutdown')content.append(make('p',index===2?'至少再等 30 秒，確認關機完成才拔電。':'先儲存成果，現在不要拔電。','presenter-shutdown-alert'));
- const notes=make('details',undefined,'presenter-notes');notes.append(make('summary','補充說明'),make('p',step.text));content.append(notes);
+ const notes=make('details',undefined,'presenter-notes');notes.append(make('summary','補充說明'),make('p',id==='camera'?PiCameraCourse.fill(step.text,host):step.text));content.append(notes);
  const copy=make('div',undefined,'presenter-copy');copy.append(...content.childNodes);content.append(copy);const canvas=make('div',undefined,'presenter-canvas');canvas.append(content);if(visual.children.length)canvas.append(visual);slide.replaceChildren(canvas);slide.classList.toggle('has-visual',Boolean(visual.children.length));slide.scrollTop=0;
 }
 function render(){
@@ -44,7 +45,7 @@ function render(){
  q('presenterCounter').textContent=(cursor.index+1)+' / '+lesson.steps.length;renderSlide();
 }
 async function publishStage(lesson,index,pauseValue=paused(),activate=true){
- if(!policy||busy||!valid(lesson,index)||!roomReady)return false;
+ if(!policy||busy||!valid(lesson,index)||!roomReady)return false;if(lesson==='camera'&&!policy.camera_supported){setStatus('請老師先執行 Python 與拍照課程的 SQL 升級，再開放教材。',true);return false;}
  const token=epoch;busy=true;render();
  try{
   const next=supportsPause()?await request('pi_helper_teacher_present_course',{p_current_lesson:lesson,p_current_step:index,p_paused:pauseValue,p_revision:policy.revision}):await request('pi_helper_teacher_set_course',{p_open_lessons:policy.open_lessons,p_current_lesson:lesson,p_current_step:index,p_revision:policy.revision});
@@ -52,7 +53,7 @@ async function publishStage(lesson,index,pauseValue=paused(),activate=true){
  }catch(e){if(token!==epoch)return false;if(activate)live=false;setStatus((activate?'尚未指定：':'提示未更新：')+e.message,true);try{const next=await request('pi_helper_teacher_course_settings');if(token===epoch)acceptPolicy(next)}catch{}return false}
  finally{if(token===epoch){busy=false;render()}}
 }
-async function move(lesson,index){if(!policy||busy||!valid(lesson,index))return;cursor={lesson,index};if(live&&!policy.open_lessons[lesson]){live=false;setStatus('此課尚未開放，請先在工作台開放教材。',true);render();return}if(live)await publishStage(lesson,index);else{setStatus('正在預覽，準備好後按「開始帶課」。');render()}}
+async function move(lesson,index){if(!policy||busy||!valid(lesson,index))return;cursor={lesson,index};if(live&&!policy.open_lessons[lesson]){live=false;setStatus('此課尚未開放，請先在工作台開放教材。',true);render();return}if(live)await publishStage(lesson,index);else{setStatus(lesson==='camera'&&!policy.camera_supported?'可預覽教材；要指定給全班，請老師先執行新課程 SQL 升級。':'正在預覽，準備好後按「開始帶課」。',lesson==='camera'&&!policy.camera_supported);render()}}
 q('presenterPublish').onclick=()=>{if(live){live=false;setStatus('已切換預覽；保留學生原本的指定階段。');render()}else publishStage(cursor.lesson,cursor.index)};
 q('presenterPause').onclick=async()=>{
  if(!supportsPause()||busy||!policy.revision)return;q('presenterOptions').open=false;const target=!paused();

@@ -460,6 +460,7 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .command-step-label { margin:0 0 6px; font-size:15px; font-weight:700; line-height:1.6; }
 .command-step pre { margin:0 0 10px; }
 .command-step button { width:100%; min-height:48px; }
+.camera-course-card { border:2px solid var(--site-green); margin-bottom:24px; }
 .page-student .task-label { margin:18px 0 6px; font-size:15px; color:var(--site-green); }
 .page-student .task-action { font-size:17px; line-height:1.8; }
 .student-expected { padding:12px 14px; margin:16px 0; border:1px solid var(--site-border); border-radius:12px; background:var(--site-soft); }

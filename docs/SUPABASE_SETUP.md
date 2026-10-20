@@ -19,7 +19,7 @@
 
 ## 版本與維護
 
-來源統一放在 `supabase/migrations/`，以 001～013 排序。`supabase/install.sql` 由 `node scripts/build-sql.cjs` 產生；在 SQL Editor 使用這份安裝檔，不要挑選舊來源重跑。
+來源統一放在 `supabase/migrations/`，以 001～014 排序。`supabase/install.sql` 由 `node scripts/build-sql.cjs` 產生；在 SQL Editor 使用這份安裝檔，不要挑選舊來源重跑。
 
 `pi_helper.schema_migrations` 記錄檔名、版本、SHA-256 與執行時間，開啟 RLS，匿名使用者不可讀寫。已完成的版本會跳過；校驗碼不符、歷史有缺口或安裝檔比資料庫舊時拒絕執行。安裝期間以交易鎖避免兩人同時升級。
 
@@ -28,6 +28,8 @@
 建課檔是管理操作，不是 migration，每次執行都會建立一堂新課。健康檢查來源為 `012_health_check.sql`，僅回傳 true，不存取課堂資料。
 
 `013_device_monitor.sql` 新增設備回報；完成 SQL 升級後仍需在各組 Pi 安裝回報程式。工作台的「課堂設定 → 樹莓派設備回報」提供配對與安裝入口，詳見 [設備回報說明](DEVICE_MONITOR.md)。這不會自動替學生確認課程完成。
+
+`014_camera_course.sql` 新增八階段拍照課程、獨立課程憑證與驗證事件。新課程預設關閉，老師實機驗收後在教材開放勾選。舊版四科目設定仍可儲存，會保留新課程開關；不會重設現有課堂進度。IP 僅在教師 RPC 回傳，學生 RPC 不包含 IP、憑證或完整指令輸出。詳見 [課程設定與驗收](CAMERA_COURSE.md)。
 
 ## 帳號與組別
 
