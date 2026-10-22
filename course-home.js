@@ -11,7 +11,7 @@ function updateLinks(){
   link.setAttribute('aria-disabled',String(!group||!PiLearning.allowed(lesson)));
  }
  for(const host of document.querySelectorAll('[data-group-host]'))host.textContent=group?group+'.local':host.dataset.groupHostPlaceholder||'（選好組別後會顯示，例如 pi5-01.local）';
- status.textContent=group?'本組：第 '+Number(group.slice(-2))+' 組 · '+group+'。下方課程會直接使用這個組別。':'請先選自己的組別，再選擇下方課程。';
+ status.textContent=group?'本組：第 '+Number(group.slice(-2))+' 組 · '+group+'。接著按老師指定的步驟，或選下方課程。':'請先選自己的組別，再選擇下方課程。';
 }
 function populate(){
  const old=select.value||preferred;select.replaceChildren();const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='請選自己的組別';select.append(placeholder);

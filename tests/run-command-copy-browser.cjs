@@ -8,21 +8,29 @@ const newMethods=new Set(['pi_helper_workbench_identity','pi_helper_workbench_ac
 const base=process.env.PI_HELPER_TEST_URL||'http://127.0.0.1:8001/';
 await ctx.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{if(window.__denyCopy)throw Error('clipboard unavailable');window.__copiedCommand=text}}}));
 async function commands(page,selector,expected){
- const list=page.locator(selector);assert.deepEqual(await list.locator('.command-step pre').allTextContents(),expected);
- assert.equal(await list.getByRole('button').count(),expected.length);
- for(let i=0;i<expected.length;i++){await list.getByRole('button').nth(i).click();assert.equal(await page.evaluate(()=>window.__copiedCommand),expected[i]);assert(!await page.evaluate(()=>window.__copiedCommand.includes('\n')));}
+ await page.mouse.move(0,0);const list=page.locator(selector);assert.deepEqual(await list.locator('.command-step pre').allTextContents(),expected);
+ const guided=await list.evaluate(e=>e.classList.contains('command-guided'));
+ assert.equal(await list.locator('.command-step button.command-copy').count(),expected.length);
+ for(let i=0;i<expected.length;i++){
+  const button=guided?list.locator('.command-step:visible button.command-copy'):list.locator('.command-step button.command-copy').nth(i);
+  if(guided)assert.equal(await list.locator('.command-step:visible').count(),1);
+  assert.equal(await button.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 91, 69)');
+  await button.click();assert.equal(await page.evaluate(()=>window.__copiedCommand),expected[i]);assert(!await page.evaluate(()=>window.__copiedCommand.includes('\n')));
+  if(guided){assert((await list.locator('.command-step:visible .command-copy-feedback').innerText()).includes('Ctrl + V'));if(i<expected.length-1)await list.getByRole('button',{name:'這行做完了，換下一行 →',exact:true}).click()}
+ }
  assert((await list.innerText()).includes('按 Enter'));
 }
 const student=await ctx.newPage();await student.goto(base+'student.html?group=pi5-05&lesson=ssh');await student.locator('#screen').waitFor({state:'visible'});
-assert.equal(await student.locator('#screen .command-steps').count(),0);await student.locator('#screen').getByRole('button',{name:'複製指令',exact:true}).click();assert.equal(await student.evaluate(()=>window.__copiedCommand),'ssh user@pi5-05.local');
+assert.equal(await student.locator('#screen .command-steps').count(),0);assert.equal(await student.locator('#screen').getByRole('button',{name:'複製指令',exact:true}).evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 91, 69)');await student.locator('#screen').getByRole('button',{name:'複製指令',exact:true}).click();assert.equal(await student.evaluate(()=>window.__copiedCommand),'ssh user@pi5-05.local');
 await student.locator('#screen .choices').getByRole('button',{name:/已進入樹莓派命令列/}).click();await commands(student,'#screen .command-steps',['hostname','whoami']);
-for(const width of [1280,390,320]){await student.setViewportSize({width,height:900});assert(await student.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const button of await student.locator('#screen .command-step button').all())assert(await button.evaluate(e=>e.getBoundingClientRect().height>=44));if(width!==320)await student.locator('#screen').screenshot({path:'/tmp/pi-split-command-'+width+'.png'});}
+for(const width of [1280,390,320]){await student.setViewportSize({width,height:900});assert(await student.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const button of await student.locator('#screen .command-step:visible button').all())assert(await button.evaluate(e=>e.getBoundingClientRect().height>=44));if(width!==320)await student.locator('#screen').screenshot({path:'/tmp/pi-split-command-'+width+'.png'});}
 await student.evaluate(()=>PiStudentFlow.enter('pi5-05','desktop',null,'rdpService'));await commands(student,'#screen .command-steps',['systemctl is-active xrdp','systemctl status xrdp --no-pager']);
+await student.evaluate(()=>PiStudentFlow.enter('pi5-05','desktop',null,'x11'));await student.mouse.move(0,0);const x11Copy=student.locator('.x11-guide-content button.command-copy');assert.equal(await x11Copy.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 91, 69)');await x11Copy.click();assert.equal(await student.evaluate(()=>window.__copiedCommand),'sudo raspi-config');
 console.log('PASS student hostname/whoami and service checks have separate copy actions, preserve single commands and fit desktop and phone screens');
 const ta=await ctx.newPage();await ta.goto(base+'assistant.html');await ta.getByRole('button',{name:'排查工具',exact:true}).click();await ta.evaluate(()=>PiAssistant.openGroupReport(5,{stage:'連線排查',step:'登入了！再確認是不是自己的組別'}));await commands(ta,'#followup .command-steps',['hostname','whoami']);
 await ta.evaluate(()=>{flowPath=['rdpInstall'];render(false,true)});await commands(ta,'#followup .command-steps',['sudo apt update','sudo apt install -y xrdp xorgxrdp','sudo systemctl enable --now xrdp']);
 await ta.evaluate(()=>{flowPath=['rdpLogs'];render(false,true)});await commands(ta,'#followup .command-steps',['sudo tail -n 80 /var/log/xrdp.log','sudo tail -n 80 /var/log/xrdp-sesman.log']);
-await ta.evaluate(()=>{window.__denyCopy=true});await ta.locator('#followup .command-step button').last().click();assert.equal(await ta.evaluate(()=>String(getSelection())),'sudo tail -n 80 /var/log/xrdp-sesman.log');
+await ta.mouse.move(0,0);for(const button of await ta.locator('button.command-copy:visible').all())assert.equal(await button.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(32, 91, 69)');await ta.evaluate(()=>{window.__denyCopy=true});await ta.locator('#followup .command-step button').last().click();assert.equal(await ta.evaluate(()=>String(getSelection())),'sudo tail -n 80 /var/log/xrdp-sesman.log');
 console.log('PASS assistant verification, installation and logs copy one command only; clipboard failure selects only the requested line');
 const presenter=await ctx.newPage();await presenter.goto(base+'presenter.html');await presenter.locator('#presenterPassword').fill(teacher);await presenter.locator('#presenterLogin').evaluate(e=>e.onsubmit({preventDefault(){}}));await presenter.locator('#presenterControls').waitFor({state:'visible'});await presenter.locator('#presenterLesson').selectOption('ssh');await presenter.locator('#presenterStep').selectOption('2');await commands(presenter,'#presenterSlide .command-steps',['hostname','whoami']);
 await presenter.locator('#presenterFullscreen').click();await presenter.waitForFunction(()=>document.body.classList.contains('presentation-mode'));await presenter.waitForFunction(()=>{const pane=document.querySelector('#presenterSlide').getBoundingClientRect(),copy=document.querySelector('.presenter-copy').getBoundingClientRect();return copy.top>=pane.top&&copy.bottom<=pane.bottom+1});

@@ -121,7 +121,7 @@ for(const page of [home,student]){
   }
   assert(!await dialog.isVisible());console.log('PASS six guide pages and dialog layout '+(page===home?'home':'student')+' '+width+'px');
  }
- assert(await page.evaluate(()=>localStorage.getItem('pi-helper-guide-v4-seen')==='1'));
+ assert(await page.evaluate(()=>localStorage.getItem('pi-helper-guide-v5-seen')==='1'));
 }
 // The same guide is also directly available before selecting a group on the course home page.
 await home.goto(base);

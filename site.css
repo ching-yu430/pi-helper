@@ -59,8 +59,7 @@ summary { cursor: pointer; min-height: 44px; align-content: center; line-height:
 button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #b47b13; outline-offset: 3px; }
 button.danger, .danger { color: #8b2e22; border-color: #b8796a; background: #fff7f4; }
 pre { background: var(--site-code-background); color: var(--site-code-ink); border: 1px solid var(--site-code-border); border-radius: 8px; font-family: Consolas, ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
-button.command-copy { background: #fff; color: var(--site-code-ink); border-color: #8a99a8; font-weight: 600; }
-.command-step button.command-copy { background: var(--site-green); color: #fff; border-color: var(--site-green); font-weight: 700; }
+button.command-copy { background: var(--site-green); color: #fff; border-color: var(--site-green); font-weight: 700; }
 .lesson-goal, .prep, .target-panel { background: var(--site-soft); border-radius: 10px; }
 .lesson-action { border-radius: 10px; }
 .equipment-check, .course-help { border-color: var(--site-border); border-radius: var(--site-radius); }
@@ -92,8 +91,7 @@ footer { color: var(--site-muted); font-size: 13px; line-height: 1.75; }
 @media (hover: hover) {
   button:not(:disabled):not(.primary):not(.selected):not(.active):hover { border-color: #6c947b; }
   a.lesson-action:not([aria-disabled=true]):hover, button.primary:not(:disabled):hover { background: #245b46; }
-  button.command-copy:not(:disabled):hover { background: #e9edf2; border-color: #6c7c8a; }
-  .command-step button.command-copy:not(:disabled):hover { background: var(--site-header); border-color: var(--site-header); }
+  button.command-copy:not(:disabled):hover { background: var(--site-header); border-color: var(--site-header); }
 }
 @media (max-width: 600px) {
   header { padding: 18px 16px 24px; }
@@ -466,11 +464,27 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .command-steps-intro { margin:0; font-size:14px; line-height:1.7; }
 .command-step { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 12px; min-width:0; padding:12px; border:1px solid var(--site-border); border-radius:12px; background:#fff; }
 .command-step-label { grid-column:1/-1; margin:0; font-size:15px; font-weight:700; line-height:1.6; }
+.command-step-label[tabindex="-1"]:focus { outline:none; }
 .command-step pre { margin:0; }
 .command-step button { width:auto; min-height:48px; align-self:stretch; }
+.command-copy-feedback,.command-line-result { grid-column:1/-1; margin:0; padding:10px 12px; border-radius:8px; line-height:1.8; font-size:15px; }
+.command-copy-feedback { background:#e7f2e8; color:#214e35; border-left:4px solid var(--site-green); }
+.command-line-result { background:#fff8e7; color:#624b20; }
+.command-line-navigation { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.command-line-navigation span { flex:1; text-align:center; font-size:14px; }
+.command-line-navigation button { font-size:14px; min-height:48px; }
+.window-check { margin:10px 0 16px; padding:10px 12px; background:#fff8e7; border-left:4px solid #b47b13; border-radius:8px; font-size:15px; line-height:1.8; }
+.action-checklist { padding-left:26px; margin:12px 0 18px; }
+.action-checklist li { margin:10px 0; line-height:1.9; }
+.action-checklist li::marker { color:var(--site-green); font-weight:800; }
+.next-step-hint { margin:16px 0 8px; padding:12px; background:var(--site-soft); border-radius:10px; font-size:15px; }
+.student-step-note { margin:10px 0; }
+.student-step-note summary { font-size:14px; }
 @media(max-width:600px) {
   .command-step { grid-template-columns:minmax(0,1fr); }
   .command-step button { width:100%; }
+  .command-line-navigation { display:grid; grid-template-columns:1fr auto; }
+  .command-line-navigation button:last-child { grid-column:1/-1; }
 }
 .camera-course-card { border:2px solid var(--site-green); margin-bottom:24px; }
 .page-student .task-label { margin:18px 0 6px; font-size:15px; color:var(--site-green); }
