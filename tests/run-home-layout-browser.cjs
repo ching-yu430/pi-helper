@@ -28,7 +28,7 @@ const assert=require('node:assert/strict'),path=require('node:path'),{chromium}=
   assert.equal(await page.locator('#connectionHelp').getAttribute('open'),null);
   for(const lesson of ['flash','ssh','desktop'])assert(!await page.locator('[data-lesson='+lesson+']').isVisible());
   assert(await page.locator('[data-lesson=camera]').isVisible());assert(await page.locator('[data-lesson=shutdown]').isVisible());
-  assert(!await page.locator('#followTeacherLink').isVisible(),'old setup teacher stage belongs inside the folded setup area');
+  assert(await page.locator('#followTeacherLink').isVisible(),'the latest teacher stage stays visible even when setup is folded');assert.equal(await page.locator('#followTeacherLink').evaluate(e=>e.closest('details')),null);
   assert.equal(await page.locator('.upcoming,.lesson-goal,.lesson-term').count(),0);
   assert.equal(await page.locator('.course-catalog [data-lesson]').count(),1);
   for(const width of [320,390,768,1280]){
@@ -47,21 +47,24 @@ const assert=require('node:assert/strict'),path=require('node:path'),{chromium}=
   assert.equal(await page.locator('.archive-lesson strong').count(),3);
   assert((await page.locator('[data-lesson=desktop]').getAttribute('href')).includes('group=pi5-04'));
   await page.locator('#initialSetup > summary').click();
-  policy={...policy,current_lesson:'camera',current_step:0,revision:2};await tick();assert(!await page.locator('#followTeacherLink').isVisible());
+  policy={...policy,current_lesson:'camera',current_step:0,revision:2};await tick();assert(await page.locator('#followTeacherLink').isVisible());
   policy={...policy,current_lesson:'camera',current_step:2,revision:3};await tick();
   assert(await page.locator('#followTeacherLink').isVisible());assert(await page.locator('#teacherSlot #teacherEntry').isVisible());
   assert((await page.locator('#followTeacherLink').getAttribute('href')).includes('group=pi5-04'));
-  console.log('PASS setup links retain their group and labels; teacher links move between setup and current course without opening the archive');
+  console.log('PASS setup links retain their group and labels; teacher links stay visible for old setup, optional checks and current course without opening the archive');
   await page.locator('[data-lesson=camera]').click();await page.locator('#cameraWorkspace').waitFor({state:'visible'});
   assert.equal(await page.locator('#cameraStage').inputValue(),'1');assert.equal(await page.locator('#cameraStageCount').innerText(),'1 / 7');
   assert(await page.locator('#cameraBack').isDisabled());assert(await page.locator('#cameraNext').isDisabled());
   assert(!(await page.locator('#cameraCommands').textContent()).includes('hostname'));assert(!(await page.locator('#cameraCommands').textContent()).includes('pwd'));
-  await page.locator('#cameraStage').selectOption('0');assert.equal(await page.locator('#cameraStageCount').innerText(),'其他檢查');assert(await page.locator('#cameraNext').isDisabled());
+  await page.locator('#cameraStage').selectOption('0');assert.equal(await page.locator('#cameraStageCount').innerText(),'選用');assert(await page.locator('#cameraNext').isDisabled());
   await home();await page.locator('[data-lesson=camera]').click();await page.locator('#cameraWorkspace').waitFor({state:'visible'});assert.equal(await page.locator('#cameraStage').inputValue(),'1');
   await page.evaluate(()=>PiLearning.save('pi5-04',{lesson:'camera',cameraIndex:3,step:PiCameraCourse.stages[3].title,completed:{camera:false}}));
   await home();assert.equal(await page.locator('[data-lesson=camera]').innerText(),'繼續上課 →');assert(!await page.locator('#continueLink').isVisible());
   await page.locator('[data-lesson=camera]').click();await page.locator('#cameraWorkspace').waitFor({state:'visible'});assert.equal(await page.locator('#cameraStage').inputValue(),'3');
   assert(!reports.some(report=>report.p_status==='done'));
+  await page.evaluate(()=>PiLearning.save('pi5-04',{completed:{camera:true}}));await home();assert(await page.locator('#currentCourseStatus').isVisible());assert.equal(await page.locator('[data-lesson=camera]').innerText(),'重新查看課程 →');assert(!(await page.locator('[data-lesson=camera]').getAttribute('href')).includes('resume=1'));await page.locator('[data-lesson=camera]').click();await page.locator('#cameraWorkspace').waitFor({state:'visible'});assert.equal(await page.locator('#cameraStage').inputValue(),'1');
+  await page.goto(base+'camera.html?group=pi5-04&resume=1');await page.locator('#cameraWorkspace').waitFor({state:'visible'});assert.equal(await page.locator('#cameraStage').inputValue(),'1');assert(!reports.some(report=>report.p_status==='done'));
+  console.log('PASS completed courses show review instead of resume and old resume links cannot trap students on the last stage');
   console.log('PASS course starts with folders, hostname checks remain optional, resume preserves the actual stage and skipped checks never report success');
   await home();policy={...policy,open_lessons:{...policy.open_lessons,camera:false},revision:3};await tick();
   assert.equal(await page.locator('[data-lesson=camera]').getAttribute('aria-disabled'),'true');assert.equal(await page.locator('[data-lesson=camera]').innerText(),'等老師開放');

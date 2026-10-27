@@ -21,15 +21,14 @@ function populate(){
 }
 function renderLearning(){
  const group=selected(),saved=group?PiLearning.read(group):null,policy=PiLearning.policy,resume=Boolean(saved?.step&&PiLearning.allowed(saved.lesson)&&!saved.completed?.[saved.lesson]),link=q('continueLink'),description=q('continueDescription');
- const teacher=q('teachingNow'),hasTeacher=policy.managed&&policy.revision>0,archived=['flash','ssh','desktop'].includes(policy.current_lesson)||(policy.current_lesson==='camera'&&policy.current_step===0);
- const slot=q(archived?'setupTeacherSlot':'teacherSlot'),entry=q('teacherEntry');if(entry.parentElement!==slot)slot.append(entry);
+ const teacher=q('teachingNow'),hasTeacher=policy.managed&&policy.revision>0,entry=q('teacherEntry');
  entry.hidden=!group||!hasTeacher;
  const step=policy.current_lesson==='camera'?(policy.current_step===0?'其他檢查':'第 '+policy.current_step+' 步'):'第 '+(policy.current_step+1)+' 步';
  teacher.textContent=hasTeacher?'老師上次指定：'+PiLearning.names[policy.current_lesson]+' · '+step:'';
  if(hasTeacher&&!policyFresh)teacher.textContent+='（暫時無法更新）';
  const follow=q('followTeacherLink'),canFollow=Boolean(group&&policyFresh&&hasTeacher&&PiLearning.allowed(policy.current_lesson));
  const oldProgress=['flash','ssh','desktop'].includes(saved?.lesson),history=q('clearLearning').closest('.learning-options'),historySlot=oldProgress?q('initialSetup'):q('continueLesson');if(history.parentElement!==historySlot)historySlot.append(history);
- q('continueLesson').hidden=!group||((!saved?.step||oldProgress)&&(archived||!hasTeacher));
+ q('continueLesson').hidden=!group||(!hasTeacher&&(!saved?.step||oldProgress));
  q('continueLesson').dataset.teacherReady=String(canFollow);entry.classList.toggle('is-ready',canFollow);
  follow.hidden=!canFollow;follow.setAttribute('aria-disabled',String(!canFollow||select.disabled));
  if(canFollow)follow.href=PiLearning.url(policy.current_lesson,group,{teacher:1});else follow.removeAttribute('href');
@@ -37,9 +36,9 @@ function renderLearning(){
  link.hidden=!resume||saved.lesson==='camera';link.setAttribute('aria-disabled',String(select.disabled||!resume));
  if(resume)link.href=PiLearning.url(saved.lesson,group,{resume:1});else link.removeAttribute('href');
  q('clearLearning').hidden=!saved;q('clearLearning').closest('.learning-options').hidden=!saved;
- const current=document.querySelector('[data-lesson="camera"]');
+ const current=document.querySelector('[data-lesson="camera"]'),cameraDone=Boolean(saved?.completed?.camera);q('currentCourseStatus').hidden=!cameraDone;
  if(resume&&saved.lesson==='camera'&&group){current.href=PiLearning.url('camera',group,{resume:1});current.textContent='繼續上課 →'}
- else{const url=new URL('camera.html',location.href);url.searchParams.set('step','1');if(group)url.searchParams.set('group',group);current.href=url.href;current.textContent=PiLearning.allowed('camera')?'開始上課 →':'等老師開放'}
+ else{const url=new URL('camera.html',location.href);url.searchParams.set('step','1');if(group)url.searchParams.set('group',group);current.href=url.href;current.textContent=PiLearning.allowed('camera')?(cameraDone?'重新查看課程 →':'開始上課 →'):'等老師開放'}
 }
 
 async function load(){

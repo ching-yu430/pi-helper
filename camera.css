@@ -51,6 +51,11 @@
 #cameraRecords>summary { cursor:pointer; min-height:44px; }
 #cameraRecords h3 { font-size:16px; }
 #cameraRecords section { padding-top:12px; }
+#cameraFallback { margin:8px 0; padding:8px 12px; border:1px solid var(--site-border); border-radius:10px; font-size:14px; background:white; }
+#cameraFallback p { margin:4px 0; color:var(--site-muted); }
+#cameraCompletion { margin:12px 0; padding:20px; background:var(--site-soft); }
+#cameraCompletion h2 { margin:0 0 12px; font-size:22px; }
+#cameraCompletion .lesson-action { display:block; margin:0; }
 .camera-check { padding:12px; margin:10px 0; border:1px solid var(--site-border); border-radius:10px; }
 .camera-check p { margin:4px 0; }
 .camera-check[data-status="passed"] { background:#edf6ea; border-color:#9abc9e; }
