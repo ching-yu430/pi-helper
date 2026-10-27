@@ -13,13 +13,13 @@ const stages=[
 ];
 // Keep stage titles stable for saved progress and teacher links; student actions are short.
 const help={
- location:{action:'先開啟樹莓派的終端機，再照下方指令一行一行做。',actions:['把遠端桌面視窗切到最前面。','在樹莓派左上角選單找「終端機／Terminal」，按一下開啟。','找到終端機後，就照下面的綠色複製按鈕操作。'],expected:'第一行要顯示 {host}。顯示別組名稱就停下，按「請助教幫忙」。',results:['顯示 {host}；別組名稱就先停下。','顯示 /home/user，或本組 pi-camera 資料夾的位置。','顯示「本次操作完成」，再回網頁按「更新檢查結果」。']},
- folders:{action:'現在要做一個放程式和照片的資料夾。',actions:['留在剛才的樹莓派終端機。','照下方順序做，一行結束後再換下一行。'],expected:'畫面顯示 /home/user/pi-camera，並看得到 photos。',results:['看目前在哪個資料夾。','顯示這個資料夾裡的東西；沒有東西也可能是正常的。','通常沒有新文字，又出現可以輸入的位置。資料夾已經建立。','通常沒有新文字，又出現可以輸入的位置。你已進入 pi-camera。','顯示 /home/user/pi-camera。','看得到 photos 這個名稱。','顯示「本次操作完成」，再回網頁按「更新檢查結果」。']},
+ location:{action:'先開啟樹莓派的終端機，再照下方指令一行一行做。',actions:['把遠端桌面視窗切到最前面。','在樹莓派左上角選單找「終端機／Terminal」，按一下開啟。','找到終端機後，就照下面的綠色複製按鈕操作。'],expected:'第一行要顯示 {host}。顯示別組名稱就停下，按「請助教幫忙」。',results:['顯示 {host}；別組名稱就先停下。','顯示 /home/user，或本組 pi-camera 資料夾的位置。','顯示「本次操作完成」，再回網頁按「更新結果」。']},
+ folders:{action:'現在要做一個放程式和照片的資料夾。',actions:['留在剛才的樹莓派終端機。','照下方順序做，一行結束後再換下一行。'],expected:'畫面顯示 /home/user/pi-camera，並看得到 photos。',results:['看目前在哪個資料夾。','顯示這個資料夾裡的東西；沒有東西也可能是正常的。','通常沒有新文字，又出現可以輸入的位置。資料夾已經建立。','通常沒有新文字，又出現可以輸入的位置。你已進入 pi-camera。','顯示 /home/user/pi-camera。','看得到 photos 這個名稱。','顯示「本次操作完成」，再回網頁按「更新結果」。']},
  hello:{where:'樹莓派桌面 → 文字編輯器，寫好後再回終端機',action:'先寫一個會顯示本組名稱的小程式。',actions:['在樹莓派左上角選單找「文字編輯器／Text Editor」，新增空白檔案。','親手輸入下面的程式。注意引號和括號。','按 Ctrl + Shift + S，將檔案存成 /home/user/pi-camera/hello.py。','存好後，切回樹莓派終端機，再執行下方綠色按鈕的指令。'],expected:'終端機顯示「第 {group} 組」。改過程式後，要先儲存，再執行一次。',results:['顯示「第 {group} 組」和「本次操作完成」。']},
  write:{where:'樹莓派桌面 → 文字編輯器，寫好後再回終端機',action:'這次讓 Python 幫你做一個文字檔。',actions:['在樹莓派的文字編輯器新增空白檔案。','親手輸入下面的程式，存成 /home/user/pi-camera/write_note.py。','存好後，回樹莓派終端機，執行下方指令。','執行完成後，用樹莓派的檔案管理員開啟 pi-camera 裡的 message.txt。'],expected:'message.txt 裡有「第 {group} 組的第一個文字檔」。',results:['顯示 message.txt 的位置和「本次操作完成」。接著去開啟這個檔案。']},
- environment:{action:'把相機接到樹莓派，再安裝拍照需要的工具。',actions:['把 USB 相機插進樹莓派的 USB 孔，不要插在 Windows 筆電。','留在樹莓派終端機，執行下方指令。','如果詢問密碼，輸入樹莓派密碼，再按 Enter；沒有文字或星號是正常的。','安裝時等它跑完，不要重複按 Enter，也不要拔電。'],expected:'最後顯示 OpenCV 版本與可用相機。看不到相機就按「請助教幫忙」。',results:['文字停止捲動，出現「本次操作完成」。才換下一行。','安裝可能要等一段時間。出現「本次操作完成」才換下一行。','顯示 OpenCV 和 /dev/video… 等相機名稱，再回網頁更新檢查結果。']},
+ environment:{action:'把相機接到樹莓派，再安裝拍照需要的工具。',actions:['把 USB 相機插進樹莓派的 USB 孔，不要插在 Windows 筆電。','留在樹莓派終端機，執行下方指令。','如果詢問密碼，輸入樹莓派密碼，再按 Enter；沒有文字或星號是正常的。','安裝時等它跑完，不要重複按 Enter，也不要拔電。'],expected:'最後顯示 OpenCV 版本與可用相機。看不到相機就按「請助教幫忙」。',results:['文字停止捲動，出現「本次操作完成」。才換下一行。','安裝可能要等一段時間。出現「本次操作完成」才換下一行。','顯示 OpenCV 和 /dev/video… 等相機名稱，再回網頁更新結果。']},
  camera:{action:'先開拍照程式，再用滑鼠拍一張照片。',actions:['先執行下方第 1 行，看到完成後，再執行第 2 行。','拍照視窗開啟後，確認裡面看得到相機畫面。','把物品放好，用滑鼠按「拍照」。先不用記快捷鍵。','看到「照片已儲存」後，按「結束」，再回網頁看結果。'],expected:'網頁顯示照片尺寸為 1920×1080，並收到正常結束的結果。',results:['顯示統一拍照程式已放入 pi-camera。','開啟拍照視窗。用滑鼠拍照，完成後按「結束」。']},
- quality:{where:'樹莓派桌面 → 檔案管理員',action:'打開剛才拍的照片，用眼睛確認。',actions:['在樹莓派開啟檔案管理員。','打開 pi-camera，再打開 photos。','點兩下照片，確認物品清楚、完整，而且不會太亮或太暗。','確認後，勾選下方「我已開啟本次照片」。'],expected:'你能清楚看見整個物品。模糊或缺角就回上一階段重拍。',manual:'我已開啟本次照片，確認物品清楚、完整。'},
+ quality:{where:'樹莓派桌面 → 檔案管理員',action:'打開剛才拍的照片，用眼睛確認。',actions:['在樹莓派開啟檔案管理員。','打開 pi-camera，再打開 photos。','點兩下照片，確認物品清楚、完整，而且不會太亮或太暗。','確認後，勾選下方的照片確認欄。'],expected:'你能清楚看見整個物品。模糊或缺角就回上一階段重拍。',manual:'我已開啟本次照片，確認物品清楚、完整。'},
  download:{where:'Windows 筆電 → PowerShell；不是樹莓派終端機',action:'最後把照片搬到 Windows 筆電。',actions:['先把遠端桌面視窗縮小。這一步在 Windows 做。','按 Windows 開始鍵，輸入 PowerShell，按一下開啟。','看到 PS 開頭的輸入位置後，貼上下方指令並按 Enter。','輸入樹莓派密碼；輸入時沒有文字是正常的。','下載完後，在 Windows 開啟「下載」→ pi-camera-photos，找到並開啟照片。'],expected:'在 Windows 筆電上也能開啟照片。找到照片後，再勾選下方確認。',manual:'我已在 Windows 找到照片，並開啟確認。',results:['下載進度結束，重新出現 PS 開頭的輸入位置。接著開啟 Windows 的下載資料夾。']}
 };
 const studentNotes={
@@ -40,6 +40,18 @@ stages[1].actions=['在樹莓派桌面開啟終端機。','照下方指令建立
 stages[1].expected='pi-camera 資料夾裡看得到 photos。';
 stages[1].notes=['mkdir 建立資料夾；cd 進入資料夾；ls 顯示裡面的東西。','資料夾已存在不用刪除。無法建立或寫入，保留錯誤畫面請助教幫忙。'];
 stages[1].results=['沒有錯誤，又出現可以輸入的位置。','已進入 pi-camera 資料夾。','看得到 photos。','顯示「本次操作完成」。'];
+// Compact student presentation; canonical titles above remain the reporting IDs.
+const views={
+ location:{title:'確認操作位置',where:'樹莓派｜終端機',action:'貼上指令，按 Enter。',commandTitles:['主機名稱','目前資料夾','回報結果'],results:['顯示 {host}。','顯示目前資料夾。','看到「本次操作完成」。']},
+ folders:{title:'建立資料夾',where:'樹莓派｜終端機',action:'在樹莓派桌面開啟「終端機」。',commandTitles:['建立照片資料夾','進入資料夾','查看資料夾','回報結果'],results:['沒有錯誤就繼續。','沒有錯誤就繼續。','看到 photos。','看到「本次操作完成」。']},
+ hello:{title:'寫第一個程式',where:'樹莓派｜文字編輯器',action:'開啟「文字編輯器」，輸入下方程式。',saveAs:'/home/user/pi-camera/hello.py',commandTitles:['執行程式'],results:['顯示「第 {group} 組」。']},
+ write:{title:'用程式存檔',where:'樹莓派｜文字編輯器',action:'開啟「文字編輯器」，輸入下方程式。',saveAs:'/home/user/pi-camera/write_note.py',commandTitles:['執行程式'],results:['產生 message.txt。']},
+ environment:{title:'接相機、安裝工具',where:'樹莓派｜終端機',action:'先把 USB 相機插在樹莓派。',commandTitles:['更新工具清單','安裝拍照工具','檢查相機'],results:['等到「本次操作完成」。','等到「本次操作完成」。','顯示 OpenCV 和可用相機。']},
+ camera:{title:'拍一張照片',where:'樹莓派｜終端機',action:'執行這兩行，開啟拍照視窗。',commandTitles:['取得拍照程式','開啟拍照視窗'],results:['程式已放入 pi-camera。','按「拍照」，再按「結束」。']},
+ quality:{title:'檢查照片',where:'樹莓派｜檔案管理員',action:'打開資料夾，點兩下照片。',path:'pi-camera → photos',check:'照片清楚、物品完整'},
+ download:{title:'下載到筆電',where:'Windows｜PowerShell',action:'縮小遠端桌面，在 Windows 開啟 PowerShell。',commandTitles:['下載照片'],results:['在「下載」→ pi-camera-photos 開啟照片。'],check:'我已在筆電開啟照片'}
+};
+for(const stage of stages)stage.view=views[stage.id];
 const fill=(text,host)=>String(text).replaceAll('{host}',host).replaceAll('{group}',host.slice(-2));
 window.PiCameraCourse={version:'1.0.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
 })();
