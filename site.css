@@ -518,3 +518,54 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
   .page-presenter .command-steps { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .page-presenter .command-steps-intro { grid-column:1/-1; }
 }
+
+/* Home is a course launcher; initial setup and troubleshooting stay folded. */
+.page-course header { padding:16px 20px; }
+.page-course header > div { max-width:760px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.page-course header h1 { font-size:26px; margin:0; }
+.page-course header .site-nav { margin:0; flex-wrap:nowrap; }
+.page-course main { max-width:760px; padding:20px 16px 36px; }
+.page-course .course-group { margin:0; padding:20px; border:1px solid var(--site-border); }
+.page-course h2 { font-size:21px; margin:0 0 12px; }
+.page-course .course-group label { margin:0; }
+.page-course #courseGroupStatus { font-size:14px; margin:8px 0 0; }
+.page-course .course-next { margin-top:12px; padding-top:12px; }
+.page-course .teacher-entry.is-ready { margin:0; padding:0; border:0; background:transparent; }
+.page-course .teacher-entry .teacher-stage { font-size:14px; margin:0 0 8px; color:var(--site-muted); }
+.page-course .teacher-entry .lesson-action { margin:0; background:#fff; color:var(--site-green); border:1px solid #9dbba7; }
+.page-course .learning-options { margin-top:10px; }
+.page-course .learning-options summary { font-size:14px; color:var(--site-muted); }
+.page-course .learning-options .lesson-action { margin:8px 0; }
+.page-course .course-catalog { margin:20px 0 16px; }
+.page-course .camera-course-card { margin:0; border:1px solid var(--site-border); padding:20px; }
+.page-course .camera-course-card h3 { font-size:24px; margin:0; }
+.page-course .course-route { margin:10px 0 18px; display:flex; gap:10px; flex-wrap:wrap; font-size:16px; }
+.page-course .course-route span { color:var(--site-muted); }
+.page-course .current-course-action { display:flex; align-items:center; justify-content:center; width:100%; min-height:52px; margin:0; font-size:18px; }
+.page-course .shutdown-routine { padding:0; margin:0 0 18px; border:0; background:transparent; }
+.page-course a.shutdown-home-link { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0; padding:14px 18px; background:#fff8e7; color:#674700; border:1px solid #d8bd7b; text-decoration:none; }
+.page-course .initial-setup,.page-course .connection-help { padding:12px 18px; margin:12px 0 0; background:#fff; border:1px solid var(--site-border); border-radius:12px; }
+.page-course .initial-setup > summary,.page-course .connection-help > summary { font-size:16px; font-weight:700; min-height:44px; }
+.page-course .setup-links { list-style:none; padding:0; margin:12px 0; display:grid; gap:8px; }
+.page-course .archive-lesson { display:flex; align-items:center; gap:12px; padding:10px 12px; min-height:48px; border:1px solid var(--site-border); border-radius:10px; text-decoration:none; }
+.page-course .archive-lesson strong { flex:1; }
+.page-course .setup-number { display:grid; place-items:center; width:32px; height:32px; background:var(--site-soft); border-radius:8px; font-size:14px; }
+.page-course .archive-lesson[aria-disabled="true"] { color:var(--site-muted); background:#f5f6f4; }
+.page-course #setupTeacherSlot:not(:empty) { margin-top:12px; }
+.page-course .platform-note { font-size:13px; color:var(--site-muted); }
+.page-course .connection-help ol { padding-left:22px; margin:12px 0; }
+.page-course .connection-help li { margin:10px 0; }
+.page-course .connection-troubleshoot-link { display:inline-flex; align-items:center; min-height:44px; }
+@media(hover:hover) {
+ .page-course .teacher-entry a.lesson-action:not([aria-disabled="true"]):hover { background:var(--site-soft); color:var(--site-green); }
+ .page-course a.shutdown-home-link:not([aria-disabled="true"]):hover { background:#fff0cc; color:#674700; }
+}
+@media(max-width:600px) {
+ .page-course header { padding:12px 16px; }
+ .page-course header h1 { font-size:22px; }
+ .page-course header .site-nav a,.page-course header .site-nav button { padding:7px 9px; }
+ .page-course main { padding:16px 12px 28px; }
+ .page-course .course-group,.page-course .camera-course-card { padding:18px 16px; }
+ .page-course .camera-course-card h3 { font-size:22px; }
+ .page-course .course-route { gap:8px; font-size:15px; }
+}

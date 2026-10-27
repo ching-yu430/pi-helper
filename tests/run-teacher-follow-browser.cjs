@@ -35,7 +35,7 @@ await specify('desktop',3);
 const tick=()=>home.evaluate(()=>window.__testIntervals.find(t=>t.ms===5000).fn());
 await home.evaluate(()=>PiLearning.save('pi5-05',{lesson:'desktop',phase:'flow',step:'遠端桌面連線完成',flowPath:['desktopDone'],completed:{desktop:true}}));
 await tick();
-assert(await home.locator('#followTeacherLink').isVisible());
+assert(!await home.locator('#followTeacherLink').isVisible());await home.locator('#initialSetup > summary').click();assert(await home.locator('#followTeacherLink').isVisible());await home.locator('.learning-options > summary').click();
 assert(!await home.locator('#continueLink').isVisible());
 assert((await home.locator('#continueDescription').innerText()).includes('已自行確認完成'));
 assert((await home.locator('#followTeacherLink').getAttribute('href')).includes('teacher=1'));

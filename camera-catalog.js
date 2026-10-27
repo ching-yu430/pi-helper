@@ -33,6 +33,13 @@ const studentNotes={
  download:['下載沒有成功或找不到照片：先保留 PowerShell 畫面，按「請助教幫忙」。','重複下載可能多一層 photos 資料夾，打開裡面找照片。','.local 連不上時，先請助教檢查；不要自己猜 IP。']
 };
 for(const stage of stages)Object.assign(stage,help[stage.id],{notes:studentNotes[stage.id]});
+// Preserve existing server step IDs; location is an optional troubleshooting check.
+stages[0].optional=true;
+stages[1].commands=['mkdir -p ~/pi-camera/photos','cd ~/pi-camera','ls',runner+'folders'];
+stages[1].actions=['在樹莓派桌面開啟終端機。','照下方指令建立資料夾。'];
+stages[1].expected='pi-camera 資料夾裡看得到 photos。';
+stages[1].notes=['mkdir 建立資料夾；cd 進入資料夾；ls 顯示裡面的東西。','資料夾已存在不用刪除。無法建立或寫入，保留錯誤畫面請助教幫忙。'];
+stages[1].results=['沒有錯誤，又出現可以輸入的位置。','已進入 pi-camera 資料夾。','看得到 photos。','顯示「本次操作完成」。'];
 const fill=(text,host)=>String(text).replaceAll('{host}',host).replaceAll('{group}',host.slice(-2));
-window.PiCameraCourse={version:'1.0.0',runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
+window.PiCameraCourse={version:'1.0.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
 })();
