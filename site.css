@@ -572,3 +572,7 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 
 .page-course .current-course-status { display:inline-block; padding:3px 9px; border-radius:6px; background:var(--site-soft); color:var(--site-green); font-size:14px; margin:8px 0 0; }
 @media(hover:hover) { .page-course .teacher-entry a.lesson-action:hover { background:var(--site-soft); color:var(--site-green); } }
+
+.camera-check-settings label { display:flex; gap:10px; align-items:center; min-height:44px; margin:12px 0; }
+.camera-check-settings input[type=checkbox] { width:22px; height:22px; flex-shrink:0; }
+.camera-check-settings a { display:inline-block; min-height:44px; padding:8px 0; margin-right:12px; }

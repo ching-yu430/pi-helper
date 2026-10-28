@@ -6,7 +6,7 @@
 #cameraTools { position:relative; }
 #cameraTools>summary { cursor:pointer; min-height:44px; padding:9px 12px; border:1px solid #79a38c; border-radius:10px; font-size:14px; }
 #cameraTools>div { position:absolute; right:0; top:calc(100% + 8px); z-index:10; display:grid; gap:8px; width:220px; max-width:calc(100vw - 24px); padding:12px; border:1px solid var(--site-border); border-radius:12px; background:white; box-shadow:0 6px 20px #203d3322; }
-.page-camera header #cameraTools button { background:#fff; color:var(--site-ink); border-color:var(--site-border); }
+.page-camera header #cameraTools button,.page-camera header #cameraTools a { background:#fff; color:var(--site-ink); border-color:var(--site-border); }
 .page-camera main { padding-top:16px; }
 .camera-course-bar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
 .page-camera #status { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:0; font-size:15px; flex-shrink:0; }
@@ -25,8 +25,6 @@
 .page-camera pre { padding:14px; margin:0; background:var(--site-code-background); color:var(--site-code-ink); border:1px solid var(--site-code-border); border-radius:8px; white-space:pre-wrap; overflow-wrap:anywhere; font:15px/1.7 Consolas,monospace; }
 #cameraSaveAs { margin:12px 0; font-size:15px; }
 #cameraSaveAs code { overflow-wrap:anywhere; }
-#cameraCodeDone { width:100%; }
-#cameraEditCode { margin-bottom:8px; }
 #cameraPath { font-weight:700; padding:12px; background:var(--site-soft); border-radius:8px; }
 .page-camera .command-compact { margin:0; gap:10px; }
 .page-camera .command-compact .command-step { padding:0; border:0; background:transparent; gap:8px 10px; }
@@ -35,23 +33,22 @@
 .page-camera .command-compact .command-line-navigation button { padding:8px; min-height:44px; font-size:14px; }
 .page-camera .command-compact .command-line-navigation button:last-child { grid-column:auto; }
 .page-camera .command-compact .command-line-navigation span { font-size:13px; }
-.camera-result-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0; }
 #cameraCheckSummary { margin:0; font-size:14px; }
 #cameraCheckSummary[data-state="passed"] { color:#21603d; font-weight:700; }
 #cameraCheckSummary[data-state="issue"] { color:#8a4915; }
-.page-camera #refreshCameraChecks { min-height:44px; font-size:14px; padding:8px 12px; flex-shrink:0; }
-.camera-issue { padding:10px 12px; margin:8px 0; border-left:4px solid #b47b13; background:#fff8e7; border-radius:6px; font-size:15px; }
-.camera-navigation { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+.page-camera #refreshCameraChecks { min-height:44px; font-size:14px; padding:8px 12px; }
+.camera-issue { padding:8px 10px; margin:10px 0; border-left:3px solid #b47b13; background:#fff8e7; border-radius:6px; font-size:14px; }
+.camera-navigation { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; margin:18px 0 0; }
 .camera-navigation button { min-height:48px; }
-.page-camera #cameraNextHint { font-size:14px; padding:0; background:none; margin:8px 0; }
-.page-camera .camera-help-actions { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 20px; }
-.page-camera .camera-help-actions>* { flex:1 1 0; width:auto; margin:0; min-height:48px; padding:10px 8px; }
-.page-camera .camera-help-actions .lesson-action { background:white; color:var(--site-green); border:1px solid var(--site-border); }
-#cameraRecords { background:white; border:1px solid var(--site-border); border-radius:12px; padding:12px 16px; font-size:14px; }
-#cameraRecords>summary { cursor:pointer; min-height:44px; }
+#cameraCommandCount { font-size:13px; white-space:nowrap; }
+.page-camera .camera-help-actions { margin:12px 0 0; }
+.page-camera #cameraAsk { width:auto; }
+#cameraRecords { margin-top:8px; padding:0; font-size:14px; }
+#cameraRecords>summary { cursor:pointer; min-height:44px; color:var(--site-muted); }
+#cameraRecords[open] { padding:12px 16px; background:white; border:1px solid var(--site-border); border-radius:12px; }
 #cameraRecords h3 { font-size:16px; }
 #cameraRecords section { padding-top:12px; }
-#cameraFallback { margin:8px 0; padding:8px 12px; border:1px solid var(--site-border); border-radius:10px; font-size:14px; background:white; }
+#cameraFallback { margin:8px 0; padding:8px 0; font-size:14px; }
 #cameraFallback p { margin:4px 0; color:var(--site-muted); }
 #cameraCompletion { margin:12px 0; padding:20px; background:var(--site-soft); }
 #cameraCompletion h2 { margin:0 0 12px; font-size:22px; }
@@ -62,7 +59,7 @@
 .camera-check[data-status="failed"],.camera-check[data-status="cancelled"] { background:#fff5e9; border-color:#d2a672; }
 .camera-check[data-status="running"] { background:#edf4fd; }
 .page-camera input[type="checkbox"] { width:22px; height:22px; flex:0 0 auto; margin:0; }
-.page-camera #cameraManual label,.page-camera #cameraFallback label { display:flex; gap:10px; align-items:center; min-height:44px; line-height:1.7; padding:10px 0; }
+.page-camera #cameraFallback label { display:flex; gap:10px; align-items:center; min-height:44px; line-height:1.7; padding:10px 0; }
 .course-task-result { border-top:1px solid var(--site-border); padding:8px 0; }
 .course-private-network button { width:100%; }
 .page-camera #cameraToast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); max-width:90vw; background:#173d31; color:#fff; padding:12px 18px; border-radius:12px; z-index:30; }
@@ -80,4 +77,3 @@
  .camera-navigation { gap:8px; }
 }
 @media(max-width:360px) { .page-camera header h1 { font-size:18px; } .page-camera .camera-header { gap:6px; } }
-@media(hover:hover) { .page-camera .camera-help-actions a.lesson-action:hover { background:var(--site-soft); color:var(--site-green); } }

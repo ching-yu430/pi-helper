@@ -19,7 +19,7 @@
 
 ## 版本與維護
 
-來源統一放在 `supabase/migrations/`，以 001～014 排序。`supabase/install.sql` 由 `node scripts/build-sql.cjs` 產生；在 SQL Editor 使用這份安裝檔，不要挑選舊來源重跑。
+來源統一放在 `supabase/migrations/`，以 001～015 排序。`supabase/install.sql` 由 `node scripts/build-sql.cjs` 產生；在 SQL Editor 使用這份安裝檔，不要挑選舊來源重跑。
 
 `pi_helper.schema_migrations` 記錄檔名、版本、SHA-256 與執行時間，開啟 RLS，匿名使用者不可讀寫。已完成的版本會跳過；校驗碼不符、歷史有缺口或安裝檔比資料庫舊時拒絕執行。安裝期間以交易鎖避免兩人同時升級。
 
@@ -42,3 +42,5 @@
 ## 驗證界線
 
 `tests/run-install-sql.cjs` 在隔離資料庫驗證新安裝、建課語法、重跑、既有專案導入與校驗碼拒絕。其他 SQL／瀏覽器測試見 [README](../README.md)。本次整理未執行正式課堂 SQL；需要 Supabase 專案管理員依上方步驟部署。
+
+`015_camera_check_mode.sql` 新增全班共用自動檢查開關，預設關閉。後台「課堂設定 → 學生進度」可儲存，約 15 秒內套用。舊資料庫在更新前先採手動下一步，後台提供最新 `supabase/install.sql` 的複製／下載；仍只需執行這一份安裝檔。既有教材開放、老師指定、暫停、照片及驗證紀錄會保留。

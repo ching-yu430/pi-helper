@@ -54,9 +54,9 @@ const assert=require('node:assert/strict'),path=require('node:path'),{chromium}=
   console.log('PASS setup links retain their group and labels; teacher links stay visible for old setup, optional checks and current course without opening the archive');
   await page.locator('[data-lesson=camera]').click();await page.locator('#cameraWorkspace').waitFor({state:'visible'});
   assert.equal(await page.locator('#cameraStage').inputValue(),'1');assert.equal(await page.locator('#cameraStageCount').innerText(),'1 / 7');
-  assert(await page.locator('#cameraBack').isDisabled());assert(await page.locator('#cameraNext').isDisabled());
+  assert(await page.locator('#cameraBack').isDisabled());assert(await page.locator('#cameraNext').isEnabled());
   assert(!(await page.locator('#cameraCommands').textContent()).includes('hostname'));assert(!(await page.locator('#cameraCommands').textContent()).includes('pwd'));
-  await page.locator('#cameraStage').selectOption('0');assert.equal(await page.locator('#cameraStageCount').innerText(),'選用');assert(await page.locator('#cameraNext').isDisabled());
+  await page.locator('#cameraStage').selectOption('0');assert.equal(await page.locator('#cameraStageCount').innerText(),'選用');assert(await page.locator('#cameraNext').isEnabled());
   await home();await page.locator('[data-lesson=camera]').click();await page.locator('#cameraWorkspace').waitFor({state:'visible'});assert.equal(await page.locator('#cameraStage').inputValue(),'1');
   await page.evaluate(()=>PiLearning.save('pi5-04',{lesson:'camera',cameraIndex:3,step:PiCameraCourse.stages[3].title,completed:{camera:false}}));
   await home();assert.equal(await page.locator('[data-lesson=camera]').innerText(),'繼續上課 →');assert(!await page.locator('#continueLink').isVisible());
