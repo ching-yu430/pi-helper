@@ -39,6 +39,7 @@ function renderLearning(){
  const current=document.querySelector('[data-lesson="camera"]'),cameraDone=Boolean(saved?.completed?.camera);q('currentCourseStatus').hidden=!cameraDone;
  if(resume&&saved.lesson==='camera'&&group){current.href=PiLearning.url('camera',group,{resume:1});current.textContent='繼續上課 →'}
  else{const url=new URL('camera.html',location.href);url.searchParams.set('step','1');if(group)url.searchParams.set('group',group);current.href=url.href;current.textContent=PiLearning.allowed('camera')?(cameraDone?'重新查看課程 →':'開始上課 →'):'等老師開放'}
+ document.dispatchEvent(new CustomEvent('pi-helper-home-group',{detail:{group}}));
 }
 
 async function load(){

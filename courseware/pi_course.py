@@ -165,15 +165,18 @@ class Reporter:
             return
 
 
-def setup(home=None):
+def setup(home=None, config=None):
     home, _, directory = paths(home)
-    encoded = getpass.getpass('貼上本組「課程回報設定碼」，按 Enter（輸入不顯示）：').strip()
-    if len(encoded) > 8192:
-        raise ValueError('設定碼過長。')
-    try:
-        config = validate_config(json.loads(base64.b64decode(encoded, validate=True)))
-    except (ValueError, TypeError):
-        raise ValueError('設定碼不正確，請回工作台重新複製。') from None
+    if config is None:
+        encoded = getpass.getpass('貼上本組「課程回報設定碼」，按 Enter（輸入不顯示）：').strip()
+        if len(encoded) > 8192:
+            raise ValueError('設定碼過長。')
+        try:
+            config = validate_config(json.loads(base64.b64decode(encoded, validate=True)))
+        except (ValueError, TypeError):
+            raise ValueError('設定碼不正確，請回工作台重新複製。') from None
+    else:
+        config = validate_config(config)
     if config['expected_hostname'] != hostname():
         raise CourseError('wrong_host', '這不是設定碼指定的 ' + config['expected_hostname'] + '，尚未套用。')
     launcher = home / 'pi-course'

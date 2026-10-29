@@ -141,21 +141,25 @@ def report(config, snapshot):
         raise RuntimeError('網路暫時無法連線，稍後自動重試。') from None
 
 
-def install():
+def install(config=None, report_first=True):
     if os.geteuid() != 0:
         raise ValueError('請使用 sudo python3 /tmp/pi-helper-device.py install 執行。')
-    encoded = getpass.getpass('貼上工作台提供的安裝設定碼，再按 Enter（輸入不顯示）：').strip()
-    if len(encoded) > 8192:
-        raise ValueError('安裝設定碼過長。')
-    try:
-        config = validate(json.loads(base64.b64decode(encoded, validate=True)))
-    except (ValueError, TypeError, KeyError):
-        raise ValueError('安裝設定碼不正確，請回工作台重新複製。') from None
+    if config is None:
+        encoded = getpass.getpass('貼上工作台提供的安裝設定碼，再按 Enter（輸入不顯示）：').strip()
+        if len(encoded) > 8192:
+            raise ValueError('安裝設定碼過長。')
+        try:
+            config = validate(json.loads(base64.b64decode(encoded, validate=True)))
+        except (ValueError, TypeError, KeyError):
+            raise ValueError('安裝設定碼不正確，請回工作台重新複製。') from None
+    else:
+        config = validate(config)
     if socket.gethostname().split('.')[0] != config['expected_hostname']:
         raise ValueError('這台 Pi 的主機名稱不是 ' + config['expected_hostname'] + '，請先確認組別；尚未安裝。')
     if run('systemctl', '--version')[0] != 0:
         raise ValueError('此安裝方式需要 Raspberry Pi OS 的 systemd。')
-    report(config, collect())
+    if report_first:
+        report(config, collect())
     try:
         pwd.getpwnam(ACCOUNT)
     except KeyError:

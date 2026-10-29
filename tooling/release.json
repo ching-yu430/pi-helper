@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "bootstrap_sha256": "f72ae8edbb7d9c1ac1373f3de80d92e82a81cd6f4c2e54ecf711ae42e5fef570",
+  "files": {
+    "device": "8d7c9e27aeff174f269d5c8ce88ad9f79e2dd92c92c29daeb9da5551d44c6d81",
+    "course": "a54e9fb74364ef566ec4d2bfa278d201178213cc346688fe41f6adbaf6a040b1",
+    "camera": "e53b91296f3b30883de35fa6b9486b1e83a752b69b2fd044359a40312749dd42"
+  }
+}
