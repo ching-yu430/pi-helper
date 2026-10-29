@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>共用課堂功能設定</title><link rel="stylesheet" href="course.css?v=0c2ff33aecc1"><link rel="stylesheet" href="site.css?v=0c2ff33aecc1"></head>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>共用課堂功能設定</title><link rel="stylesheet" href="course.css?v=6517efdc98c5"><link rel="stylesheet" href="site.css?v=6517efdc98c5"></head>
 <body class="page-setup"><header><div><nav class="site-nav"><a href="assistant.html">工作台管理</a><a href="index.html">課程首頁</a></nav><h1>啟用共用課堂功能</h1><p>由有 Supabase 管理權限的老師完成。</p></div></header><main>
 <section class="lesson-card"><div><h2>使用同一份安裝／升級檔</h2><ol><li>確認目前使用的 Supabase 專案，先備份資料庫。</li><li>下載完整 SQL，在該專案的 SQL Editor 貼上並執行。</li><li>成功後重新整理網站，登入工作台確認課堂與帳號，再測試求助與上課模式。</li></ol><a class="lesson-action" href="supabase/install.sql" download>下載完整安裝／升級 SQL</a><p>安裝檔會依編號執行尚未完成的升級，記錄版本與校驗碼；重跑會跳過已完成版本，錯誤時回滾整批。保留課堂、帳號、期限及回報，不會自動清除看板。</p><p>既有課堂不要執行建課檔。新專案完成安裝後，再依 <a href="docs/SUPABASE_SETUP.md">資料庫設定說明</a> 建立課堂並設定公開連線資料。不要將管理密碼或資料庫憑證貼到對話中。</p></div></section>
 <section class="lesson-card"><div><h2>個人登入與共用求助</h2><p>用原管理員密碼登入，在「課堂設定 → 登入帳號設定」新增各人的名稱與密碼。求助接手會記錄實際登入者；學生可確認結果或再次求助。</p></div></section>

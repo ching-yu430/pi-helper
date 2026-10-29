@@ -61,12 +61,12 @@ body[data-assistant-view="tools"] #groupHelp{display:none!important}body[data-as
 /* The board and settings share authentication but have separate views. */
 .dashboard-content{grid-template-columns:minmax(0,1fr)}
 .dashboard-content>[hidden]{display:none!important}
-body[data-assistant-view="settings"] main{max-width:860px;padding-bottom:max(36px,env(safe-area-inset-bottom))}
-body[data-assistant-view="settings"] main>section:not(#classroomDashboard),
-body[data-assistant-view="settings"] main>footer,
-body[data-assistant-view="settings"]>.quick-nav,
-body[data-assistant-view="settings"]>.reset-button,
-body[data-assistant-view="settings"]>.flash-tab{display:none!important}
+body:is([data-assistant-view="settings"],[data-assistant-view="approvals"]) main{max-width:860px;padding-bottom:max(36px,env(safe-area-inset-bottom))}
+body:is([data-assistant-view="settings"],[data-assistant-view="approvals"]) main>section:not(#classroomDashboard),
+body:is([data-assistant-view="settings"],[data-assistant-view="approvals"]) main>footer,
+body:is([data-assistant-view="settings"],[data-assistant-view="approvals"])>.quick-nav,
+body:is([data-assistant-view="settings"],[data-assistant-view="approvals"])>.reset-button,
+body:is([data-assistant-view="settings"],[data-assistant-view="approvals"])>.flash-tab{display:none!important}
 .classroom-settings{min-width:0}
 .flash-step>img{display:block;max-width:100%;height:auto;margin:12px auto}
 .flash-step>ol,.flash-step>pre,.flash-step>a{margin:16px}
