@@ -21,6 +21,8 @@
 
 ![模擬資料：左右配置的操作狀態卡與目前執行步驟](../assets/screenshots/workbench-details-running.png)
 
+![模擬資料：淺底與小型狀態標籤的操作卡](../assets/screenshots/workbench-operation-card.png)
+
 ## 回報的實際範圍
 
 此頁用範例資料展示介面，不會替目前工具新增監控能力。mkdir、cd、ls 仍標示「尚無獨立回報」。可顯示的設備及課程證據、逐行回報的限制，以及正式環境的 SQL 更新，見 [工作台操作紀錄](COURSE_MONITOR.md)。

@@ -639,40 +639,38 @@ body[data-assistant-view="details"]>.flash-tab { display:none!important; }
 .group-details-controls select { margin:6px 0 0; min-height:48px; }
 .group-details-controls button { min-height:48px; white-space:nowrap; }
 .group-help .group-details-title { font-size:24px; margin:0 0 18px; }
-.group-help .course-current-operation { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.38fr); gap:18px; background:var(--site-green); border:0; border-radius:24px; padding:18px; margin-bottom:10px; }
-.current-operation-main { min-width:0; border-radius:20px; padding:20px 24px; background:#d7e9dc; }
-.group-help .current-operation-main h3 { margin:0 0 14px; font-size:16px; font-weight:500; color:#294d40; }
-.group-help .current-operation-main .course-current-title { margin:0; font-size:25px; font-weight:650; line-height:1.5; color:#193b30; }
-.current-operation-meta { display:grid; grid-template-rows:1fr auto; gap:12px; min-width:0; }
-.group-help .current-operation-meta .course-overview-result { display:flex; align-items:center; justify-content:center; min-height:76px; padding:14px; margin:0; border-radius:20px; background:#edf3e9; color:#203d32; font-size:25px; font-weight:750; text-align:center; }
-.current-operation-time { display:flex; flex-direction:column; justify-content:center; gap:4px; border-radius:18px; background:#e5eee3; color:#2c473b; padding:12px 16px; }
-.current-operation-time span { font-size:12px; }
-.current-operation-time time { font-size:14px; line-height:1.5; }
-.current-operation-next { margin:10px 0 24px!important; padding:0 4px; font-size:14px; }
-.group-help .course-current-operation[data-state="issue"] { background:#8b4531; }
-.group-help .course-current-operation[data-state="issue"] .current-operation-main { background:#f8e4dc; }
-.group-help .course-current-operation[data-state="issue"] .course-overview-result { color:#813b26; background:#fff3ee; }
-.group-help .course-current-operation[data-state="stale"] { background:#80632d; }
-.group-help .course-current-operation[data-state="stale"] .current-operation-main { background:#f4e8c8; }
-.group-help .course-current-operation[data-state="stale"] .course-overview-result { background:#fff7e7; color:#72551e; }
-.group-help .course-current-operation[data-state="none"] { background:#61766a; }
-.group-help .course-current-operation[data-state="none"] .current-operation-main { background:#e8eeea; }
-.course-operation[data-current="true"] { background:#e4f0e7; border:2px solid #4a8061; box-shadow:inset 4px 0 #4a8061; }
-.course-operation[data-current="true"][data-state="running"] { background:#dceee2; }
-.course-operation[data-current="true"]:is([data-state="failed"],[data-state="cancelled"]) { background:#fff0e7; border-color:#ac684b; box-shadow:inset 4px 0 #ac684b; }
-.course-operation[data-current="true"][data-state="stale"] { background:#fff5d9; border-color:#b29040; box-shadow:inset 4px 0 #b29040; }
-.operation-current-marker { display:inline-block; vertical-align:middle; margin-left:10px; padding:2px 7px; border-radius:5px; background:#205b45; color:#fff; font-size:12px; font-weight:650; }
-.course-operation[data-state="failed"] .operation-current-marker,.course-operation[data-state="cancelled"] .operation-current-marker { background:#914b33; }
-.course-operation[data-state="stale"] .operation-current-marker { background:#80632d; }
+.group-help .course-current-operation { display:grid; grid-template-columns:minmax(0,1fr) minmax(205px,.3fr); align-items:center; gap:24px; background:#f7faf7; border:1px solid #d7e3d9; border-left:3px solid #5b856b; border-radius:14px; padding:22px 24px; margin-bottom:10px; }
+.current-operation-main { min-width:0; padding:0; background:transparent; }
+.group-help .current-operation-main h3 { margin:0 0 10px; font-size:13px; font-weight:500; color:#6a7d70; }
+.group-help .current-operation-main .course-current-title { margin:0; font-size:22px; font-weight:600; line-height:1.55; color:#244237; }
+.current-operation-meta { display:flex; flex-direction:column; align-items:flex-start; gap:12px; min-width:0; border-left:1px solid #dbe4dc; padding-left:22px; }
+.group-help .current-operation-meta .course-overview-result { display:inline-flex; align-items:center; justify-content:flex-start; gap:8px; min-height:34px; padding:5px 10px; margin:0; border-radius:7px; background:#e7f0e8; color:#326148; font-size:16px; font-weight:650; text-align:left; }
+.current-operation-meta .course-overview-result::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.current-operation-time { display:flex; flex-direction:column; gap:3px; padding:0; background:transparent; }
+.current-operation-time span { color:#758278; font-size:12px; }
+.current-operation-time time { color:#566b5e; font-size:13px; line-height:1.5; }
+.current-operation-next { margin:10px 0 24px!important; padding:0 3px; color:#5b7162; font-size:14px; font-weight:500; }
+.group-help .course-current-operation[data-state="issue"] { background:#fcf8f5; border-color:#e5d4c9; border-left-color:#b18469; }
+.group-help .course-current-operation[data-state="issue"] .course-overview-result { color:#885137; background:#f3e6dd; }
+.group-help .course-current-operation[data-state="stale"] { background:#fcfaf4; border-color:#e5dec9; border-left-color:#b29b64; }
+.group-help .course-current-operation[data-state="stale"] .course-overview-result { background:#f3eddc; color:#806b38; }
+.group-help .course-current-operation[data-state="none"] { background:#f7f8f6; border-color:#dde2da; border-left-color:#a1afa2; }
+.course-operation[data-current="true"] { background:#edf5ef; border:1px solid #91af9b; box-shadow:inset 3px 0 #72977d; }
+.course-operation[data-current="true"][data-state="running"] { background:#e7f2e9; }
+.course-operation[data-current="true"]:is([data-state="failed"],[data-state="cancelled"]) { background:#fbf2ed; border-color:#c5a28d; box-shadow:inset 3px 0 #b18a72; }
+.course-operation[data-current="true"][data-state="stale"] { background:#fbf6e8; border-color:#c8b98c; box-shadow:inset 3px 0 #b8a575; }
+.operation-current-marker { display:inline-block; vertical-align:middle; margin-left:10px; padding:2px 7px; border-radius:5px; background:#dceadf; color:#38624a; font-size:11px; font-weight:600; }
+.course-operation[data-state="failed"] .operation-current-marker,.course-operation[data-state="cancelled"] .operation-current-marker { background:#f0e0d5; color:#885137; }
+.course-operation[data-state="stale"] .operation-current-marker { background:#f0e8d2; color:#806b38; }
 .course-operation-stage h4 { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .browser-stage-marker { display:inline-block; padding:3px 8px; font-size:12px; font-weight:500; color:#365e7b; background:#edf3f8; border-radius:5px; }
 @media(max-width:720px) {
- .group-help .course-current-operation { grid-template-columns:minmax(0,1fr); border-radius:20px; gap:12px; padding:14px; }
- .current-operation-main { padding:18px; border-radius:16px; }
- .current-operation-meta { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows:auto; gap:10px; }
- .group-help .current-operation-meta .course-overview-result { font-size:21px; min-height:76px; border-radius:16px; padding:10px; }
- .current-operation-time { border-radius:16px; padding:10px 12px; }
- .group-help .current-operation-main .course-current-title { font-size:21px; }
+ .group-help .course-current-operation { grid-template-columns:minmax(0,1fr); border-radius:12px; gap:16px; padding:18px; }
+ .current-operation-main { padding:0; }
+ .current-operation-meta { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); align-items:center; gap:14px; border-left:0; border-top:1px solid #e0e6de; padding:14px 0 0; }
+ .group-help .current-operation-meta .course-overview-result { font-size:15px; min-height:34px; border-radius:7px; padding:5px 9px; width:fit-content; }
+ .current-operation-time { padding:0; }
+ .group-help .current-operation-main .course-current-title { font-size:20px; }
  .group-details-controls { align-items:stretch; gap:10px; }
  .group-details-controls button { align-self:end; font-size:13px; padding:10px; }
  .operation-current-marker { margin-left:0; margin-top:4px; margin-right:6px; }
@@ -684,16 +682,14 @@ body[data-assistant-view="details"]>.flash-tab { display:none!important; }
  .group-details-controls label { flex-basis:100%; max-width:none; }
  .group-details-controls button { width:100%; }
  .group-help .current-operation-main .course-current-title { font-size:19px; }
- .group-help .current-operation-meta .course-overview-result { font-size:19px; }
+ .group-help .current-operation-meta .course-overview-result { font-size:15px; }
  .current-operation-time time { font-size:12px; }
 }
 
-.group-help .course-current-operation[data-state="issue"] .current-operation-time { background:#f1e5df; color:#614333; }
-.group-help .course-current-operation[data-state="stale"] .current-operation-time { background:#eee5cc; color:#604c2c; }
 .course-operation[data-state="running"]:not([data-current="true"]) { background:#edf6ef; border-color:#85ab91; }
 
 .group-operation-summary .group-operation-result { display:inline-flex; padding:3px 8px; border-radius:6px; background:#eef3ee; color:#506657; font-size:13px; }
-.group-operation-summary .group-operation-result[data-state="running"] { color:#205b45; background:#dceee2; box-shadow:inset 3px 0 #4a8061; }
+.group-operation-summary .group-operation-result[data-state="running"] { color:#205b45; background:#e7f2e9; box-shadow:inset 3px 0 #4a8061; }
 .group-operation-summary .group-operation-result:is([data-state="failed"],[data-state="cancelled"]) { color:#813b26; background:#fbe5da; }
 .group-operation-summary .group-operation-result[data-state="stale"] { color:#72551e; background:#fff1cd; }
 .group-operation-summary .group-operation-result[data-state="passed"] { color:#205b45; background:#e5f1e8; }
