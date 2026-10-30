@@ -693,3 +693,49 @@ body[data-assistant-view="details"]>.flash-tab { display:none!important; }
 .group-operation-summary .group-operation-result:is([data-state="failed"],[data-state="cancelled"]) { color:#813b26; background:#fbe5da; }
 .group-operation-summary .group-operation-result[data-state="stale"] { color:#72551e; background:#fff1cd; }
 .group-operation-summary .group-operation-result[data-state="passed"] { color:#205b45; background:#e5f1e8; }
+
+/* Compact management header and scan-friendly group summaries. */
+body[data-assistant-view="details"] .dashboard-heading { display:grid; grid-template-columns:auto minmax(220px,1fr) auto; align-items:center; gap:18px; }
+body[data-assistant-view="details"] .dashboard-heading h2 { font-size:22px; margin:0; white-space:nowrap; }
+.dashboard-group-picker { min-width:0; max-width:480px; }
+.dashboard-group-picker label { font-size:12px; color:var(--site-muted); }
+.dashboard-group-picker select { min-height:44px; font-size:16px; margin:4px 0 0; background:#fff; }
+body[data-assistant-view="details"] .dashboard-actions { display:flex; align-items:center; gap:8px; }
+body[data-assistant-view="details"] .dashboard-actions button { min-width:74px; min-height:44px; padding:8px 12px; font-size:14px; }
+body[data-assistant-view="details"] .dashboard-status { border:0; padding:0; margin:8px 0 16px; text-align:right; font-size:12px; }
+body[data-assistant-view="details"] .group-details-title { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.group-details-controls { padding:0; margin:18px 0 0; border:0; }
+.group-details-controls button { width:auto; padding:8px 12px; min-height:44px; color:var(--site-muted); font-size:13px; }
+.group-card { gap:0; }
+.group-card .group-card-top { margin-bottom:12px; }
+.group-card .group-operation-summary { margin:0 0 10px; }
+.group-card .group-source { margin:0 0 4px; color:var(--site-muted); font-size:12px; }
+.group-card .group-step { font-size:18px; margin:4px 0 8px; }
+.group-card .group-next-action { margin:6px 0; font-size:13px; line-height:1.65; }
+.group-card .group-report-time { margin-top:10px; color:var(--site-muted); font-size:12px; }
+.group-card .group-device-summary { display:inline-flex; gap:5px; align-items:center; color:var(--site-muted); font-size:12px; margin:0 0 8px; }
+.group-card .group-device-summary[data-state="fresh"]::before { content:''; width:6px; height:6px; border-radius:50%; background:#689473; flex-shrink:0; }
+.group-card .group-device-summary[data-state="stale"] { color:#85652d; }
+.group-card .group-browser-state,.group-card .group-browser-step { font-size:12px; color:var(--site-muted); margin:0 0 8px; }
+.group-card .group-help-summary { padding:8px 10px; margin:0 0 8px; background:#fff5dc; border-radius:7px; color:#76582b; font-size:13px; }
+.group-card .group-assignee { margin:0 0 8px; font-size:12px; color:var(--site-muted); }
+.tool-management-queue,.tool-management-settings { min-width:0; }
+.tool-management-queue h3,.tool-management-settings>h3 { font-size:18px; margin:0 0 12px; }
+.tool-management-settings { margin-top:24px; padding-top:20px; border-top:1px solid var(--site-border); }
+.tool-management-settings .settings-section { margin:10px 0; border:1px solid var(--site-border); border-radius:12px; padding:12px 16px; background:#fff; }
+.tool-management-settings .settings-section>summary { font-size:16px; }
+.tool-management-settings .settings-section p { font-size:14px; }
+.tool-management-settings .legacy-tool-settings .settings-section { padding:10px 12px; }
+.tool-management-settings .device-installation { min-width:0; }
+.tool-management-settings .device-installation textarea { width:100%; }
+@media(max-width:720px) {
+ body[data-assistant-view="details"] .dashboard-heading { grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+ .dashboard-group-picker { grid-column:1 / -1; grid-row:2; max-width:none; }
+ body[data-assistant-view="details"] .dashboard-status { margin:6px 0 14px; text-align:left; }
+ body[data-assistant-view="details"] .dashboard-heading h2 { font-size:21px; }
+ body[data-assistant-view="details"] .dashboard-actions button { min-width:60px; padding:8px; font-size:13px; }
+ .group-details-controls button { width:auto; }
+ .tool-management-settings .settings-section { padding:10px 12px; }
+}
+
+.dashboard-stats .stat-issue { background:#fff4ef; }

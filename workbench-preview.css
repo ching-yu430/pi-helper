@@ -11,7 +11,7 @@
 .preview-scenario-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .preview-scenario-actions button { background:#fff; margin-top:10px; min-height:44px; }
 .preview-watermark { position:fixed; z-index:90; bottom:12px; right:12px; pointer-events:none; background:#745116; color:#fff; padding:3px 9px; border-radius:6px; font-size:12px; opacity:.85; }
-body[data-preview] .assistant-views button:nth-child(n+3),body[data-preview] .assistant-header-links,body[data-preview] #flashOpen,body[data-preview] .flash-tab,body[data-preview] .dashboard-login,body[data-preview] .dashboard-actions button:last-child { display:none!important; }
+body[data-preview] .assistant-views button:nth-child(3),body[data-preview] .assistant-views button:nth-child(4),body[data-preview] .assistant-header-links,body[data-preview] #flashOpen,body[data-preview] .flash-tab,body[data-preview] .dashboard-login,body[data-preview] .dashboard-actions button:last-child { display:none!important; }
 body[data-preview] .dashboard-actions { display:flex; }
 body[data-preview] .dashboard-actions button { min-width:110px; }
 body[data-preview] header { padding:16px 22px; }

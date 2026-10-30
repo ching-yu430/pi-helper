@@ -77,3 +77,6 @@
  .camera-navigation { gap:8px; }
 }
 @media(max-width:360px) { .page-camera header h1 { font-size:18px; } .page-camera .camera-header { gap:6px; } }
+.camera-editor-intro { margin:0 0 10px; color:var(--site-ink); font-size:15px; }
+#cameraSaveAs { display:flex; flex-direction:column; gap:5px; font-size:14px; }
+#cameraSaveAs code { color:var(--site-green); font-size:15px; font-weight:600; }
