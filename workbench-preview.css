@@ -1,0 +1,18 @@
+.preview-controls { background:#fff4d7; color:#493813; border-bottom:2px solid #cfad57; padding:14px 18px; }
+.preview-control-inner { max-width:1180px; margin:auto; }
+.preview-warning { margin:0 0 10px; font-size:14px; }
+.preview-warning strong { display:inline-block; background:#745116; color:#fff; border-radius:6px; padding:2px 8px; }
+.preview-picker { display:flex; gap:12px; align-items:end; }
+.preview-picker label { flex:1; max-width:650px; }
+.preview-picker select { background:#fff; margin:4px 0 0; }
+.preview-picker button { background:#fff; white-space:nowrap; }
+.preview-picker a { min-height:48px; display:flex; align-items:center; font-size:14px; }
+#previewHint { margin:10px 0 0; font-size:14px; }
+.preview-scenario-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.preview-scenario-actions button { background:#fff; margin-top:10px; min-height:44px; }
+.preview-watermark { position:fixed; z-index:90; bottom:12px; right:12px; pointer-events:none; background:#745116; color:#fff; padding:3px 9px; border-radius:6px; font-size:12px; opacity:.85; }
+body[data-preview] .assistant-views,body[data-preview] .assistant-header-links,body[data-preview] #flashOpen,body[data-preview] .flash-tab,body[data-preview] .dashboard-login,body[data-preview] .dashboard-actions button:last-child { display:none!important; }
+body[data-preview] .dashboard-actions { display:flex; }
+body[data-preview] .dashboard-actions button { min-width:110px; }
+body[data-preview] header { padding:16px 22px; }
+@media(max-width:600px) { .preview-controls { padding:12px; } .preview-picker { flex-wrap:wrap; gap:8px; } .preview-picker label { flex-basis:100%; max-width:none; } .preview-warning,#previewHint { font-size:13px; } .preview-picker button { flex:1; } .preview-picker a { flex:1; justify-content:center; } body[data-preview] header { padding:14px 16px; } }

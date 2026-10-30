@@ -1,47 +1,40 @@
-# 工作台收到 Pi 回報後的畫面
+# 工作台情境預覽
 
-以下使用實際網站介面與隔離資料庫產生，**全部為模擬資料，不是真實 Pi 測試結果**。組別情境、IP、套件版本、照片資訊與時間都是範例；沒有寫入正式課堂。
+[開啟可操作的預覽](https://ching-yu430.github.io/pi-helper/workbench-preview.html)。不需樹莓派、登入密碼或 Supabase 更新。
 
-## 看板總覽
+**全部為模擬資料，不是真實 Pi 的測試成果。** 預覽使用與正式工作台相同的畫面程式，回報資料與求助狀態只存在這個預覽頁的記憶體。頁面不載入正式 Supabase 設定或連線程式，並用 CSP 禁止資料連線；重新整理會還原情境。
 
-![工作台前三組示意](../assets/screenshots/workbench-camera-overview.png)
+## 建議先試這四個情境
 
-- 第 01 組：學生自行確認完成；課程工具另有預覽、照片及正常結束的通過紀錄。
-- 第 02 組：學生求助，環境檢查回報找不到 USB 相機。
-- 第 03 組：套件安裝執行中，等候後續回報。
+1. [Python 失敗與重試](https://ching-yu430.github.io/pi-helper/workbench-preview.html?scenario=3)：展開「執行紀錄」，比較過去成功與最新失敗；按「模擬重試成功」，再看結果與紀錄改變。
+2. [相機問題與求助](https://ching-yu430.github.io/pi-helper/workbench-preview.html?scenario=4)：查看本組不會接手。展開本組求助，按接手，再按「請學生再試一次」及上方「模擬學生確認解決」。也可以先模擬接回相機，觀察設備通過並不會自行結束求助。
+3. [回報中斷](https://ching-yu430.github.io/pi-helper/workbench-preview.html?scenario=5)：看到的是「狀態待確認」，不是失敗或關機；可模擬恢復。
+4. [拍照課檢查完成](https://ching-yu430.github.io/pi-helper/workbench-preview.html?scenario=6)：查看照片名稱、尺寸及正常結束結果；照片品質和 Windows 下載另標學生自行確認。
 
-上方統計與組別標籤來自學生網頁回報；「Pi 設備」與課程結果分開呈現。學生按完成，不會替設備新增驗證通過紀錄。
+上方選單另有資料夾成功、套件安裝中、只有自行確認、尚無紀錄及剛安裝課堂工具等情境。「重設預覽」會還原所有模擬操作；「離開預覽」才回到正式工作台。
 
-## 點進組別：查看實際結果
+![模擬資料：九組不同狀況的工作台總覽](../assets/screenshots/workbench-preview-overview.png)
 
-![成功執行的課程結果示意](../assets/screenshots/workbench-camera-success.png)
+![模擬資料：Python 失敗及過去成功的執行紀錄](../assets/screenshots/workbench-preview-retry.png)
 
-實際能看到的資料包括：
+## 回報的實際範圍
 
-| 項目 | 工作台顯示內容 |
-| --- | --- |
-| 背景設備回報 | 主機名稱、SSH／遠端桌面服務、套件、X11 設定、Python、USB 相機數量、可用空間與最後回報時間 |
-| 課程工具回報 | 位置與資料夾檢查、hello.py／write_note.py 執行結果、安裝狀態、OpenCV 與相機檢查、預覽、拍照及正常結束 |
-| 拍照成果 | 本次照片檔名、實際尺寸、檔案大小、可讀性驗證、MJPEG 警告次數；不顯示照片內容 |
-| 備用 IP | 最後一次位置檢查回報的區域網路 IPv4，可複製 SSH 指令；仍優先使用 .local |
-| 錯誤 | 例如找不到程式、組別文字不符、套件安裝失敗、相機沒有影像、照片尺寸不符等摘要 |
+此頁用範例資料展示介面，不會替目前工具新增監控能力。mkdir、cd、ls 仍標示「尚無獨立回報」。可顯示的設備及課程證據、逐行回報的限制，以及正式環境的 SQL 更新，見 [工作台操作紀錄](COURSE_MONITOR.md)。
 
-這是課程工具範圍內的執行結果；不包含學生所有指令、完整終端機歷史、桌面畫面或相機即時影像。照片清晰度與 Windows 是否已下載開啟，仍需學生自行確認。
+## 維護與測試
 
-## 有問題：查看求助與檢查結果
-
-![找不到相機的求助示意](../assets/screenshots/workbench-camera-help.png)
-
-助教點進該組，先看求助內容，再核對設備與課程檢查結果，接手後協助學生重試。上次通過的結果不保證設備目前仍維持相同狀態。
-
-SQL 更新完成後，仍需在 Pi 安裝背景設備回報與 user 身分課程工具，才能出現以上資料。背景設備約每 30 秒回報；課程工具在執行指定操作時回報，長時間套件工作另有進行中回報。超過 90 秒未收到資料只表示待確認，不會判定設備已關機或故障。
-
-## 重產示意圖
-
-依 README 安裝 Playwright、Chromium 與 PGlite，啟動本機網站後執行：
+`workbench-preview.html` 由正式 assistant.html 產生，改用 workbench-preview.js 的本機模擬介面；CSS 與看板、設備、課程和求助元件仍共用正式來源。更新正式頁面後執行：
 
 ```sh
-PI_HELPER_TEST_URL=http://127.0.0.1:8001/ PGLITE_ROOT=/tmp/pi-test/node_modules/@electric-sql/pglite node scripts/capture-workbench-demo.cjs
+node scripts/build-workbench-preview.cjs
+node scripts/version-assets.cjs
+node scripts/build-workbench-preview.cjs --check
 ```
 
-腳本會將 Supabase 請求導向暫存記憶體資料庫，只將三張標示模擬的圖片寫入 assets/screenshots，不操作正式 Supabase。
+本機網站啟動後，使用 Playwright 與 Chromium 測試九組情境、重試、求助完整流程、直接連結、重設及手機排版；測試攔截所有外部 HTTPS，確認沒有正式資料連線：
+
+```sh
+PI_HELPER_TEST_URL=http://127.0.0.1:8021/ node tests/run-workbench-preview-browser.cjs
+```
+
+加上 `PI_HELPER_CAPTURE_PREVIEW=1` 會更新本文件兩張標示模擬資料的截圖；也可沿用 `node scripts/capture-workbench-demo.cjs`。截圖是瀏覽器實際渲染結果，內容仍是模擬資料。

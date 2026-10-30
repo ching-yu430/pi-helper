@@ -12,6 +12,7 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/run-tests.cjs
+      - run: node scripts/build-workbench-preview.cjs --check
       - run: node scripts/build-sql.cjs --check
       - run: node scripts/version-assets.cjs --check
       - run: node scripts/build-tool-release.cjs --check
