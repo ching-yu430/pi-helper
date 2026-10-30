@@ -2,6 +2,21 @@
 'use strict';
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e};
 function lines(text){return String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean)}
+// A callback must return true only after a confirmed clipboard write.
+function bindCopy(button,text,{source=null,status=null,onCopy,success='已複製。',failure='無法自動複製，請選取內容後手動複製。'}={}){
+ const label=button.textContent;let sequence=0;
+ button.type='button';if(status){status.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite')}
+ button.onclick=async()=>{const attempt=++sequence;button.disabled=true;button.dataset.copyState='copying';let copied=false;
+  try{const value=typeof text==='function'?text():text;if(onCopy)copied=await onCopy(value,source)===true;else{await navigator.clipboard.writeText(value);copied=true}}catch{}
+  if(attempt!==sequence)return;button.disabled=false;button.dataset.copyState=copied?'success':'failed';button.textContent=copied?'已複製':'請手動複製';
+  if(!copied&&source){try{const range=document.createRange();range.selectNodeContents(source);getSelection().removeAllRanges();getSelection().addRange(range)}catch{}}
+  if(status){status.textContent=copied?success:failure;status.dataset.copyState=copied?'success':'failed';status.hidden=false}
+  setTimeout(()=>{if(attempt===sequence){button.textContent=label;button.dataset.copyState=''}},2200);
+  return copied;
+ };
+ button.resetCopyFeedback=()=>{sequence++;button.disabled=false;button.textContent=label;button.dataset.copyState='';if(status){status.hidden=true;status.dataset.copyState=''}};
+ return button;
+}
 function build(text,{onCopy,buttonClass='',guided=false,pasteTarget='指定的視窗',pasteKeys='Ctrl + V',results=[],onStepChange,compact=false,commandTitles=[],navigation=true,copyLabel=null,showResult=true}={}){
  const commands=lines(text),box=make('div',undefined,'command-steps');
  if(compact)box.classList.add('command-compact');
@@ -10,9 +25,11 @@ function build(text,{onCopy,buttonClass='',guided=false,pasteTarget='指定的�
  const cards=commands.map((command,index)=>{
   const step=make('div',undefined,'command-step'),label=make('p',compact?(commandTitles[index]||'指令 '+(index+1)):'第 '+(index+1)+' 行：'+(labels[command]||(index===0?'先執行這一行':'再執行這一行')),'command-step-label'),pre=make('pre',command),button=make('button',copyLabel||'複製第 '+(index+1)+' 行',('command-copy '+buttonClass).trim());
   const feedback=make('p',compact?pasteKeys+' 貼上 → Enter':undefined,'command-copy-feedback');feedback.hidden=!compact;feedback.setAttribute('role','status');
-  button.type='button';button.setAttribute('aria-label','複製第 '+(index+1)+' 行：'+command);button.onclick=async()=>{const copied=await onCopy?.(command,pre);if(guided&&copied===true){feedback.textContent=compact?'已複製，到'+pasteTarget+'按 '+pasteKeys+' → Enter':'複製好了。切到'+pasteTarget+'，按 '+pasteKeys+' 貼上，再按 Enter。';feedback.hidden=false}};
-  step.append(label,pre,button);box.append(step);
-  if(guided){step.append(feedback);const result=make('p',(compact?'完成時：':'這行做完會看到：')+(results[index]||'文字停止捲動，又出現可以輸入指令的位置。'),'command-line-result');if(showResult)step.append(result)}
+  button.setAttribute('aria-label','複製第 '+(index+1)+' 行：'+command);
+  bindCopy(button,command,{source:pre,status:feedback,onCopy,success:guided?'已複製，到'+pasteTarget+'按 '+pasteKeys+' → Enter。':'已複製這一行，請到指定視窗貼上執行。'});
+  if(compact){feedback.textContent=pasteKeys+' 貼上 → Enter';feedback.hidden=false}
+  step.append(label,pre,button,feedback);box.append(step);
+  if(guided){const result=make('p',(compact?'完成時：':'這行做完會看到：')+(results[index]||'文字停止捲動，又出現可以輸入指令的位置。'),'command-line-result');if(showResult)step.append(result)}
   return step;
  });
  if(guided&&commands.length){
@@ -23,5 +40,5 @@ function build(text,{onCopy,buttonClass='',guided=false,pasteTarget='指定的�
  }
  return box;
 }
-window.PiCommandSteps={lines,build};
+window.PiCommandSteps={lines,build,bindCopy};
 })();

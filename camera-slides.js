@@ -3,10 +3,11 @@
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e};
 function build(index,host,onStatus){
  const stage=PiCameraCourse.stages[index],box=make('div',undefined,'camera-slide-instructions'),fill=text=>PiCameraCourse.fill(text,host);
- if(stage.code)box.append(make('p','在 Thonny 按 Ctrl + N 輸入程式，再按 Ctrl + S 存成 '+stage.view.saveAs,'muted'),make('pre',fill(stage.code)));
+ async function copy(text,pre){try{await navigator.clipboard.writeText(text);onStatus('已複製，請貼到指定的視窗。',true);return true}catch{try{const range=document.createRange();range.selectNodeContents(pre);getSelection().removeAllRanges();getSelection().addRange(range)}catch{}onStatus('無法自動複製，請手動複製已選取的內容。',true);return false}}
+ if(stage.code){const pre=make('pre',fill(stage.code)),button=make('button','複製程式碼','command-copy');PiCommandSteps.bindCopy(button,fill(stage.code),{source:pre,onCopy:copy});box.append(make('p','在 Thonny 按 Ctrl + N 輸入程式，再按 Ctrl + S 存成 '+stage.view.saveAs,'muted'),pre,button)}
  if(stage.commands.length){
-  const label=make('label','這個階段的指令（一次只做一行）'),select=make('select'),pre=make('pre'),copy=make('button','複製目前這一行','command-copy');copy.type='button';
-  stage.commands.forEach((command,i)=>{const option=make('option','第 '+(i+1)+' / '+stage.commands.length+' 行');option.value=String(i);select.append(option)});label.append(select);const render=()=>pre.textContent=fill(stage.commands[Number(select.value)||0]);select.onchange=render;copy.onclick=async()=>{try{await navigator.clipboard.writeText(pre.textContent);onStatus('已複製目前這一行，請在指定視窗貼上後按 Enter。',true)}catch{const range=document.createRange();range.selectNodeContents(pre);getSelection().removeAllRanges();getSelection().addRange(range);onStatus('請手動複製已選取的這一行。',true)}};box.append(label,pre,copy);render();
+  const label=make('label','這個階段的指令（一次只做一行）'),select=make('select'),pre=make('pre'),button=make('button','複製目前這一行','command-copy');
+  stage.commands.forEach((command,i)=>{const option=make('option','第 '+(i+1)+' / '+stage.commands.length+' 行');option.value=String(i);select.append(option)});label.append(select);const render=()=>{pre.textContent=fill(stage.commands[Number(select.value)||0]);button.resetCopyFeedback?.()};select.onchange=render;PiCommandSteps.bindCopy(button,()=>pre.textContent,{source:pre,onCopy:copy});box.append(label,pre,button);render();
  }
  return box;
 }

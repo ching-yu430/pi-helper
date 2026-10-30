@@ -739,3 +739,5 @@ body[data-assistant-view="details"] .group-details-title { position:absolute; wi
 }
 
 .dashboard-stats .stat-issue { background:#fff4ef; }
+
+.command-copy-feedback[data-copy-state="failed"] { color:#81551f; background:#fff7e8; border-left-color:#b28a42; }

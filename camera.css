@@ -80,3 +80,14 @@
 .camera-editor-intro { margin:0 0 10px; color:var(--site-ink); font-size:15px; }
 #cameraSaveAs { display:flex; flex-direction:column; gap:5px; font-size:14px; }
 #cameraSaveAs code { color:var(--site-green); font-size:15px; font-weight:600; }
+.camera-copy-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:stretch; gap:10px; }
+.camera-copy-row .command-copy { min-width:112px; min-height:48px; padding:10px 14px; text-align:center; font-size:14px; }
+.camera-path-copy { align-items:center; margin-top:4px; }
+.camera-copy-feedback { display:block; margin:7px 0 0; color:#326148; font-size:13px; }
+@media(max-width:600px) {
+ .camera-copy-row { grid-template-columns:minmax(0,1fr); gap:8px; }
+ .camera-copy-row .command-copy { justify-self:end; min-height:44px; }
+ .camera-path-copy .command-copy { justify-self:end; }
+}
+
+.camera-copy-feedback[data-copy-state="failed"] { color:#81551f; }
