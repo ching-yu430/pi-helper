@@ -77,7 +77,7 @@ window.PiSyncAPI={configured:()=>true,pollMs:5000,async rpc(name,args={}){
 }};
 function dismissNotice(){const dialog=document.getElementById('helpRequestDialog');if(dialog?.open)dialog.querySelector('.help-request-actions button:last-child')?.click()}
 async function refresh(){await document.querySelector('.dashboard-actions button')?.onclick();dismissNotice()}
-function showScenario(group){current=group;document.getElementById('previewScenario').value=String(group);const sample=scenarios.find(s=>s.group===group);document.getElementById('previewHint').textContent=sample.hint;
+function showScenario(group){const url=new URL(location.href);if(group)url.searchParams.set('scenario',String(group));else url.searchParams.delete('scenario');history.replaceState(null,'',url);current=group;document.getElementById('previewScenario').value=String(group);const sample=scenarios.find(s=>s.group===group);document.getElementById('previewHint').textContent=sample.hint;
  const advance=document.getElementById('previewAdvance');advance.textContent=sample.advance||'';advance.hidden=!sample.advance;advance.disabled=chosen.has(group);
  document.getElementById('previewStudentConfirm').hidden=group!==4;
  dismissNotice();if(!group){document.querySelector('.assistant-views button').click();return}
@@ -85,7 +85,7 @@ function showScenario(group){current=group;document.getElementById('previewScena
 }
 document.addEventListener('DOMContentLoaded',async()=>{
  const select=document.getElementById('previewScenario');select.replaceChildren();for(const sample of scenarios){const option=document.createElement('option');option.value=String(sample.group);option.textContent=sample.title;select.append(option)}
- select.onchange=()=>showScenario(Number(select.value));document.getElementById('previewReset').onclick=()=>{location.href='workbench-preview.html'};
+ select.onchange=()=>showScenario(Number(select.value));document.getElementById('detailGroupSelect').addEventListener('change',event=>showScenario(Number(event.target.value)));document.getElementById('previewReset').onclick=()=>{location.href='workbench-preview.html'};
  document.getElementById('previewAdvance').onclick=async()=>{
   if(chosen.has(current))return;const group=current,button=document.getElementById('previewAdvance');button.disabled=true;
   if(group===2){const run=courses[1].tasks.find(t=>t.task==='install').run_id;record(2,'install','passed',{exit_code:0},run)}

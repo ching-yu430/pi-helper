@@ -11,8 +11,10 @@
 .preview-scenario-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .preview-scenario-actions button { background:#fff; margin-top:10px; min-height:44px; }
 .preview-watermark { position:fixed; z-index:90; bottom:12px; right:12px; pointer-events:none; background:#745116; color:#fff; padding:3px 9px; border-radius:6px; font-size:12px; opacity:.85; }
-body[data-preview] .assistant-views,body[data-preview] .assistant-header-links,body[data-preview] #flashOpen,body[data-preview] .flash-tab,body[data-preview] .dashboard-login,body[data-preview] .dashboard-actions button:last-child { display:none!important; }
+body[data-preview] .assistant-views button:nth-child(n+3),body[data-preview] .assistant-header-links,body[data-preview] #flashOpen,body[data-preview] .flash-tab,body[data-preview] .dashboard-login,body[data-preview] .dashboard-actions button:last-child { display:none!important; }
 body[data-preview] .dashboard-actions { display:flex; }
 body[data-preview] .dashboard-actions button { min-width:110px; }
 body[data-preview] header { padding:16px 22px; }
 @media(max-width:600px) { .preview-controls { padding:12px; } .preview-picker { flex-wrap:wrap; gap:8px; } .preview-picker label { flex-basis:100%; max-width:none; } .preview-warning,#previewHint { font-size:13px; } .preview-picker button { flex:1; } .preview-picker a { flex:1; justify-content:center; } body[data-preview] header { padding:14px 16px; } }
+
+body[data-preview] .assistant-views { display:flex; }

@@ -625,3 +625,75 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .course-report-limits { margin:16px 0; color:var(--site-muted); font-size:13px; }
 @media(max-width:720px) { .dashboard-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .dashboard-stats .stat-item:last-child { grid-column:auto; flex-direction:column; align-items:flex-start; gap:0; } }
 @media(max-width:420px) { .group-help-requests,.group-device-details { padding:10px; } .course-operation { padding:0 10px; } .operation-status { max-width:7em; } }
+
+/* A dedicated group-details tab shares the authenticated dashboard shell. */
+body[data-assistant-view="details"] main { max-width:1180px; padding-bottom:max(36px,env(safe-area-inset-bottom)); }
+body[data-assistant-view="details"] main>section:not(#classroomDashboard),
+body[data-assistant-view="details"] main>footer,
+body[data-assistant-view="details"]>.quick-nav,
+body[data-assistant-view="details"]>.reset-button,
+body[data-assistant-view="details"]>.flash-tab { display:none!important; }
+.group-details-panel { min-width:0; }
+.group-details-controls { display:flex; align-items:end; gap:16px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid var(--site-border); }
+.group-details-controls label { flex:1; max-width:580px; font-size:14px; }
+.group-details-controls select { margin:6px 0 0; min-height:48px; }
+.group-details-controls button { min-height:48px; white-space:nowrap; }
+.group-help .group-details-title { font-size:24px; margin:0 0 18px; }
+.group-help .course-current-operation { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.38fr); gap:18px; background:var(--site-green); border:0; border-radius:24px; padding:18px; margin-bottom:10px; }
+.current-operation-main { min-width:0; border-radius:20px; padding:20px 24px; background:#d7e9dc; }
+.group-help .current-operation-main h3 { margin:0 0 14px; font-size:16px; font-weight:500; color:#294d40; }
+.group-help .current-operation-main .course-current-title { margin:0; font-size:25px; font-weight:650; line-height:1.5; color:#193b30; }
+.current-operation-meta { display:grid; grid-template-rows:1fr auto; gap:12px; min-width:0; }
+.group-help .current-operation-meta .course-overview-result { display:flex; align-items:center; justify-content:center; min-height:76px; padding:14px; margin:0; border-radius:20px; background:#edf3e9; color:#203d32; font-size:25px; font-weight:750; text-align:center; }
+.current-operation-time { display:flex; flex-direction:column; justify-content:center; gap:4px; border-radius:18px; background:#e5eee3; color:#2c473b; padding:12px 16px; }
+.current-operation-time span { font-size:12px; }
+.current-operation-time time { font-size:14px; line-height:1.5; }
+.current-operation-next { margin:10px 0 24px!important; padding:0 4px; font-size:14px; }
+.group-help .course-current-operation[data-state="issue"] { background:#8b4531; }
+.group-help .course-current-operation[data-state="issue"] .current-operation-main { background:#f8e4dc; }
+.group-help .course-current-operation[data-state="issue"] .course-overview-result { color:#813b26; background:#fff3ee; }
+.group-help .course-current-operation[data-state="stale"] { background:#80632d; }
+.group-help .course-current-operation[data-state="stale"] .current-operation-main { background:#f4e8c8; }
+.group-help .course-current-operation[data-state="stale"] .course-overview-result { background:#fff7e7; color:#72551e; }
+.group-help .course-current-operation[data-state="none"] { background:#61766a; }
+.group-help .course-current-operation[data-state="none"] .current-operation-main { background:#e8eeea; }
+.course-operation[data-current="true"] { background:#e4f0e7; border:2px solid #4a8061; box-shadow:inset 4px 0 #4a8061; }
+.course-operation[data-current="true"][data-state="running"] { background:#dceee2; }
+.course-operation[data-current="true"]:is([data-state="failed"],[data-state="cancelled"]) { background:#fff0e7; border-color:#ac684b; box-shadow:inset 4px 0 #ac684b; }
+.course-operation[data-current="true"][data-state="stale"] { background:#fff5d9; border-color:#b29040; box-shadow:inset 4px 0 #b29040; }
+.operation-current-marker { display:inline-block; vertical-align:middle; margin-left:10px; padding:2px 7px; border-radius:5px; background:#205b45; color:#fff; font-size:12px; font-weight:650; }
+.course-operation[data-state="failed"] .operation-current-marker,.course-operation[data-state="cancelled"] .operation-current-marker { background:#914b33; }
+.course-operation[data-state="stale"] .operation-current-marker { background:#80632d; }
+.course-operation-stage h4 { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.browser-stage-marker { display:inline-block; padding:3px 8px; font-size:12px; font-weight:500; color:#365e7b; background:#edf3f8; border-radius:5px; }
+@media(max-width:720px) {
+ .group-help .course-current-operation { grid-template-columns:minmax(0,1fr); border-radius:20px; gap:12px; padding:14px; }
+ .current-operation-main { padding:18px; border-radius:16px; }
+ .current-operation-meta { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows:auto; gap:10px; }
+ .group-help .current-operation-meta .course-overview-result { font-size:21px; min-height:76px; border-radius:16px; padding:10px; }
+ .current-operation-time { border-radius:16px; padding:10px 12px; }
+ .group-help .current-operation-main .course-current-title { font-size:21px; }
+ .group-details-controls { align-items:stretch; gap:10px; }
+ .group-details-controls button { align-self:end; font-size:13px; padding:10px; }
+ .operation-current-marker { margin-left:0; margin-top:4px; margin-right:6px; }
+ .course-operation[data-current="true"] > summary > span:first-child { display:flex; flex-direction:column; align-items:flex-start; }
+ .page-workbench .assistant-views #installationApprovalTab { grid-column:1 / -1; }
+}
+@media(max-width:400px) {
+ .group-details-controls { flex-wrap:wrap; }
+ .group-details-controls label { flex-basis:100%; max-width:none; }
+ .group-details-controls button { width:100%; }
+ .group-help .current-operation-main .course-current-title { font-size:19px; }
+ .group-help .current-operation-meta .course-overview-result { font-size:19px; }
+ .current-operation-time time { font-size:12px; }
+}
+
+.group-help .course-current-operation[data-state="issue"] .current-operation-time { background:#f1e5df; color:#614333; }
+.group-help .course-current-operation[data-state="stale"] .current-operation-time { background:#eee5cc; color:#604c2c; }
+.course-operation[data-state="running"]:not([data-current="true"]) { background:#edf6ef; border-color:#85ab91; }
+
+.group-operation-summary .group-operation-result { display:inline-flex; padding:3px 8px; border-radius:6px; background:#eef3ee; color:#506657; font-size:13px; }
+.group-operation-summary .group-operation-result[data-state="running"] { color:#205b45; background:#dceee2; box-shadow:inset 3px 0 #4a8061; }
+.group-operation-summary .group-operation-result:is([data-state="failed"],[data-state="cancelled"]) { color:#813b26; background:#fbe5da; }
+.group-operation-summary .group-operation-result[data-state="stale"] { color:#72551e; background:#fff1cd; }
+.group-operation-summary .group-operation-result[data-state="passed"] { color:#205b45; background:#e5f1e8; }

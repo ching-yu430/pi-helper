@@ -11,11 +11,15 @@
 3. [回報中斷](https://ching-yu430.github.io/pi-helper/workbench-preview.html?scenario=5)：看到的是「狀態待確認」，不是失敗或關機；可模擬恢復。
 4. [拍照課檢查完成](https://ching-yu430.github.io/pi-helper/workbench-preview.html?scenario=6)：查看照片名稱、尺寸及正常結束結果；照片品質和 Windows 下載另標學生自行確認。
 
-上方選單另有資料夾成功、套件安裝中、只有自行確認、尚無紀錄及剛安裝課堂工具等情境。「重設預覽」會還原所有模擬操作；「離開預覽」才回到正式工作台。
+工作台上方的「詳細內容」可用組別選單切換，並用底色凸顯目前回報的操作。
+
+上方情境選單另有資料夾成功、套件安裝中、只有自行確認、尚無紀錄及剛安裝課堂工具等情境。「重設預覽」會還原所有模擬操作；「離開預覽」才回到正式工作台。
 
 ![模擬資料：九組不同狀況的工作台總覽](../assets/screenshots/workbench-preview-overview.png)
 
 ![模擬資料：Python 失敗及過去成功的執行紀錄](../assets/screenshots/workbench-preview-retry.png)
+
+![模擬資料：左右配置的操作狀態卡與目前執行步驟](../assets/screenshots/workbench-details-running.png)
 
 ## 回報的實際範圍
 
