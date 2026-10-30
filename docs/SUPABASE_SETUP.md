@@ -19,7 +19,7 @@
 
 ## 版本與維護
 
-來源統一放在 `supabase/migrations/`，以 001～016 排序。`supabase/install.sql` 由 `node scripts/build-sql.cjs` 產生；在 SQL Editor 使用這份安裝檔，不要挑選舊來源重跑。
+來源統一放在 `supabase/migrations/`，以 001～017 排序。`supabase/install.sql` 由 `node scripts/build-sql.cjs` 產生；在 SQL Editor 使用這份安裝檔，不要挑選舊來源重跑。
 
 `pi_helper.schema_migrations` 記錄檔名、版本、SHA-256 與執行時間，開啟 RLS，匿名使用者不可讀寫。已完成的版本會跳過；校驗碼不符、歷史有缺口或安裝檔比資料庫舊時拒絕執行。安裝期間以交易鎖避免兩人同時升級。
 
@@ -46,3 +46,7 @@
 `015_camera_check_mode.sql` 新增全班共用自動檢查開關，預設關閉。後台「課堂設定 → 學生進度」可儲存，約 15 秒內套用。舊資料庫在更新前先採手動下一步，後台提供最新 `supabase/install.sql` 的複製／下載；仍只需執行這一份安裝檔。既有教材開放、老師指定、暫停、照片及驗證紀錄會保留。
 
 `016_tool_assignments.sql` 新增統一工具版本、分組指派、助教密碼／手機核准、一次性領取與安裝結果。只存授權雜湊，更新可沿用原設備與課程憑證。更新仍使用同一份 `supabase/install.sql`，不需挑選來源 SQL。詳見 [統一安裝說明](CLASSROOM_TOOLS.md)。
+
+## 課程執行紀錄
+
+`017_course_run_history.sql` 由已驗證的課程事件建立教師專用執行紀錄，每組每項操作保留最近 10 次。開始、結束、錯誤分類與檢查證據來自實際回報，不收集完整終端機輸出。既有結果可查，但沒有開始事件的舊結果不補造時間。更新使用同一份 `supabase/install.sql`，不必重裝 Pi 工具。未升級仍顯示最新操作結果。

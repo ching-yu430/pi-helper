@@ -67,7 +67,7 @@ function createTeacher({settings,request}){
  };
  disable.onclick=async()=>{if(busy||!active)return;const group=Number(select.value),token=epoch;if(!confirm('停用第 '+group+' 組的設備回報？Pi 的 SSH 與遠端桌面仍可使用。'))return;busy=true;pair.disabled=disable.disabled=select.disabled=true;try{await request('pi_helper_teacher_disable_device',{p_group_no:group});if(token!==epoch)return;setup.replaceChildren();setup.hidden=true;message.textContent='已停用此組設備回報。需要恢復時，重新產生設定碼並安裝。';await refresh()}catch(e){if(token===epoch)message.textContent='停用失敗：'+e.message}finally{if(token===epoch){busy=false;pair.disabled=disable.disabled=select.disabled=false}}};
  function reset(){epoch++;active=busy=false;rows.clear();error='';setup.replaceChildren();setup.hidden=true;message.textContent='';pair.disabled=disable.disabled=select.disabled=false;paint()}
- return {refresh,attach,reset};
+ return {refresh,attach,reset,summary(group){const row=rows.get(group);return {...status(row,error),services:row?.enabled&&row.snapshot?'SSH：'+service(row.snapshot.ssh)+' · 遠端桌面：'+service(row.snapshot.xrdp):''}}};
 }
 // Student queries contain no teacher password, device token or other groups' data.
 let student=null,studentEpoch=0,studentData=null,studentError='',studentFetched=0;

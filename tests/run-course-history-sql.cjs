@@ -1,0 +1,26 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const pkg=process.env.PGLITE_ROOT||'@electric-sql/pglite',{PGlite}=require(pkg),{pgcrypto}=require(pkg+'/dist/contrib/pgcrypto.cjs');
+(async()=>{
+ const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated;create role service_role');
+ const dir=path.join(__dirname,'../supabase/migrations');for(const name of fs.readdirSync(dir).filter(n=>/^\d{3}_/.test(n)&&Number(n.slice(0,3))<17).sort())await db.exec(fs.readFileSync(path.join(dir,name),'utf8'));
+ const created=(await db.query(fs.readFileSync(path.join(__dirname,'../supabase/create-classroom.sql'),'utf8'))).rows[0],room=created['課堂加入碼_給學生'],pw=created['助教管理碼_僅助教保管'];
+ const q=async(sql,args)=>(await db.query(sql,args)).rows[0]?.v;
+ let token=(await q('select public.pi_helper_teacher_pair_course($1,$2,3::smallint) v',[room,pw])).course_token,seq=0;
+ const run=n=>'11111111-1111-4111-8111-'+String(n).padStart(12,'0');
+ const send=(id,status,evidence={},task='hello')=>q('select public.pi_helper_course_event($1,$2::jsonb) v',[token,JSON.stringify({hostname:'pi5-03',run_id:run(id),sequence:++seq,task,status,evidence})]);
+ const history=()=>q('select public.pi_helper_teacher_course_runs($1,$2) v',[room,pw]);
+ await send(1,'passed',{group_output:true,exit_code:0});
+ await db.exec(fs.readFileSync(path.join(dir,'017_course_run_history.sql'),'utf8'));
+ assert.equal((await q('select public.pi_helper_teacher_course_runs($1,$2,3::smallint) v',[room,pw])).length,1);await assert.rejects(()=>q('select public.pi_helper_teacher_course_runs($1,$2,10::smallint) v',[room,pw]),/INVALID_GROUP/);let rows=await history(),runs=rows[2].runs;assert.equal(runs.length,1);assert.equal(runs[0].started_at,null);assert(runs[0].finished_at);
+ await db.exec('set role anon');await assert.rejects(()=>db.query('select * from pi_helper.course_runs'),/permission denied/);await assert.rejects(()=>q('select public.pi_helper_teacher_course_runs($1,$2) v',[room,'wrong']),/TEACHER_DENIED/);
+ await send(2,'running');const start=(await history())[2].runs[0].started_at;await send(2,'running');assert.equal((await history())[2].runs[0].started_at,start);await send(2,'failed',{error_code:'python_failed',raw_output:'private text'});runs=(await history())[2].runs;assert.equal(runs.length,2);assert.equal(runs[0].status,'failed');assert(runs[0].finished_at);assert(!JSON.stringify(runs).includes('private text'));
+ await send(3,'running');await send(3,'passed',{group_output:true,exit_code:0});runs=(await history())[2].runs;assert.equal(runs[0].status,'passed');assert.equal(runs[1].status,'failed');
+ await q('select public.pi_helper_workbench_save_account($1,$2,null,\'助教\',\'staff\',true) v',[room,pw]);assert.equal((await q('select public.pi_helper_teacher_course_runs($1,$2) v',[room,'staff']))[2].runs.length,3);
+ const other=(await db.exec('reset role'),(await db.query(fs.readFileSync(path.join(__dirname,'../supabase/create-classroom.sql'),'utf8'))).rows[0]);assert.equal((await q('select public.pi_helper_teacher_course_runs($1,$2) v',[other['課堂加入碼_給學生'],other['助教管理碼_僅助教保管']]))[2].runs.length,0);
+ for(let n=4;n<20;n++)await send(n,'passed',{group_output:true,exit_code:0});runs=(await history())[2].runs;assert.equal(runs.length,10);assert.equal(runs[0].run_id,run(19));assert.equal(runs.at(-1).run_id,run(10));
+ const before=await history();await db.exec(fs.readFileSync(path.join(dir,'017_course_run_history.sql'),'utf8'));assert.deepEqual(await history(),before);
+ token=(await q('select public.pi_helper_teacher_pair_course($1,$2,3::smallint) v',[room,pw])).course_token;assert.equal((await history())[2].runs.length,0);seq=0;await send(20,'passed',{folders_ok:true},'folders');assert.equal((await history())[2].runs.length,1);
+ assert(!JSON.stringify((await q('select public.pi_helper_student_camera($1,3::smallint) v',[room]))).includes('started_at'));
+ await db.close();console.log('PASS private teacher history, honest legacy timestamps, heartbeat start preservation, retries, bounded retention, classroom isolation, re-pair and repeat migration');
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -580,3 +580,48 @@ header .site-nav a.staff-entry { flex: 0 0 48px; width: 48px; font-size: 20px !i
 .tool-group-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tool-group-picker label,.tool-assignments label{display:flex;align-items:center;gap:8px;min-height:44px}.tool-assignments input[type=checkbox]{width:22px;height:22px;flex-shrink:0}.tool-assignments>div>label{display:block}.tool-job-row{border-top:1px solid var(--site-border);padding:12px 0}.tool-job-row h4,.tool-job-row p{margin:4px 0}.tool-request-code{font-family:Consolas,monospace;font-weight:700}.tool-student-task{margin-top:12px!important}.tool-install-dialog pre{max-height:180px;overflow:auto;padding:12px;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}.tool-install-dialog button{min-height:48px}.tool-install-dialog form{margin:12px 0}.tool-install-dialog #toolApprovalPassword{font-size:16px}.tool-assignments a{display:inline-block;min-height:44px;padding:8px;margin:8px 0}@media(max-width:400px){.tool-group-picker{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .approval-count{display:inline-block;min-width:22px;padding:1px 5px;margin-left:5px;border-radius:12px;background:#fff1cc;color:#6c4700;font-size:13px}.installation-approval-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}.installation-approval-card{padding:16px;border:1px solid var(--site-border);border-radius:12px;background:#fff}.installation-approval-card h3{margin:0}.installation-approval-card button{width:100%}.installation-approval-card .tool-request-code{font-size:22px;letter-spacing:1px}.installation-approval-history{margin-top:16px}.installation-approvals .action-row{margin:12px 0}@media(max-width:600px){.page-workbench .assistant-views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.installation-approval-list{grid-template-columns:minmax(0,1fr)}}
+
+/* Teacher overview: group -> course operations -> one execution. */
+.dashboard-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.stat-issue,.group-card.state-issue { background:#fff4ef; border-color:#d4a58e; }
+.state-issue .badge { color:#8b3423; background:#ffe0d3; }
+.group-card { display:flex; flex-direction:column; min-width:0; }
+.group-card p { margin:6px 0; }
+.group-operation-summary { margin:8px 0 12px; }
+.group-operation-summary .group-step { font-size:18px; font-weight:700; }
+.group-operation-result { font-weight:700; }
+.group-next-action { font-size:14px; color:var(--site-muted); }
+.group-browser-step,.group-browser-state,.group-device-summary,.group-help-summary { font-size:13px; }
+.board-report-details { margin:8px 0; font-size:13px; }
+.board-report-details > summary { color:var(--site-muted); }
+.board-report-details p { font-size:13px; }
+.group-card-actions { display:flex; gap:8px; margin-top:auto; padding-top:12px; }
+.group-card-actions > button { flex:1; min-width:0; width:auto; margin:0; min-height:48px; padding:10px; text-align:center; }
+.group-handle-help { background:#fff4db; border-color:#bb8b32; color:#6b4710; }
+.group-help-requests,.group-device-details { border:1px solid var(--site-border); border-radius:12px; padding:12px 16px; margin-top:18px; }
+.group-device-details .device-status { background:transparent; padding:0; border:0; }
+.group-help .course-device-status { border:0; padding:0; background:transparent; }
+.course-current-operation { background:var(--site-soft); border-left:4px solid var(--site-green); border-radius:12px; padding:16px; margin-bottom:24px; }
+.course-current-operation[data-state="issue"] { background:#fff4ef; border-color:#a34b29; }
+.course-current-operation[data-state="stale"] { background:#fff7e5; border-color:#b47b13; }
+.group-help .course-current-operation h3 { font-size:14px; margin:0 0 8px; color:var(--site-muted); }
+.course-current-title { font-weight:700; font-size:21px; }
+.course-next-action { font-weight:600; }
+.course-operation-stage { margin-top:18px; }
+.course-operation-stage h4 { margin:0 0 8px; font-size:16px; }
+.course-operation { border:1px solid var(--site-border); border-radius:10px; margin:8px 0; padding:0 12px; }
+.course-operation > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; cursor:pointer; font-size:15px; }
+.course-operation > summary::after { content:'＋'; color:var(--site-muted); flex-shrink:0; }
+.course-operation[open] > summary::after { content:'－'; }
+.course-operation > summary > span:first-child { flex:1; }
+.operation-status { font-size:13px; color:var(--site-muted); text-align:right; }
+.course-operation[data-state="passed"] .operation-status { color:#205b45; }
+.course-operation:is([data-state="failed"],[data-state="cancelled"]) { border-color:#cc927a; background:#fff8f4; }
+.course-operation:is([data-state="failed"],[data-state="cancelled"]) .operation-status { color:#913d21; font-weight:700; }
+.operation-detail { border-top:1px solid var(--site-border); padding:10px 0 14px; font-size:14px; }
+.operation-detail pre { background:#f4f6f8; color:#17394b; border:1px solid #c9d4dd; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; padding:12px; }
+.operation-history { margin-top:12px; }
+.operation-run { padding:10px 12px; margin:8px 0; border-left:3px solid var(--site-border); background:#f6f8f6; border-radius:6px; }
+.course-report-limits { margin:16px 0; color:var(--site-muted); font-size:13px; }
+@media(max-width:720px) { .dashboard-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .dashboard-stats .stat-item:last-child { grid-column:auto; flex-direction:column; align-items:flex-start; gap:0; } }
+@media(max-width:420px) { .group-help-requests,.group-device-details { padding:10px; } .course-operation { padding:0 10px; } .operation-status { max-width:7em; } }

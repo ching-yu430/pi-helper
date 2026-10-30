@@ -30,6 +30,9 @@ jobs:
       - run: node tests/run-camera-sql.cjs
         env:
           PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
+      - run: node tests/run-course-history-sql.cjs
+        env:
+          PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
