@@ -4,7 +4,7 @@
 
 ## 首次啟用
 
-1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 016。既有課堂、帳號、進度、設備及課程紀錄保留。
+1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 018。既有課堂、帳號、進度、設備及課程紀錄保留。
 2. 登入工作台，開啟「課堂工具 → 指派安裝／更新」，勾選組別及版本，按「指派安裝／更新」。可一次選取全班。
 3. 學生在首頁選自己的組別，按「安裝課堂工具」提出申請，畫面顯示組別與核對碼。
 4. 老師／助教可以在學生頁輸入自己的後台密碼核准，也可以在自己的手機開啟 [課堂工具頁](https://ching-yu430.github.io/pi-helper/assistant.html?view=classroom-tools)，登入後會直接進入上方「課堂工具」分頁；核對該組核對碼後按「核准安裝」。前者不建立或保存學生瀏覽器的後台登入。
@@ -36,11 +36,11 @@
 
 ## 發布新的工具版本
 
-`tooling/releases/1.0.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
+`tooling/releases/1.0.0/` 與 `1.1.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
 
 1. 修改來源工具並通過測試。
 2. 新增下一份編號 migration，包含 begin／commit 與 `-- RELEASE_SEED` 標記；不要修改已發布的 016 或既有版本目錄。
-3. 例如：`node scripts/build-tool-release.cjs --version=1.1.0 --migration=018_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。
+3. 例如：`node scripts/build-tool-release.cjs --version=1.2.0 --migration=019_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。
 4. 執行 `node scripts/build-sql.cjs`、`node scripts/version-assets.cjs`，提交並部署程式與資料庫更新。
 5. 老師選新版指派更新，同一組沿用既有配對。
 
@@ -61,4 +61,10 @@ CI 檢查版本目錄、來源、校驗碼與 SQL 目錄是否一致。
 
 學生在 Pi 遠端桌面使用 Thonny 寫程式與存檔，再回 Pi 終端機執行網頁提供的 `~/pi-course hello`／`write`，維持實際執行檢查與後台回報。不要以 Thonny 的 F5 執行代替課程工具回報。
 
-上課前助教先確認選單可開啟 Thonny；未安裝時，「課堂工具 → 上課前確認 Thonny」提供 `sudo apt install -y thonny`。這是現場準備指令，本次沒有改動已發布的工具 1.0.0，也不宣稱已驗證各組安裝或 OS 選單。既有 `view=install-approvals` 網址仍可開啟同一分頁。
+上課前助教先確認選單可開啟 Thonny；未安裝時，「課堂工具 → 上課前確認 Thonny」提供 `sudo apt install -y thonny`。這是現場準備指令，已發布的工具 1.0.0 保留；新版 1.1.0 加入學生 AI 拍照程式的執行與結果檢查，也不宣稱已驗證各組安裝或 OS 選單。既有 `view=install-approvals` 網址仍可開啟同一分頁。
+
+## AI 拍照程式檢查（1.1.0）
+
+先執行最新 SQL 安裝檔（含 018），再指派 1.1.0 更新既有 Pi。學生自己的 `pi5-組號_camera.py` 不會被更新工具覆寫。`~/pi-course camera-student` 不安裝範例程式，只執行本組檔案，結束後檢查新照片及相機可再次取像。舊版 `camera-install`／`camera` 留供相容，不會替新版作業新增成功。
+
+程式執行期間約每 30 秒回報執行中，照片結果在結束後回傳；關掉課程網頁不會停止 Pi 程式。這不是逐行監控 Python，也不會在後台自動顯示預覽或照片影像。詳見 [課程設計](CAMERA_COURSE.md)。

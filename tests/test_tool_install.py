@@ -49,6 +49,7 @@ class ToolInstallTests(unittest.TestCase):
     def test_unified_update_preserves_photos_credentials_and_pending_events(self):
         files={key:(ROOT/path).read_bytes() for key,path in installer.SOURCES.items()}
         hashes={key:hashlib.sha256(body).hexdigest() for key,body in files.items()}
+        version=json.loads((ROOT/'tooling/release.json').read_text())['version']
         with tempfile.TemporaryDirectory() as temp:
             home=Path(temp);directory=home/'.config/pi-helper-course';directory.mkdir(parents=True)
             config=dict(url=self.ticket()['url'],key=self.ticket()['key'],expected_hostname='pi5-03',course_token='c'*64)
@@ -56,6 +57,7 @@ class ToolInstallTests(unittest.TestCase):
             queued=dict(tag=hashlib.sha256(config['course_token'].encode()).hexdigest(),sequence=42,events=[dict(sequence=42,task='hello')])
             (directory/'pending.json').write_text(json.dumps(queued));(home/'pi-course').write_text(course.LAUNCHER)
             photos=home/'pi-camera/photos';photos.mkdir(parents=True);(photos/'keep.jpg').write_bytes(b'photo')
+            student=home/'pi-camera/pi5-03_camera.py';student.write_text('# student-owned AI application\n')
             device=dict(url=config['url'],key=config['key'],expected_hostname='pi5-03',device_token='d'*64)
             calls=[]
             def run(args,**kwargs):
@@ -64,18 +66,19 @@ class ToolInstallTests(unittest.TestCase):
             def rpc(ticket,name,args):
                 if name=='pi_helper_tool_claim':
                     self.assertEqual(args['p_device_token'],'d'*64);self.assertEqual(args['p_course_token'],'c'*64)
-                    return dict(version='1.0.0',files=hashes,device_token='d'*64,course_token='c'*64)
+                    return dict(version=version,files=hashes,device_token='d'*64,course_token='c'*64)
                 self.assertEqual(name,'pi_helper_tool_finish');self.assertEqual(args['p_status'],'completed');return True
             with mock.patch.object(installer.os,'geteuid',return_value=1000),mock.patch.object(installer.socket,'gethostname',return_value='pi5-03'),mock.patch.object(installer.subprocess,'run',side_effect=run),mock.patch.object(installer,'rpc',side_effect=rpc),mock.patch.object(installer,'fetch_sources',return_value=files):
                 installer.install(self.ticket(),home=home)
             self.assertEqual(json.loads((directory/'pending.json').read_text()),queued)
             self.assertEqual(json.loads((directory/'config.json').read_text()),config)
             self.assertEqual((photos/'keep.jpg').read_bytes(),b'photo')
+            self.assertEqual(student.read_text(),'# student-owned AI application\n')
             self.assertEqual((home/'.local/share/pi-helper-course/pi_course.py').read_bytes(),files['course'])
             privileged=[item for item in calls if item[0][-1]=='install-device'][0]
             payload=json.loads(privileged[1]['input']);self.assertEqual(payload['config'],device)
             self.assertFalse(any('teacher' in json.dumps(item) for item in calls))
-            self.assertEqual(json.loads((home/'.config/pi-helper-install/version.json').read_text())['version'],'1.0.0')
+            self.assertEqual(json.loads((home/'.config/pi-helper-install/version.json').read_text())['version'],version)
 
     def test_release_manifest_matches_every_installed_component(self):
         release=json.loads((ROOT/'tooling/release.json').read_text())

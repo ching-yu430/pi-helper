@@ -34,8 +34,8 @@ function seed(){
  for(let group=1;group<=9;group++){
   const enabled=![7,8].includes(group),stale=group===5;
   devices.push({group_no:group,enabled,received_at:enabled?stamp(stale?300:10):null,snapshot:enabled?{hostname:host(group),ssh:'active',xrdp:'active',display:'x11',xrdp_installed:true,xorgxrdp_installed:true,python_version:'Python 3.11.2',usb_cameras:group===4?0:1,free_mb:8192,uptime_seconds:1200}:null});
-  courses.push({group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
-  installations.push({group_no:group,installed_version:enabled?'1.0.0':null,completed_at:enabled?stamp(1800):null,job:null});
+  courses.push({student_camera_supported:true,group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
+  installations.push({group_no:group,installed_version:enabled?(group===6?'1.1.0':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
   if(enabled)attempt(group,'location',{cwd:'home',python_version:'3.11.2'},600);
   if(enabled&&group!==9)attempt(group,'folders',{folders_ok:true},500);
   if([2,3,4,5,6].includes(group))attempt(group,'hello',{group_output:true,exit_code:0},450);
@@ -47,7 +47,7 @@ function seed(){
  const cameraRun=id(++runNumber);record(4,'environment','running',{},cameraRun,35);record(4,'environment','failed',{error_code:'camera_missing'},cameraRun,30);
  record(5,'install','running',{},undefined,300);
  attempt(6,'environment',{cv2_ok:true,tk_ok:true,v4l_ok:true,device:'/dev/video0',python_version:'3.11.2',opencv_version:'4.6.0',os:'示範系統版本',arch:'aarch64'},250);
- const capture=id(++runNumber);record(6,'camera','running',{},capture,200);record(6,'camera','passed',{readable:true,width:1280,height:720},capture,195);record(6,'photo','passed',{readable:true,width:1920,height:1080,bytes:245760,file_name:'pi5-06_practice_20261030_120000_000001_deadbeef.jpg',photo_count:1},capture,170);record(6,'camera_exit','passed',{released:true},capture,160);
+ const capture=id(++runNumber);record(6,'student_camera','running',{},capture,200);record(6,'student_camera','passed',{verifier:'student-v1',script_name:'pi5-06_camera.py',exit_code:0},capture,195);record(6,'photo','passed',{readable:true,width:1920,height:1080,bytes:245760,file_name:'pi5-06_20261031_120000_000001.jpg',photo_count:1,verifier:'student-v1',fresh_photo:true},capture,170);record(6,'camera_exit','passed',{verifier:'student-v1',camera_reopened:true,device:'/dev/video0'},capture,160);
  reports=[browser(1,'建立並找到課程資料夾'),browser(2,'安裝 OpenCV 並確認 USB 相機'),browser(3,'親手寫第一個 Python 程式'),browser(4,'安裝 OpenCV 並確認 USB 相機','need_help'),browser(5,'安裝 OpenCV 並確認 USB 相機'),browser(6,'把照片下載到 Windows','done','camera'),browser(7,'把照片下載到 Windows','done','camera'),browser(9,'建立並找到課程資料夾')];
  help=[{id:id(999),group_no:4,stage:'Python與USB拍照',step:'安裝 OpenCV 並確認 USB 相機',message:'USB 相機已接到樹莓派，但檢查找不到相機。',status:'open',assignee:null,revision:1,requested_at:stamp(180),updated_at:stamp(30)}];
 }
@@ -65,7 +65,7 @@ window.PiSyncAPI={configured:()=>true,pollMs:5000,async rpc(name,args={}){
  case 'pi_helper_workbench_identity':result={id:id(800),name:'示範助教',admin:false};break;
  case 'pi_helper_teacher_course_settings':case 'pi_helper_course_settings':result=policy;break;
  case 'pi_helper_teacher_help':result=help;break;
- case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0'],groups:installations};break;
+ case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0'],groups:installations};break;
  case 'pi_helper_teacher_update_help':{
   const row=help.find(r=>r.id===args.p_id);if(!row||row.revision!==args.p_revision)throw Error('模擬求助已更新，請重新讀取。');
   if(!['open','claimed','waiting','resolved'].includes(args.p_status))throw Error('不支援此模擬狀態。');

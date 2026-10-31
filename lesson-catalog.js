@@ -24,6 +24,6 @@ for(const [id,lesson] of Object.entries(lessons))lesson.steps.forEach((item,i)=>
 lessons.flash.steps[13].where='手機、Windows 與桌上的 Pi';
 lessons.ssh.steps[3].where='核對本組登入結果';lessons.desktop.steps[8].where='Windows 遠端桌面';
 lessons.shutdown.steps[0].where='Pi 桌面或目前操作的視窗';lessons.shutdown.steps[2].where='桌上的樹莓派';
-if(window.PiCameraCourse)lessons.camera={title:'Python 與 USB 拍照',steps:PiCameraCourse.stages.map((s,i)=>({title:s.title,text:s.action+'\n'+s.notes.join('\n'),action:s.action,expected:s.expected,where:s.where||'樹莓派遠端桌面 → 終端機',short:String(i+1)+'. '+s.title,command:null,cameraIndex:i}))};
+if(window.PiCameraCourse)lessons.camera={title:'Python 與 USB 拍照',steps:PiCameraCourse.stages.map((s,i)=>({title:s.view?.title||s.title,text:s.action+'\n'+s.notes.join('\n'),action:s.action,expected:s.expected,where:s.where||'樹莓派遠端桌面 → 終端機',short:String(i+1)+'. '+(s.view?.title||s.title),command:null,cameraIndex:i}))};
 window.PiLessonCatalog=lessons;
 })();

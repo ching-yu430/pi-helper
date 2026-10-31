@@ -52,6 +52,30 @@ const views={
  download:{title:'下載到筆電',where:'Windows｜PowerShell',action:'縮小遠端桌面，在 Windows 開啟 PowerShell。',commandTitles:['下載照片'],results:['在「下載」→ pi-camera-photos 開啟照片。'],check:'我已在筆電開啟照片'}
 };
 for(const stage of stages)stage.view=views[stage.id];
+// The AI assignment owns its file; the legacy teacher camera app remains available separately.
+const assignment=stages.find(s=>s.id==='camera');
+Object.assign(assignment,{
+ assignment:true,where:'樹莓派｜Thonny，寫好後回終端機',download:null,commands:[runner+'camera-student'],tasks:['student_camera','photo','camera_exit'],
+ action:'請 AI 幫你做拍照程式，存好後用網頁指令執行。',
+ expected:'結束程式後，檢查這次的新照片與相機；預覽和照片品質要親眼確認。',
+ actions:['把功能清單交給 AI，產生本組的 Python 拍照程式。','在樹莓派開啟 Thonny，貼上程式並儲存到指定位置。','用網頁指令開啟程式，預覽、拍照，再按結束。','有錯誤就把錯誤交給 AI 修改，儲存後重新執行。'],
+ requirements:['看得到相機畫面。','用滑鼠按「拍照」，存成 1920×1080 的 JPG。','照片存到指定資料夾，檔名不重複。','顯示已存檔、張數、尺寸與位置。','有「結束」按鈕，結束後相機還能再用。','相機沒接好或不能存檔時，顯示提示。'],
+ notes:['先做出能拍照的程式，再修改功能，不用加入辨識或串流。','檢查在程式結束後進行；只留下舊照片不算這次完成。','看到預覽、照片清楚、不是把小圖放大，由學生或助教確認。','工具需要 1.1.0。找不到 camera-student 指令時，請助教到「課堂工具」指派更新。','保留一次「遇到什麼問題、請 AI 改了什麼」的例子即可。'],
+ view:{title:'用 AI 做拍照程式',where:'樹莓派｜Thonny',action:'把功能清單交給 AI，程式貼進 Thonny 並存檔。',saveAs:'/home/user/pi-camera/{host}_camera.py',commandTitles:['開啟本組程式並檢查'],results:['預覽 → 拍照 → 結束，之後才會回報檢查結果。']}
+});
+const aiPrompt=`請用 Python 幫我製作 USB 相機拍照程式。
+環境：Raspberry Pi 5、Raspberry Pi OS 遠端桌面，使用系統 /usr/bin/python3、apt 安裝的 OpenCV 與 Tkinter。在 Thonny 編輯，不使用 pip 或虛擬環境。
+相機：GENERAL WEBCAM、UVC；曾測試 /dev/video0 支援 MJPEG 1920×1080。裝置編號可能改變，請能選擇可用相機。
+功能：
+1. 即時預覽 USB 相機畫面。
+2. 滑鼠「拍照」按鈕，儲存相機實際取得的 1920×1080 JPG，不要把小張照片放大。
+3. 存到 /home/user/pi-camera/photos/；檔名 {host}_YYYYMMDD_HHMMSS_ffffff.jpg，ffffff 是六位微秒，例如 {host}_20261031_153000_123456.jpg；不得覆蓋舊照片。
+4. 顯示拍照成功、張數、照片實際尺寸及完整存檔位置。
+5. 「結束」與關閉視窗都正常釋放相機；介面不因取像卡住。
+6. 相機未接、被占用、讀取或存檔失敗時提示，可以重試。
+程式存成 /home/user/pi-camera/{host}_camera.py，不接受額外命令列參數也能執行，不需要回報網站或讀取課堂憑證。預覽可縮小，但照片保留原尺寸。
+請提供完整程式與簡短使用方式，先做拍照，不加入模型辨識、串流或額外安裝套件。`;
+assignment.aiPrompt=aiPrompt;
 const fill=(text,host)=>String(text).replaceAll('{host}',host).replaceAll('{group}',host.slice(-2));
-window.PiCameraCourse={version:'1.0.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
+window.PiCameraCourse={version:'1.1.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
 })();

@@ -23,9 +23,9 @@ import urllib.error
 import urllib.request
 import uuid
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 PYTHON = '/usr/bin/python3'
-TASKS = ('location', 'folders', 'hello', 'write', 'update', 'install', 'environment', 'camera-install', 'camera')
+TASKS = ('location', 'folders', 'hello', 'write', 'update', 'install', 'environment', 'camera-install', 'camera', 'camera-student')
 LAUNCHER = '''#!/usr/bin/python3
 # PI_HELPER_COURSE_LAUNCHER_V1
 from pathlib import Path
@@ -301,9 +301,120 @@ def execute(command, cwd, timeout=15, limit=65536, interactive=False):
     return max(0, code) if code == 0 else max(1, abs(code)), output
 
 
+
+def photo_snapshot(project):
+    """Bounded local snapshot; never accept an existing filename as a new photo."""
+    folder = checked_path(project, 'photos')
+    if not folder.is_dir():
+        raise CourseError('missing_folder', '請先建立 ~/pi-camera/photos。')
+    result = {}
+    for path in folder.iterdir():
+        if path.suffix.lower() not in ('.jpg', '.jpeg', '.png'):
+            continue
+        if len(result) >= 5000:
+            raise CourseError('photo_limit', '照片太多，請先整理到其他資料夾後重試。')
+        if path.is_symlink() or not path.is_file():
+            raise CourseError('photo_name', '照片必須是 photos 裡的實際檔案，不能使用連結。')
+        stat = path.stat()
+        result[path.name] = (stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+    return result
+
+
+def new_student_photos(project, before, host):
+    import cv2
+    import numpy as np
+    from datetime import datetime
+    after = photo_snapshot(project)
+    if any(after.get(name) != stamp for name, stamp in before.items()):
+        raise CourseError('photo_overwritten', '舊照片被更改或刪除，請讓程式使用不重複的檔名。')
+    names = sorted(after.keys() - before.keys())
+    if not names:
+        raise CourseError('photo_missing', '這次沒有新照片。請重新執行、按拍照，再按結束。')
+    evidence = []
+    for name in names:
+        match = re.fullmatch(re.escape(host) + r'_([0-9]{8}_[0-9]{6}_[0-9]{6})\.jpg', name)
+        try:
+            if not match:
+                raise ValueError()
+            datetime.strptime(match[1], '%Y%m%d_%H%M%S_%f')
+        except ValueError:
+            raise CourseError('photo_name', '照片檔名請用 ' + host + '_年月日_時分秒_微秒.jpg。') from None
+        path = project / 'photos' / name
+        if after[name][1] <= 0 or after[name][1] > 32 * 1024 * 1024:
+            raise CourseError('save_failed', '照片為空檔或太大，請檢查存檔方式。')
+        with path.open('rb') as stream:
+            data = stream.read(32 * 1024 * 1024 + 1)
+        if not data.startswith(b'\xff\xd8') or len(data) > 32 * 1024 * 1024:
+            raise CourseError('save_failed', '照片不是可讀取的 JPG。')
+        image = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            raise CourseError('save_failed', '照片無法開啟，請重新拍照。')
+        height, width = image.shape[:2]
+        if (width, height) != (1920, 1080):
+            raise CourseError('camera_size', '照片必須是 1920×1080；不要只放大小張照片。')
+        evidence.append(dict(readable=True, fresh_photo=True, width=width, height=height,
+                             bytes=len(data), file_name=name, photo_count=len(names), verifier='student-v1'))
+    return evidence[-1]
+
+
+def probe_camera():
+    """Probe in a separate process so an unresponsive driver cannot hang the runner."""
+    command = """import cv2,sys
+cap=cv2.VideoCapture(sys.argv[1],cv2.CAP_V4L2)
+try:
+    ok=False
+    if cap.isOpened():
+        for _ in range(8):
+            ret,frame=cap.read()
+            if ret and frame is not None and frame.size:
+                ok=True
+                break
+    sys.exit(0 if ok else 1)
+finally:
+    cap.release()
+"""
+    devices = capture_devices()
+    if not devices:
+        raise CourseError('camera_missing', '程式已結束，但找不到 USB 相機。請重新接好相機後重試。')
+    for device in devices:
+        try:
+            code = subprocess.run([PYTHON, '-c', command, device], stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL, timeout=8).returncode
+            if code == 0:
+                return device
+        except subprocess.TimeoutExpired:
+            continue
+    raise CourseError('camera_busy', '程式已結束，但相機還不能重新取像。請關閉其他相機程式後重試。')
+
+
+def run_student_camera(reporter):
+    project = reporter.project
+    script = checked_path(project, hostname() + '_camera.py')
+    if not script.is_file():
+        raise CourseError('missing_script', '請在 Thonny 儲存為 ' + str(script) + '。')
+    try:
+        import cv2
+    except ImportError:
+        raise CourseError('environment_missing', '請先安裝拍照工具。') from None
+    before = photo_snapshot(project)
+    print('開啟本組程式：' + script.name + '。請預覽、拍照，最後按程式的結束按鈕；結束後才檢查。', flush=True)
+    code, _ = execute([PYTHON, str(script)], project, timeout=None, interactive=True)
+    if code:
+        raise CourseError('python_failed', '程式沒有正常結束，請保留終端機錯誤，修改並儲存後重試。')
+    photo = new_student_photos(project, before, hostname())
+    device = probe_camera()
+    reporter.emit('photo', 'passed', photo)
+    reporter.emit('camera_exit', 'passed', {'verifier': 'student-v1', 'camera_reopened': True, 'device': device})
+    print('本次新增 ' + str(photo['photo_count']) + ' 張可讀取的 1920×1080 JPG；相機可再次取像。')
+    print('預覽、畫面品質、是否由相機原始尺寸取像，請再親眼確認。')
+    return {'verifier': 'student-v1', 'script_name': script.name, 'exit_code': 0}, None
+
+
 def run_task(task, reporter):
     home, project = reporter.home, reporter.project
     group = hostname()[-2:]
+    if task == 'camera-student':
+        return run_student_camera(reporter)
     if task == 'location':
         cwd = Path.cwd().resolve()
         label = 'home' if cwd == home.resolve() else 'project' if cwd == project.resolve() else 'photos' if cwd == (project / 'photos').resolve() else 'other'
@@ -408,29 +519,38 @@ def main():
         print('已嘗試補送本機待回報結果，請回網頁按「更新檢查結果」。')
         return 0
     task = args.task
+    event_task = 'student_camera' if task == 'camera-student' else task
     with lock(reporter.directory, 'operation.lock', blocking=False):
         heartbeat_stop = threading.Event()
+        heartbeat_thread = None
+        def stop_heartbeat():
+            heartbeat_stop.set()
+            if heartbeat_thread:
+                heartbeat_thread.join(timeout=10)
         def heartbeat():
             while not heartbeat_stop.wait(30):
-                reporter.emit(task, 'running')
-        if task in ('update', 'install'):
-            threading.Thread(target=heartbeat, daemon=True).start()
+                reporter.emit(event_task, 'running')
+        if task in ('update', 'install', 'camera-student'):
+            heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
+            heartbeat_thread.start()
         if task != 'camera-install':
-            reporter.emit(task, 'running')
+            reporter.emit(event_task, 'running')
         try:
             evidence, network = run_task(task, reporter)
+            stop_heartbeat()
             if evidence is not None:
-                reporter.emit(task, 'passed', evidence, network)
+                reporter.emit(event_task, 'passed', evidence, network)
             print('本次操作完成。請回網頁確認檢查結果。')
             result = 0
         except (CourseError, OSError, UnicodeError) as error:
+            stop_heartbeat()
             code = error.code if isinstance(error, CourseError) else 'unknown'
             if task != 'camera-install':
-                reporter.emit(task, 'cancelled' if code == 'interrupted' else 'failed', {'error_code': code})
+                reporter.emit(event_task, 'cancelled' if code == 'interrupted' else 'failed', {'error_code': code})
             print(str(error) if isinstance(error, CourseError) else '檔案或裝置操作失敗，請保留終端機畫面並請助教確認。', file=sys.stderr)
             result = 1
         finally:
-            heartbeat_stop.set()
+            stop_heartbeat()
             reporter.flush(blocking=True)
     return result
 

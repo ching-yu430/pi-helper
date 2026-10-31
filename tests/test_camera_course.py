@@ -4,6 +4,8 @@ import io
 import json
 from pathlib import Path
 import socket
+import sys
+import subprocess
 import tempfile
 import queue
 from types import SimpleNamespace
@@ -124,6 +126,143 @@ class CourseTests(unittest.TestCase):
         with patch.object(course.getpass, 'getpass', return_value=code), self.assertRaises(course.CourseError):
             course.setup(self.home)
         self.assertFalse((self.home / '.config/pi-helper-course/config.json').exists())
+
+
+class StudentCameraTests(unittest.TestCase):
+    setUp = CourseTests.setUp
+    tearDown = CourseTests.tearDown
+    reporter = CourseTests.reporter
+    def photo(self, name='pi5-03_20261031_153000_123456.jpg', width=1920, height=1080):
+        import cv2
+        import numpy as np
+        folder = self.project / 'photos'
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / name
+        self.assertTrue(cv2.imwrite(str(path), np.zeros((height, width, 3), dtype=np.uint8)))
+        return path
+
+    def fixture(self):
+        # The child really executes Python and writes a new JPEG. No GUI/camera is simulated as verified.
+        import base64
+        image = self.photo()
+        encoded = base64.b64encode(image.read_bytes()).decode()
+        image.unlink()
+        script = self.project / 'pi5-03_camera.py'
+        script.write_text("from pathlib import Path\nimport base64\nPath('photos/pi5-03_20261031_153000_123456.jpg').write_bytes(base64.b64decode(" + repr(encoded) + "))\n")
+        return script
+
+    def test_student_script_actual_execution_reports_new_photo_then_reusable_camera(self):
+        self.fixture()
+        events = []
+        reporter = self.reporter()
+        reporter.emit = lambda *args: events.append(args)
+        with patch.object(course, 'PYTHON', sys.executable), patch.object(course, 'probe_camera', return_value='/dev/video2'), patch('sys.stdout', new=io.TextIOWrapper(io.BytesIO(), encoding='utf-8')):
+            evidence, _ = course.run_task('camera-student', reporter)
+        self.assertEqual(evidence, dict(verifier='student-v1', script_name='pi5-03_camera.py', exit_code=0))
+        self.assertEqual([e[0] for e in events], ['photo', 'camera_exit'])
+        self.assertTrue(events[0][2]['fresh_photo'])
+        self.assertEqual(events[0][2]['photo_count'], 1)
+        self.assertTrue(events[1][2]['camera_reopened'])
+        self.assertNotIn('released', events[1][2])
+
+    def test_command_reports_running_and_final_pass_with_one_run(self):
+        self.fixture()
+        events = []
+        reporter = self.reporter()
+        reporter.emit = lambda *args: events.append(args)
+        reporter.flush = lambda **kwargs: None
+        with patch.object(course,'Reporter',return_value=reporter), patch.object(course.os,'geteuid',return_value=1000), patch.object(course.sys,'argv',['pi-course','camera-student']), patch.object(course,'PYTHON',sys.executable), patch.object(course,'probe_camera',return_value='/dev/video0'), patch('sys.stdout',new=io.TextIOWrapper(io.BytesIO(),encoding='utf-8')):
+            self.assertEqual(course.main(),0)
+        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','passed'),('camera_exit','passed'),('student_camera','passed')])
+
+    def test_command_cancellation_reports_no_success(self):
+        events = []
+        reporter = self.reporter()
+        reporter.emit = lambda *args: events.append(args)
+        reporter.flush = lambda **kwargs: None
+        with patch.object(course,'Reporter',return_value=reporter), patch.object(course.os,'geteuid',return_value=1000), patch.object(course.sys,'argv',['pi-course','camera-student']), patch.object(course,'run_task',side_effect=course.CourseError('interrupted','stopped')), patch('sys.stderr',new=io.StringIO()):
+            self.assertEqual(course.main(),1)
+        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('student_camera','cancelled')])
+
+    def test_existing_photo_is_not_new_even_if_correctly_named(self):
+        self.photo()
+        before = course.photo_snapshot(self.project)
+        with self.assertRaises(course.CourseError) as caught:
+            course.new_student_photos(self.project, before, 'pi5-03')
+        self.assertEqual(caught.exception.code, 'photo_missing')
+
+    def test_overwriting_an_old_photo_is_rejected(self):
+        photo = self.photo()
+        before = course.photo_snapshot(self.project)
+        photo.write_bytes(photo.read_bytes())
+        with self.assertRaises(course.CourseError) as caught:
+            course.new_student_photos(self.project, before, 'pi5-03')
+        self.assertEqual(caught.exception.code, 'photo_overwritten')
+
+    def test_bad_name_wrong_group_invalid_date_and_bad_dimensions(self):
+        for name, width, expected in [('pi5-04_20261031_153000_123456.jpg',1920,'photo_name'),('pi5-03_20261331_153000_123456.jpg',1920,'photo_name'),('pi5-03_20261031_153000_123456.jpg',640,'camera_size')]:
+            photo = self.photo(name,width)
+            with self.assertRaises(course.CourseError) as caught:
+                course.new_student_photos(self.project, {}, 'pi5-03')
+            self.assertEqual(caught.exception.code, expected)
+            photo.unlink()
+
+    def test_all_new_photos_are_checked_not_only_one_valid_photo(self):
+        good = self.photo()
+        bad = self.photo('pi5-03_20261031_153001_123456.jpg',640)
+        with self.assertRaises(course.CourseError):
+            course.new_student_photos(self.project, {}, 'pi5-03')
+        bad.unlink()
+        self.assertEqual(course.new_student_photos(self.project, {}, 'pi5-03')['photo_count'], 1)
+
+    def test_corrupt_or_png_renamed_as_jpg_fails(self):
+        import cv2
+        import numpy as np
+        path = self.photo()
+        for data in [b'not a photo', b'\xff\xd8broken', cv2.imencode('.png',np.zeros((1080,1920,3),dtype=np.uint8))[1].tobytes()]:
+            path.write_bytes(data)
+            with self.assertRaises(course.CourseError) as caught:
+                course.new_student_photos(self.project, {}, 'pi5-03')
+            self.assertEqual(caught.exception.code, 'save_failed')
+
+    def test_legacy_teacher_app_does_not_replace_group_program(self):
+        (self.project / 'photos').mkdir(parents=True)
+        (self.project / 'camera_app.py').write_text('print("legacy")')
+        with self.assertRaises(course.CourseError) as caught:
+            course.run_task('camera-student', self.reporter())
+        self.assertEqual(caught.exception.code, 'missing_script')
+
+    def test_program_failure_or_camera_failure_never_emits_passed_events(self):
+        script = self.fixture()
+        events = []
+        reporter = self.reporter()
+        reporter.emit = lambda *args: events.append(args)
+        for fails in [True, False]:
+            if fails:
+                script.write_text('raise RuntimeError("test error")')
+            else:
+                self.fixture()
+            with patch.object(course, 'PYTHON', sys.executable), patch.object(course, 'probe_camera', side_effect=course.CourseError('camera_busy','busy')), patch('sys.stdout', new=io.TextIOWrapper(io.BytesIO(), encoding='utf-8')), self.assertRaises(course.CourseError):
+                course.run_task('camera-student', reporter)
+            self.assertEqual(events, [])
+
+    def test_photo_symlinks_are_not_followed(self):
+        path = self.photo()
+        outside = self.home / 'outside.jpg'
+        path.rename(outside)
+        path.symlink_to(outside)
+        with self.assertRaises(course.CourseError):
+            course.photo_snapshot(self.project)
+
+    def test_unplugged_camera_has_a_distinct_error(self):
+        with patch.object(course,'capture_devices',return_value=[]), self.assertRaises(course.CourseError) as caught:
+            course.probe_camera()
+        self.assertEqual(caught.exception.code,'camera_missing')
+
+    def test_probe_timeout_is_bounded_and_next_camera_can_be_used(self):
+        with patch.object(course,'capture_devices',return_value=['/dev/video0','/dev/video2']), patch.object(course.subprocess,'run',side_effect=[subprocess.TimeoutExpired('camera',8),subprocess.CompletedProcess([],0)]) as run:
+            self.assertEqual(course.probe_camera(), '/dev/video2')
+            self.assertTrue(all(call.kwargs['timeout']==8 for call in run.call_args_list))
 
 
 class PhotoTests(unittest.TestCase):
