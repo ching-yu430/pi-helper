@@ -4,7 +4,7 @@
 
 ## 首次啟用
 
-1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 020。既有課堂、帳號、進度、設備及課程紀錄保留。
+1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 021。既有課堂、帳號、進度、設備及課程紀錄保留。
 2. 登入工作台，開啟「課堂工具 → 指派安裝／更新」，勾選組別及版本，按「指派安裝／更新」。可一次選取全班。
 3. 學生在首頁選自己的組別，按「安裝課堂工具」提出申請，畫面顯示組別與核對碼。
 4. 老師／助教可以在學生頁輸入自己的後台密碼核准，也可以在自己的手機開啟 [課堂工具頁](https://ching-yu430.github.io/pi-helper/assistant.html?view=classroom-tools)，登入後會直接進入上方「課堂工具」分頁；核對該組核對碼後按「核准安裝」。前者不建立或保存學生瀏覽器的後台登入。
@@ -36,11 +36,11 @@
 
 ## 發布新的工具版本
 
-`tooling/releases/1.0.0/`、`1.1.0/`、`1.2.0/` 與 `1.3.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
+`tooling/releases/1.0.0/`、`1.1.0/`、`1.2.0/`、`1.3.0/` 與 `1.4.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
 
 1. 修改來源工具並通過測試。
 2. 新增下一份編號 migration，包含 begin／commit 與 `-- RELEASE_SEED` 標記；不要修改已發布的 016 或既有版本目錄。
-3. 例如：`node scripts/build-tool-release.cjs --version=1.4.0 --migration=021_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。
+3. 例如：`node scripts/build-tool-release.cjs --version=1.5.0 --migration=022_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。
 4. 執行 `node scripts/build-sql.cjs`、`node scripts/version-assets.cjs`，提交並部署程式與資料庫更新。
 5. 老師選新版指派更新，同一組沿用既有配對。
 
@@ -76,3 +76,20 @@ CI 檢查版本目錄、來源、校驗碼與 SQL 目錄是否一致。
 ## 本組程式路徑（1.3.0）
 
 最新 SQL 安裝檔含 020，版本目錄加入 1.3.0；不更改事件格式、驗收或配對。指派更新後，教材明列並執行 `/usr/bin/python3 /home/user/pi-camera/pi5-組號_camera.py`，前面沿用 `~/pi-course run --` 以保留檢查及回報。只接受與本機組別相符的指定程式，不接受任意腳本或額外參數。舊 camera-student 指令仍可使用。
+
+## 1.4.0 安裝修正與復原
+
+已確認 1.0.0～1.3.0 的安裝器會由 sudo 子程序以 importlib 載入學生暫存目錄的 device.py，Python 因而建立 root:root、755 的 __pycache__。user 在 TemporaryDirectory 收尾時無法刪除其中的 pyc，安裝在執行 location 及完成驗證之前中斷。重跑相同指令會再次建立快取，1.3.0 與 1.2.0 的安裝器相同。
+
+1.4.0 在動態載入期間禁止寫入 bytecode，並以 -B 啟動 sudo Python。相同權限測試已在離線隔離容器實際以 root 載入、UID 1000 清理，重現舊版失敗並確認修正版成功。GitHub CI 也執行這項測試，測試只建立暫存假模組，不安裝服務或連接正式資料庫。
+
+復原：
+
+1. 資料庫執行最新 install.sql，包含 021；不重建課堂。
+2. 重新整理工作台，指派原組別 1.4.0，不勾「重新綁定」。
+3. 學生在首頁選該組，重新申請／核准，複製新指令到原 Pi 執行。舊版指令不再重跑。
+4. 等到終端機顯示「設備與課程回報都已收到」，且網站為已完成。
+
+舊的 root 暫存快取不需手動刪除才能更新；新安裝使用新的暫存目錄，修正版會正常清理。相片、學生程式、既有憑證與待送事件保留。設備服務啟動訊息不再宣稱已送出第一筆回報，最終成功仍須伺服器收到兩項實際回報。等待確認時會再次補送課程待送資料，並有進度提示，不把等待直接當成功。
+
+失敗會顯示階段，後台保存限定的錯誤代碼；本機安全摘要在 `~/.config/pi-helper-install/last-error.json`。可將這個摘要交給助教，勿貼安裝指令內的申請密鑰或配對設定。摘要只含階段、錯誤類別、errno、結束碼與時間，不包含票證、憑證、HTTP 原文或原始子程序參數。

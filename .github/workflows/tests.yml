@@ -27,6 +27,7 @@ jobs:
         env:
           PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
       - run: python3 -m unittest discover -s tests -p test_tool_install.py
+      - run: sudo python3 tests/test_installer_permissions.py -v
       - run: python3 -m unittest discover -s tests -p test_device_agent.py
       - run: node tests/run-camera-sql.cjs
         env:

@@ -2,6 +2,8 @@
 """One approved classroom install/update. Standard library; no remote command queue."""
 import argparse
 import base64
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import fcntl
 import hashlib
 import importlib.util
@@ -24,7 +26,69 @@ ERRORS = {'TOOL_EXPIRED': '授權已到期，請回網頁請助教重新核准�
           'TOOL_HOST_MISMATCH': '這台樹莓派不是指派的組別，尚未安裝。',
           'TOOL_REBIND_REQUIRED': '現有配對與本機設定不同，請助教確認是否需要重新綁定。',
           'TOOL_ALREADY_CLAIMED': '這次安裝已由另一台設備領取，請找助教。',
-          'TOOL_NOT_VERIFIED': '尚未收到兩項實際回報，請稍後重試。'}
+          'TOOL_NOT_VERIFIED': '尚未收到兩項實際回報，請稍後重試。',
+          'ROOM_NOT_FOUND': '課堂已關閉、到期或本組未開放，請助教確認。',
+          'INVALID_STATE': '安裝任務狀態不符，請回工作台確認指派版本。',
+          'NETWORK_ERROR': '網路連線失敗，請確認樹莓派能上網後重試。',
+          'REMOTE_ERROR': '伺服器未完成安裝確認，請助教查看課堂設定。'}
+
+
+
+STEPS = {'sudo': '取得 Pi 安裝權限', 'read_config': '讀取既有配對', 'claim': '核對安裝授權',
+         'download': '下載與驗證工具', 'write_files': '寫入課堂工具', 'course_setup': '設定課程回報',
+         'device_setup': '啟動設備回報服務', 'cleanup': '清理安裝暫存檔', 'course_report': '送出課程位置回報',
+         'verify': '等候兩項回報確認', 'save': '儲存完成紀錄'}
+
+
+def diagnostic(error):
+    stage = getattr(error, 'install_stage', '')
+    stage = stage if stage in STEPS else 'unknown'
+    code = getattr(error, 'code', '')
+    code = code if isinstance(code, str) and code in ERRORS else ''
+    return dict(stage=stage, error_code='install_' + stage if stage != 'unknown' else 'install_failed',
+                remote_code=code, exception=type(error).__name__ if type(error).__name__ in
+                ('PermissionError', 'FileNotFoundError', 'CalledProcessError', 'RuntimeError', 'ValueError', 'JSONDecodeError', 'TimeoutError') else 'Error',
+                errno=error.errno if isinstance(error, OSError) and isinstance(error.errno, int) else None,
+                returncode=error.returncode if isinstance(error, subprocess.CalledProcessError) else None,
+                time=datetime.now(timezone.utc).isoformat())
+
+
+def failure_message(error):
+    info = diagnostic(error)
+    stage = STEPS.get(info['stage'], '安裝流程')
+    if info['remote_code']:
+        detail = ERRORS[info['remote_code']]
+    elif isinstance(error, PermissionError):
+        detail = '檔案權限不足（PermissionError）。'
+    elif isinstance(error, subprocess.CalledProcessError):
+        detail = '子程序執行失敗（結束碼 ' + str(error.returncode) + '），請查看上方訊息。'
+    else:
+        message = str(error)
+        safe = message in ERRORS.values() or message in {
+            '請用 user 執行安裝指令，不要在整行前加 sudo。',
+            '工具版本與指派內容不同，尚未更新檔案。請助教指派最新版本。',
+            '本機已有其他課堂設定，請助教確認；尚未變更。',
+            '已有安裝正在執行，請等待完成。', '需要 Raspberry Pi OS 的 systemd。',
+            '安裝指令格式不正確，請回網頁重新複製。', '只能使用公開連線金鑰。',
+            '授權資料不正確。', '組別不正確。', '伺服器位址不正確。',
+            '工具版本格式不正確。', '課堂工具版本不完整。', '版本校驗碼不正確。'
+        } or re.fullmatch(r'這台不是 pi5-[0-9]{2}，尚未領取或安裝。', message) is not None
+        detail = message if safe else '請保留本機畫面，讓助教查看錯誤紀錄。'
+    return '安裝未完成｜' + stage + '：' + detail
+
+
+@contextmanager
+def installation_step(stage, directory):
+    try:
+        yield
+    except Exception as error:
+        if not hasattr(error, 'install_stage'):
+            error.install_stage = stage
+        try:
+            atomic_json(directory / 'last-error.json', diagnostic(error))
+        except OSError:
+            pass
+        raise
 
 
 def atomic_json(path, value):
@@ -66,17 +130,27 @@ def rpc(ticket, name, args):
             code = json.loads(error.read(2048)).get('message', '')
         except (ValueError, OSError):
             code = ''
-        problem = RuntimeError(ERRORS.get(code, '無法完成安裝回報，請檢查網路或找助教。'))
+        code = code if isinstance(code, str) and code in ERRORS else 'REMOTE_ERROR'
+        problem = RuntimeError(ERRORS[code])
         problem.code = code
         raise problem from None
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
-        raise RuntimeError('網路連線失敗。請保留網頁，稍後重試同一行安裝指令。') from None
+        problem = RuntimeError(ERRORS['NETWORK_ERROR'])
+        problem.code = 'NETWORK_ERROR'
+        raise problem from None
 
 
 def load_module(path, name):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    # The sudo helper imports a file inside the student's 0700 temporary directory.
+    # A root-owned __pycache__ there prevents the student from cleaning it up.
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous
     return module
 
 
@@ -136,56 +210,75 @@ def install(ticket, home=None):
         atomic_json(state_path, state)
         claim_secret = state['claim_secret']
         print('確認本組與授權。若詢問密碼，輸入樹莓派密碼，不是後台密碼。', flush=True)
-        subprocess.run(['sudo', '-v'], check=True)
+        with installation_step('sudo', directory):
+            subprocess.run(['sudo', '-v'], check=True)
         script = str(Path(__file__).resolve())
-        existing = subprocess.run(['sudo', '/usr/bin/python3', script, '--privileged', 'read-device'], check=True, capture_output=True, text=True)
-        device = json.loads(existing.stdout)
-        course_path = home / '.config/pi-helper-course/config.json'
-        course = json.loads(course_path.read_text()) if course_path.exists() else {}
+        with installation_step('read_config', directory):
+            existing = subprocess.run(['sudo', '/usr/bin/python3', '-B', script, '--privileged', 'read-device'], check=True, capture_output=True, text=True)
+            device = json.loads(existing.stdout)
+            course_path = home / '.config/pi-helper-course/config.json'
+            course = json.loads(course_path.read_text()) if course_path.exists() else {}
         # Never send an old credential to a different configured server.
         if device and device.get('url') != ticket['url'] or course and course.get('url') != ticket['url']:
             raise ValueError('本機已有其他課堂設定，請助教確認；尚未變更。')
-        job = rpc(ticket, 'pi_helper_tool_claim', dict(p_job_id=ticket['job_id'], p_request_secret=ticket['request_secret'],
-                  p_claim_secret=claim_secret, p_hostname=ticket['expected_hostname'],
-                  p_device_token=device.get('device_token'), p_course_token=course.get('course_token')))
+        with installation_step('claim', directory):
+            job = rpc(ticket, 'pi_helper_tool_claim', dict(p_job_id=ticket['job_id'], p_request_secret=ticket['request_secret'],
+                      p_claim_secret=claim_secret, p_hostname=ticket['expected_hostname'],
+                      p_device_token=device.get('device_token'), p_course_token=course.get('course_token')))
         if job.get('completed'):
             state_path.unlink(missing_ok=True)
             print('這次安裝已完成，請回網頁繼續上課。')
             return
         try:
-            files = fetch_sources(job['files'], version=job['version'])
-            with tempfile.TemporaryDirectory(prefix='pi-helper-tools-') as temporary:
-                stage = Path(temporary)
-                for name, data in files.items():
-                    (stage / (name + '.py')).write_bytes(data)
-                target = home / '.local/share/pi-helper-course'
-                target.mkdir(parents=True, mode=0o755, exist_ok=True)
-                for name, filename in [('course', 'pi_course.py'), ('camera', 'camera_app.py')]:
-                    temporary_path = target / (filename + '.' + uuid.uuid4().hex)
-                    temporary_path.write_bytes(files[name])
-                    temporary_path.chmod(0o644)
-                    os.replace(temporary_path, target / filename)
-                shared = dict(url=ticket['url'], key=ticket['key'], expected_hostname=ticket['expected_hostname'])
-                load_module(target / 'pi_course.py', 'course_installer').setup(home=home, config={**shared, 'course_token': job['course_token']})
-                payload = dict(config={**shared, 'device_token': job['device_token']}, source=str(stage / 'device.py'), sha256=job['files']['device'])
-                subprocess.run(['sudo', '/usr/bin/python3', script, '--privileged', 'install-device'], input=json.dumps(payload), text=True, check=True)
-            subprocess.run(['/usr/bin/python3', str(home / 'pi-course'), 'location'], check=True)
-            for attempt in range(8):
-                try:
-                    rpc(ticket, 'pi_helper_tool_finish', dict(p_job_id=ticket['job_id'], p_claim_secret=claim_secret,
-                        p_status='completed', p_version=job['version'], p_error_code=None))
-                    break
-                except RuntimeError as error:
-                    if getattr(error, 'code', '') != 'TOOL_NOT_VERIFIED' or attempt == 7:
-                        raise
-                    time.sleep(5)
-            atomic_json(directory / 'version.json', {'version': job['version'], 'job_id': ticket['job_id']})
-            state_path.unlink(missing_ok=True)
+            with installation_step('download', directory):
+                files = fetch_sources(job['files'], version=job['version'])
+            with installation_step('cleanup', directory):
+                with tempfile.TemporaryDirectory(prefix='pi-helper-tools-') as temporary:
+                    stage = Path(temporary)
+                    with installation_step('write_files', directory):
+                        for name, data in files.items():
+                            (stage / (name + '.py')).write_bytes(data)
+                        target = home / '.local/share/pi-helper-course'
+                        target.mkdir(parents=True, mode=0o755, exist_ok=True)
+                        for name, filename in [('course', 'pi_course.py'), ('camera', 'camera_app.py')]:
+                            temporary_path = target / (filename + '.' + uuid.uuid4().hex)
+                            temporary_path.write_bytes(files[name])
+                            temporary_path.chmod(0o644)
+                            os.replace(temporary_path, target / filename)
+                    shared = dict(url=ticket['url'], key=ticket['key'], expected_hostname=ticket['expected_hostname'])
+                    with installation_step('course_setup', directory):
+                        load_module(target / 'pi_course.py', 'course_installer').setup(home=home, config={**shared, 'course_token': job['course_token']})
+                    payload = dict(config={**shared, 'device_token': job['device_token']}, source=str(stage / 'device.py'), sha256=job['files']['device'])
+                    with installation_step('device_setup', directory):
+                        subprocess.run(['sudo', '/usr/bin/python3', '-B', script, '--privileged', 'install-device'], input=json.dumps(payload), text=True, check=True)
+            with installation_step('course_report', directory):
+                subprocess.run(['/usr/bin/python3', str(home / 'pi-course'), 'location'], check=True)
+            with installation_step('verify', directory):
+                for attempt in range(13):
+                    try:
+                        rpc(ticket, 'pi_helper_tool_finish', dict(p_job_id=ticket['job_id'], p_claim_secret=claim_secret,
+                            p_status='completed', p_version=job['version'], p_error_code=None))
+                        break
+                    except RuntimeError as error:
+                        if getattr(error, 'code', '') != 'TOOL_NOT_VERIFIED' or attempt == 12:
+                            raise
+                        if attempt == 0:
+                            print('工具檔案已安裝，正在等候設備與課程回報；請保持終端機開啟。', flush=True)
+                        # An offline backlog may need more than one bounded flush.
+                        try:
+                            subprocess.run(['/usr/bin/python3', str(home / 'pi-course'), 'flush'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15, check=False)
+                        except (OSError, subprocess.SubprocessError):
+                            pass
+                        time.sleep(5)
+            with installation_step('save', directory):
+                atomic_json(directory / 'version.json', {'version': job['version'], 'job_id': ticket['job_id']})
+                state_path.unlink(missing_ok=True)
+                (directory / 'last-error.json').unlink(missing_ok=True)
             print('課堂工具安裝完成，設備與課程回報都已收到。請回網頁繼續上課。', flush=True)
-        except Exception:
+        except Exception as error:
             try:
                 rpc(ticket, 'pi_helper_tool_finish', dict(p_job_id=ticket['job_id'], p_claim_secret=claim_secret,
-                    p_status='failed', p_version=job['version'], p_error_code='install_failed'))
+                    p_status='failed', p_version=job['version'], p_error_code=diagnostic(error)['error_code']))
             except Exception:
                 pass
             raise
@@ -208,9 +301,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, RuntimeError, OSError, subprocess.SubprocessError) as error:
-        # Only known human-readable messages; never expose requests or credentials.
-        message = str(error)
-        safe = message in ERRORS.values() or message.startswith(('這台不是 ', '請用 user ', '工具版本與指派內容不同', '本機已有其他課堂設定'))
-        print(message if safe else '安裝未完成。請保留本機畫面並回網頁查看狀態，或重試同一行指令。', file=sys.stderr)
+    except Exception as error:
+        # Never print subprocess arguments, HTTP bodies or credential-bearing payloads.
+        print(failure_message(error), file=sys.stderr)
         sys.exit(1)

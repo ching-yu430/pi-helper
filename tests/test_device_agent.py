@@ -112,6 +112,16 @@ class ReporterTests(unittest.TestCase):
                 self.assertEqual(command.call_args_list[-1].args[0], ['systemctl', 'restart', 'pi-helper-device.service'])
                 self.assertNotIn(config['device_token'], output.getvalue())
 
+    def test_unified_install_waits_for_real_reports_instead_of_claiming_one_was_sent(self):
+        config=self.config()
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(agent,'CONFIG',root/'config.json'),patch.object(agent,'SCRIPT',root/'lib/reporter.py'),patch.object(agent,'SERVICE',root/'reporter.service'),patch.object(agent.os,'geteuid',return_value=0),patch.object(agent.os,'fchown'),patch.object(agent.socket,'gethostname',return_value='pi5-03'),patch.object(agent.pwd,'getpwnam',return_value=SimpleNamespace(pw_gid=1234)),patch.object(agent,'run',return_value=(0,'systemd')),patch.object(agent,'report') as report,patch.object(agent.subprocess,'run'),patch('sys.stdout',new=io.StringIO()) as output:
+                agent.install(config=config,report_first=False)
+            report.assert_not_called()
+            self.assertIn('等待伺服器確認',output.getvalue())
+            self.assertNotIn('已安裝並送出第一筆回報',output.getvalue())
+
 
 if __name__ == '__main__':
     unittest.main()

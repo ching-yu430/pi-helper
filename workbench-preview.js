@@ -35,7 +35,7 @@ function seed(){
   const enabled=![7,8].includes(group),stale=group===5;
   devices.push({group_no:group,enabled,received_at:enabled?stamp(stale?300:10):null,snapshot:enabled?{hostname:host(group),ssh:'active',xrdp:'active',display:'x11',xrdp_installed:true,xorgxrdp_installed:true,python_version:'Python 3.11.2',usb_cameras:group===4?0:1,free_mb:8192,uptime_seconds:1200}:null});
   courses.push({environment_steps_supported:true,student_camera_supported:true,group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
-  installations.push({group_no:group,installed_version:enabled?(group===6?'1.3.0':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
+  installations.push({group_no:group,installed_version:enabled?(group===6?'1.4.0':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
   if(enabled)attempt(group,'location',{cwd:'home',python_version:'3.11.2'},600);
   if(enabled&&group!==9)attempt(group,'folders',{folders_ok:true},500);
   if([2,3,4,5,6].includes(group))attempt(group,'hello',{group_output:true,exit_code:0},450);
@@ -65,7 +65,7 @@ window.PiSyncAPI={configured:()=>true,pollMs:5000,async rpc(name,args={}){
  case 'pi_helper_workbench_identity':result={id:id(800),name:'示範助教',admin:false};break;
  case 'pi_helper_teacher_course_settings':case 'pi_helper_course_settings':result=policy;break;
  case 'pi_helper_teacher_help':result=help;break;
- case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0','1.2.0','1.3.0'],groups:installations};break;
+ case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0','1.2.0','1.3.0','1.4.0'],groups:installations};break;
  case 'pi_helper_teacher_update_help':{
   const row=help.find(r=>r.id===args.p_id);if(!row||row.revision!==args.p_revision)throw Error('模擬求助已更新，請重新讀取。');
   if(!['open','claimed','waiting','resolved'].includes(args.p_status))throw Error('不支援此模擬狀態。');

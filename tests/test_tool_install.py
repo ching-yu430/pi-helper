@@ -1,4 +1,7 @@
 import hashlib
+from contextlib import contextmanager
+import io
+import sys
 import importlib.util
 import json
 import os
@@ -6,6 +9,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import urllib.error
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +83,103 @@ class ToolInstallTests(unittest.TestCase):
             payload=json.loads(privileged[1]['input']);self.assertEqual(payload['config'],device)
             self.assertFalse(any('teacher' in json.dumps(item) for item in calls))
             self.assertEqual(json.loads((home/'.config/pi-helper-install/version.json').read_text())['version'],version)
+
+    def test_loading_privileged_source_does_not_create_bytecode_and_restores_flag(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'device.py'
+            previous=sys.dont_write_bytecode
+            try:
+                for initial in [False,True]:
+                    sys.dont_write_bytecode=initial
+                    source.write_text('VALUE = 42\n')
+                    self.assertEqual(installer.load_module(source,'device_fixture').VALUE,42)
+                    self.assertEqual(sys.dont_write_bytecode,initial)
+                    self.assertFalse((source.parent/'__pycache__').exists())
+                    source.write_text('raise ValueError("fixture failure")\n')
+                    with self.assertRaises(ValueError):installer.load_module(source,'device_failure')
+                    self.assertEqual(sys.dont_write_bytecode,initial)
+                    self.assertFalse((source.parent/'__pycache__').exists())
+            finally:sys.dont_write_bytecode=previous
+
+    def test_privileged_helper_validates_and_imports_without_a_root_cache(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'device.py'
+            source.write_text('from pathlib import Path\ndef install(config, report_first):\n    assert report_first is False\n    Path(__file__).with_suffix(".marker").write_text("installed")\n')
+            payload=dict(source=str(source),sha256=hashlib.sha256(source.read_bytes()).hexdigest(),config={})
+            with mock.patch.object(installer.os,'geteuid',return_value=0),mock.patch('sys.stdin',new=io.StringIO(json.dumps(payload))):
+                installer.privileged('install-device')
+            self.assertEqual(source.with_suffix('.marker').read_text(),'installed')
+            self.assertFalse((source.parent/'__pycache__').exists())
+
+    @contextmanager
+    def simulated_install(self,home,*,cleanup_failure=False,delayed_verification=False):
+        files={key:(ROOT/path).read_bytes() for key,path in installer.SOURCES.items()}
+        hashes={key:hashlib.sha256(body).hexdigest() for key,body in files.items()}
+        version=json.loads((ROOT/'tooling/release.json').read_text())['version'];calls=[];requests=[];remaining=[1 if delayed_verification else 0]
+        def run(args,**kwargs):
+            calls.append((args,kwargs))
+            return subprocess.CompletedProcess(args,0,stdout='{}' if args[-1]=='read-device' else '')
+        def rpc(ticket,name,args):
+            requests.append((name,args))
+            if name=='pi_helper_tool_claim':return dict(version=version,files=hashes,device_token='d'*64,course_token='c'*64)
+            if args['p_status']=='completed' and remaining[0]:
+                remaining[0]-=1
+                error=RuntimeError(installer.ERRORS['TOOL_NOT_VERIFIED']);error.code='TOOL_NOT_VERIFIED';raise error
+            return True
+        original=installer.tempfile.TemporaryDirectory
+        class CleanupFailure:
+            def __init__(self,*args,**kwargs):pass
+            def __enter__(self):self.context=original(prefix='pi-installer-test-');return self.context.__enter__()
+            def __exit__(self,*args):self.context.__exit__(*args);raise PermissionError(13,'credential must not leak','secret-path')
+        with mock.patch.object(installer.os,'geteuid',return_value=1000),mock.patch.object(installer.socket,'gethostname',return_value='pi5-03'),mock.patch.object(installer.subprocess,'run',side_effect=run),mock.patch.object(installer,'rpc',side_effect=rpc),mock.patch.object(installer,'fetch_sources',return_value=files),mock.patch.object(installer.time,'sleep'):
+            if cleanup_failure:
+                with mock.patch.object(installer.tempfile,'TemporaryDirectory',side_effect=CleanupFailure):yield calls,requests
+            else:yield calls,requests
+
+    def test_cleanup_failure_is_reported_without_claiming_completion_or_leaking(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home=Path(directory)
+            with self.simulated_install(home,cleanup_failure=True) as (calls,requests),self.assertRaises(PermissionError) as caught:
+                installer.install(self.ticket(),home=home)
+            self.assertFalse(any(args[-1]=='location' for args,_ in calls))
+            finish=[args for name,args in requests if name=='pi_helper_tool_finish']
+            self.assertEqual(finish[-1]['p_status'],'failed');self.assertEqual(finish[-1]['p_error_code'],'install_cleanup')
+            self.assertFalse((home/'.config/pi-helper-install/version.json').exists())
+            path=home/'.config/pi-helper-install/last-error.json';record=json.loads(path.read_text())
+            self.assertEqual(record['stage'],'cleanup');self.assertEqual(record['errno'],13);self.assertEqual(path.stat().st_mode&0o777,0o600)
+            message=installer.failure_message(caught.exception)
+            self.assertIn('清理安裝暫存檔',message);self.assertIn('PermissionError',message)
+            for secret in ['credential must not leak','secret-path',self.ticket()['request_secret']]:
+                self.assertNotIn(secret,message);self.assertNotIn(secret,path.read_text())
+
+    def test_verification_retry_flushes_pending_reports_before_confirming(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home=Path(directory)
+            with self.simulated_install(home,delayed_verification=True) as (calls,requests):installer.install(self.ticket(),home=home)
+            self.assertEqual(sum(name=='pi_helper_tool_finish' and args['p_status']=='completed' for name,args in requests),2)
+            self.assertTrue(any(args[-1]=='flush' for args,_ in calls))
+            self.assertTrue((home/'.config/pi-helper-install/version.json').exists())
+            self.assertFalse((home/'.config/pi-helper-install/last-error.json').exists())
+            for args,_ in calls:
+                if args[:2]==['sudo','/usr/bin/python3']:self.assertIn('-B',args)
+
+    def test_error_formatter_never_prints_command_payloads_or_unknown_remote_data(self):
+        secret='not-for-students-secret'
+        error=subprocess.CalledProcessError(2,['installer',secret],output=secret,stderr=secret);error.install_stage='device_setup'
+        self.assertNotIn(secret,installer.failure_message(error));self.assertNotIn(secret,json.dumps(installer.diagnostic(error)))
+        error=RuntimeError(secret);error.code=secret;error.install_stage=secret
+        self.assertNotIn(secret,installer.failure_message(error));self.assertNotIn(secret,json.dumps(installer.diagnostic(error)))
+
+    def test_rpc_errors_keep_only_known_codes_not_remote_bodies(self):
+        secret='private-remote-body'
+        for message,expected in [('TOOL_EXPIRED','TOOL_EXPIRED'),(secret,'REMOTE_ERROR'),({'secret':secret},'REMOTE_ERROR')]:
+            body=io.BytesIO(json.dumps({'message':message,'details':secret}).encode())
+            error=urllib.error.HTTPError('https://example.supabase.co',400,'',{},body)
+            with mock.patch.object(installer.urllib.request,'urlopen',side_effect=error),self.assertRaises(RuntimeError) as caught:
+                installer.rpc(self.ticket(),'pi_helper_tool_claim',{})
+            self.assertEqual(caught.exception.code,expected)
+            self.assertNotIn(secret,installer.failure_message(caught.exception))
+            self.assertNotIn(secret,json.dumps(installer.diagnostic(caught.exception)))
 
     def test_release_manifest_matches_every_installed_component(self):
         release=json.loads((ROOT/'tooling/release.json').read_text())

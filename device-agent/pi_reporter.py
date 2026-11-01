@@ -199,7 +199,10 @@ WantedBy=multi-user.target
     subprocess.run(['systemctl', 'daemon-reload'], check=True)
     subprocess.run(['systemctl', 'enable', 'pi-helper-device.service'], check=True)
     subprocess.run(['systemctl', 'restart', 'pi-helper-device.service'], check=True)
-    print('已安裝並送出第一筆回報。請助教在看板確認本組設備狀態；之後每 30 秒回報。')
+    if report_first:
+        print('已安裝並送出第一筆回報。請助教在看板確認本組設備狀態；之後每 30 秒回報。')
+    else:
+        print('設備回報服務已安裝並啟動；等待伺服器確認設備與課程回報。')
 
 
 def main():

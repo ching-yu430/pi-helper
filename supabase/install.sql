@@ -12,7 +12,7 @@ alter table pi_helper.schema_migrations enable row level security;
 revoke all on pi_helper.schema_migrations from public,anon,authenticated;
 do $installer$
 begin
- if exists(select 1 from pi_helper.schema_migrations where version>20) then
+ if exists(select 1 from pi_helper.schema_migrations where version>21) then
   raise exception 'Installer is older than this database; use the latest release.';
  end if;
 
@@ -2179,6 +2179,40 @@ insert into pi_helper.tool_releases(version,bootstrap_sha256,files) values ('1.3
 notify pgrst,'reload schema';
 $migration_20$;
   insert into pi_helper.schema_migrations(version,name,sha256) values(20,'020_camera_script_path.sql','3c310d8589a10d4b2b4a1ee7136d694a8912fd5c1eba04f4e3e5adf7b9bb522d');
+ end if;
+
+ if exists(select 1 from pi_helper.schema_migrations where version=21 and (sha256<>'ab83ed57868e790381f3533ab7f80da6646697ece2976b5e977ccf08a943d00e' or name<>'021_installer_permissions.sql')) then
+  raise exception 'Migration 021_installer_permissions.sql differs from the applied version; append a new migration instead.';
+ end if;
+ if not exists(select 1 from pi_helper.schema_migrations where version=21) then
+  if exists(select 1 from pi_helper.schema_migrations where version>21) then
+   raise exception 'Migration history has a gap at 021_installer_permissions.sql.';
+  end if;
+  execute $migration_21$-- Fix installer cross-UID bytecode cleanup and expose bounded failure stages.
+
+create or replace function public.pi_helper_tool_finish(p_job_id uuid,p_claim_secret text,p_status text,p_version text,p_error_code text default null)
+returns boolean language plpgsql security definer set search_path='' as $$
+declare j pi_helper.tool_jobs%rowtype;
+begin
+ select * into j from pi_helper.tool_jobs where id=p_job_id for update;
+ if not found or p_claim_secret is null or j.claim_hash is distinct from encode(extensions.digest(p_claim_secret,'sha256'),'hex') or j.status not in ('installing','failed','completed') then raise exception 'TOOL_DENIED'; end if;
+ if j.claim_until<=now() then raise exception 'TOOL_EXPIRED'; end if;
+ if not exists(select 1 from pi_helper.rooms where id=j.room_id and active and ends_at>now() and group_count>=j.group_no) then raise exception 'ROOM_NOT_FOUND'; end if;
+ if p_version is distinct from j.version or p_status is null or p_status not in ('completed','failed') or (p_error_code is not null and p_error_code not in ('install_failed','install_sudo','install_read_config','install_claim','install_download','install_write_files','install_course_setup','install_device_setup','install_cleanup','install_course_report','install_verify','install_save')) then raise exception 'INVALID_STATE'; end if;
+ if j.status='completed' then if p_status='completed' then return true; else raise exception 'TOOL_DENIED'; end if;end if;
+ if p_status='completed' then
+  if not exists(select 1 from pi_helper.devices where room_id=j.room_id and group_no=j.group_no and enabled and token_hash=j.claim_device_hash and received_at>=j.claimed_at)
+  or not exists(select 1 from pi_helper.course_devices c join pi_helper.course_tasks t using(room_id,group_no) where c.room_id=j.room_id and c.group_no=j.group_no and c.enabled and c.token_hash=j.claim_course_hash and t.task='location' and t.status='passed' and t.received_at>=j.claimed_at) then raise exception 'TOOL_NOT_VERIFIED'; end if;
+  insert into pi_helper.tool_installations(room_id,group_no,version) values(j.room_id,j.group_no,j.version)
+  on conflict(room_id,group_no) do update set version=excluded.version,completed_at=now();
+ end if;
+ update pi_helper.tool_jobs set status=p_status,error_code=p_error_code,revision=revision+1,updated_at=now() where id=j.id;
+ return true;
+end; $$;
+insert into pi_helper.tool_releases(version,bootstrap_sha256,files) values ('1.4.0','a01f2fb21079882c70774e7e14ee3581224efd7cf7a1188cd942f43269d14064','{"device":"b53c4e04e72bdb55d448e733a0fbb440e6e71f79b2891737e5d53f93735c182d","course":"4d5c8b1d995e90ffa1d64b16c01c98aa37d61585200aff944d29137649c803e1","camera":"e53b91296f3b30883de35fa6b9486b1e83a752b69b2fd044359a40312749dd42"}'::jsonb) on conflict(version) do nothing;
+notify pgrst,'reload schema';
+$migration_21$;
+  insert into pi_helper.schema_migrations(version,name,sha256) values(21,'021_installer_permissions.sql','ab83ed57868e790381f3533ab7f80da6646697ece2976b5e977ccf08a943d00e');
  end if;
 end;
 $installer$;

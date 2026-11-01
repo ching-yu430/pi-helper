@@ -18,8 +18,8 @@ function paintResult(){
  if(!stage.tasks.length)text=manual[stage.id]?'你已確認下載':'下載後開啟照片，再按「完成課程」。';
  else if(error){text='無法重新檢查';state='issue';issue=error==='FEATURE_UNAVAILABLE'?'自動檢查尚未啟用，請找助教設定。':'暫時無法更新。按「重新檢查」重試，仍不行就找助教。'}
  else if(!row)text='正在讀取結果…';
- else if(stage.id==='environment'&&row.environment_steps_supported!==true){text='檢查工具待更新';issue='請助教更新資料庫與課堂工具 1.2.0。'}
- else if(stage.assignment&&row.student_camera_supported!==true){text='檢查工具待更新';issue='請助教更新資料庫與課堂工具 1.1.0；也可先關閉自動檢查。'}
+ else if(stage.id==='environment'&&row.environment_steps_supported!==true){text='檢查工具待更新';issue='請助教更新資料庫與修正版課堂工具 1.4.0。'}
+ else if(stage.assignment&&row.student_camera_supported!==true){text='檢查工具待更新';issue='請助教更新資料庫與修正版課堂工具 1.4.0；也可先關閉自動檢查。'}
  else if(!row.enabled)text=staff?'尚無設備回報':'尚未設定自動檢查，請找助教。';
  else if(automatic){state='passed';text=stage.manual?(manual[stage.id]?'你已確認照片':'照片已存檔，請打開確認。'):'檢查通過';}
  else {const failed=items.find(task=>['failed','cancelled'].includes(task?.status)),running=items.find(task=>task?.status==='running');
