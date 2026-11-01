@@ -67,7 +67,7 @@ Object.assign(environment,{
  view:{title:'安裝 OpenCV、確認相機',where:'樹莓派｜終端機',action:'先更新套件清單。',
  commandTitles:['更新套件清單','安裝 OpenCV 與相機工具','測試 OpenCV','列出 USB 相機','查詢支援解析度','查看相機設定'],
  commandActions:['先更新套件清單，等它執行完。','安裝 OpenCV、相機工具與視窗套件。','確認 Python 能使用 OpenCV。','把 USB 相機插在樹莓派，再執行這一行。','選好相機位置，再查詢支援的解析度。','使用同一個相機位置，查看設定。'],
- results:['等到「本次操作完成」，再做下一行。','安裝完成並回到輸入位置。','看到 OpenCV 版本，例如 4.6.0；版本不同也可以。','找到 GENERAL WEBCAM；下一行選它對應的 /dev/video… 位置。','在 MJPG 下找到 1920x1080。沒有就請助教確認。','看到 Driver name、Width/Height 等相機資訊。這些設定不用修改。']}
+ results:['等到「本次操作完成」，再做下一行。','安裝完成並回到輸入位置。','看到 OpenCV 版本，例如 4.6.0；版本不同也可以。','找到 GENERAL WEBCAM，並看最後「可用 USB 相機：…」。下一行選這個位置。','在 MJPG 下找到 1920x1080。沒有就請助教確認。','看到 Driver name、Width/Height 等相機資訊。這些設定不用修改。']}
 });
 // The AI assignment owns its file; the legacy teacher camera app remains available separately.
 const assignment=stages.find(s=>s.id==='camera');
@@ -105,7 +105,11 @@ stages[7].view.openPhotoSteps=['留在剛才的 Windows PowerShell，複製下�
 stages[7].view.path='Windows 照片位置：使用者資料夾 → Downloads → pi-camera-photos → photos';
 stages[7].notes=stages[7].notes.filter(text=>!text.startsWith('重複下載可能'));
 stages[7].notes.push('每次依序使用這三行。照片固定放在 Downloads\\pi-camera-photos\\photos；重複下載不會再多一層 photos。','若 Windows 的「下載」已移到 OneDrive 或其他地方，仍用本頁 explorer.exe 指令開啟這次指定的位置。');
-environment.view.commandInstructions=environment.commands.map((_,i)=>[...terminalSteps,...(i<2?['如果詢問 [sudo] password，輸入樹莓派密碼再按 Enter。沒有文字或星號是正常的；不要再貼一次指令。']:i===3?['相機要插在樹莓派。找到 GENERAL WEBCAM 下方的 /dev/video…，下一步會用到。']:i>=4?['先在下方「相機位置」選剛才看到的 /dev/video…。不確定選哪個，就保留畫面請助教幫忙。']:[])]);
+environment.view.commandInstructions=environment.commands.map((_,i)=>{
+ const select=i>=4?['先在下方「相機位置」選剛才看到的 /dev/video…。不確定選哪個，就保留畫面請助教幫忙。']:[];
+ const note=i<2?['如果詢問 [sudo] password，輸入樹莓派密碼再按 Enter。沒有文字或星號是正常的；不要再貼一次指令。']:i===3?['相機要插在樹莓派。先看最後「可用 USB 相機：…」，再對照下方範例找 GENERAL WEBCAM。']:[];
+ return [...select,...terminalSteps.slice(0,2),...note,terminalSteps[2]];
+});
 assignment.view.runningInstructions=[...terminalSteps.slice(0,2),'等拍照視窗出現，用滑鼠按「拍照」。看到存檔成功後，按程式的「結束」，不要只縮小視窗。','回到網頁等檢查結果。有錯誤先保留終端機畫面；要修改程式，按下方「回去修改程式」。'];
 function instructionsFor(stage,{writing=false,lineIndex=0}={}){
  return writing?stage.view.writingInstructions||[]:stage.view.commandInstructions?.[lineIndex]||stage.view.runningInstructions||stage.view.instructions||[];

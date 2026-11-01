@@ -766,3 +766,24 @@ body[data-assistant-view="details"] .group-details-title { position:absolute; wi
 @media(max-width:600px) { .group-record-actions button { width:100%; } }
 
 .tool-capability-note { padding:14px 16px; border-radius:12px; background:var(--site-soft); font-size:15px; }
+
+.camera-device-guide { margin:18px 0 0; padding:16px; border:1px solid var(--site-border); border-radius:12px; background:#f8faf7; font-size:15px; line-height:1.75; }
+.camera-device-guide h3 { margin:0 0 10px; font-size:18px; }
+.camera-device-guide ol { padding-left:22px; margin:10px 0; }
+.camera-device-guide li { margin:8px 0; }
+.camera-device-guide p { margin:10px 0 0; }
+.camera-device-guide summary { cursor:pointer; min-height:44px; font-weight:700; }
+.camera-device-example { margin:14px 0; }
+.camera-device-example figcaption { margin-bottom:8px; font-size:13px; color:var(--site-muted); }
+.camera-device-example code { display:block; white-space:pre-wrap; overflow-wrap:anywhere; padding:12px; background:#eef2ed; color:var(--site-code-ink); border-radius:8px; font:14px/1.7 Consolas,monospace; }
+.camera-device-example .camera-device-ignore { color:#59685d; margin-bottom:8px; }
+.camera-device-example .camera-device-usb { background:#eaf4eb; border:1px solid #9bbda1; }
+.camera-device-example mark { background:#c8e5c9; color:#174b3c; font-weight:700; border-radius:3px; }
+.camera-device-note { font-size:14px; color:#506254; }
+.camera-device-choice { padding:10px 12px; border-radius:8px; background:#eaf1f9; color:#2c5278; overflow-wrap:anywhere; font-weight:600; }
+.camera-device-reference { margin-top:14px; border-top:1px solid var(--site-border); padding-top:10px; }
+.camera-device-reference table { width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
+.camera-device-reference caption { text-align:left; padding:8px 0; color:var(--site-muted); }
+.camera-device-reference th,.camera-device-reference td { text-align:left; padding:9px 6px; border-bottom:1px solid var(--site-border); overflow-wrap:anywhere; vertical-align:top; }
+.camera-device-reference th { width:28%; }
+.page-presenter .camera-device-guide { padding:12px; }

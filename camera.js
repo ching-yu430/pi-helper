@@ -52,6 +52,7 @@ function updateNext(){
  q('cameraFallback').hidden=!checksEnabled()||staff||completionConfirmed||!stage.tasks.length||automatic;
  q('cameraVerification').hidden=!checksEnabled()&&!staff;
  q('cameraCheckOverview').hidden=writing||!stage.tasks.length||!checksEnabled()&&!staff;
+ const deviceGuide=q('cameraDeviceGuide'),guideKey=stage.id==='environment'?lineIndex+':'+cameraDevice:'';if(deviceGuide.dataset.guideKey!==guideKey){deviceGuide.dataset.guideKey=guideKey;deviceGuide.replaceChildren();const guide=stage.id==='environment'?PiCameraDeviceGuide.build(lineIndex,cameraDevice):null;deviceGuide.hidden=!guide;if(guide)deviceGuide.append(guide)}
  paintResult();
  q('cameraCheckOverview').dataset.state=q('cameraCheckSummary').dataset.state||'waiting';
 }
