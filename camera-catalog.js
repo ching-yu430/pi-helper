@@ -81,7 +81,7 @@ Object.assign(assignment,{
  view:{title:'用 AI 做拍照程式',where:'樹莓派｜Thonny',action:'自己向 AI 提問，做出符合以下規範的拍照程式。',saveAs:'/home/user/pi-camera/{host}_camera.py',commandTitles:['開啟本組程式並檢查'],results:['預覽 → 拍照 → 結束，之後才會回報檢查結果。']}
 });
 // Main lesson instructions: only the actions needed in the current window.
-const terminalSteps=['在樹莓派桌面，按左上角黑色「>_」圖示，開啟終端機。','按下方「複製指令」，點一下樹莓派終端機，按 Ctrl + Shift + V，再按 Enter。'];
+const terminalSteps=['切到剛才的樹莓派終端機。還沒開啟時，按樹莓派桌面左上角黑色「>_」圖示。','按下方「複製指令」，點一下樹莓派終端機，按 Ctrl + Shift + V，再按 Enter。','等這一行執行完，重新看到 user@{host} 的輸入位置，再按網頁的「下一步」。請留在同一個終端機。'];
 for(const stage of stages){
  if(stage.commands.length&&stage.id!=='download')stage.view.instructions=terminalSteps;
  if(stage.code){
@@ -94,9 +94,19 @@ stages[3].view.runningInstructions=[...terminalSteps,'執行後，在樹莓派�
 stages[6].view.instructions=['在樹莓派桌面，按上方黃色資料夾圖示，開啟檔案管理員。','在檔案管理員按 Ctrl + L，輸入 /home/user/pi-camera/photos，再按 Enter。','點兩下 JPG 照片。確認物品清楚、完整，沒有太亮或太暗，再回網頁按「照片看過了」。'];
 stages[6].view.path='照片在樹莓派：/home/user/pi-camera/photos';
 assignment.view.where='Windows｜AI 網站 → 樹莓派｜Thonny';
-assignment.view.writingInstructions=['在 Windows 筆電的瀏覽器開啟你使用的 AI 網站，自己描述下方六項功能。','複製 AI 給的 Python 程式。回到樹莓派遠端桌面，點樹莓派選單 → 程式設計 → Thonny，按 Ctrl + N。','點 Thonny 上半部空白區，按 Ctrl + V。按 Ctrl + S，在「檔案名稱」填下方完整路徑並儲存，再回網頁按「開始試拍」。'];
+assignment.view.writingInstructions=['在 Windows 瀏覽器開啟你使用的 AI 網站。告訴 AI 下方六項功能、使用的工具、照片資料夾及檔名規則。','複製 AI 給的 Python 程式。回樹莓派遠端桌面，點樹莓派選單 → 程式設計 → Thonny，按 Ctrl + N。','點 Thonny 上半部空白區，按 Ctrl + V。按 Ctrl + S，把下方完整路徑貼到「檔案名稱」並儲存，再回網頁按「開始試拍」。'];
 assignment.view.runningInstructions=[...terminalSteps,'等拍照視窗出現：用滑鼠按「拍照」，再按程式的「結束」。回到網頁等檢查結果；有錯誤先保留終端機畫面。'];
-stages[7].view.commandInstructions=[['縮小樹莓派遠端桌面。按 Windows 開始鍵，輸入 PowerShell，再按 Enter；找到 PS 開頭的輸入位置。','複製下方指令，點一下 Windows PowerShell，按 Ctrl + V，再按 Enter。第一次出現 yes/no 時，先請助教核對本組目標，再輸入 yes。','出現 password 時，輸入樹莓派密碼，再按 Enter；看不到文字或星號是正常的。等下載結束，再按「下一步」。'],[]];
+stages[7].commands=['New-Item -ItemType Directory -Force "$HOME\\Downloads\\pi-camera-photos" | Out-Null','scp -r user@{host}.local:/home/user/pi-camera/photos "$HOME\\Downloads\\pi-camera-photos"','explorer.exe "$HOME\\Downloads\\pi-camera-photos\\photos"'];
+stages[7].view.commandTitles=['準備筆電上的照片資料夾','下載本組照片','開啟下載好的照片'];
+stages[7].view.commandActions=['先在 Windows 筆電準備放照片的資料夾。已經有這個資料夾也可以執行。','將樹莓派的照片下載到 Windows，等下載完成再按「下一步」。','最後打開筆電裡的照片，確認真的下載好了。'];
+stages[7].view.results=['沒有錯誤，重新出現 PS 開頭的輸入位置。','下載進度結束，重新出現 PS 命令列。沒有紅色錯誤才繼續。','開啟 photos 資料夾。點兩下 JPG，確認看得到照片。'];
+stages[7].view.commandInstructions=[['縮小樹莓派遠端桌面。按 Windows 開始鍵，輸入 PowerShell，再按 Enter；找到 PS 開頭的輸入位置。','複製下方指令，點一下 Windows PowerShell，按 Ctrl + V，再按 Enter。這行只建立資料夾，不會刪除舊照片。'],['留在同一個 Windows PowerShell，複製下方指令，按 Ctrl + V，再按 Enter。','第一次出現 yes/no 時，先請助教核對本組目標，再輸入 yes。出現 password 時，輸入樹莓派密碼再按 Enter；看不到文字或星號是正常的。','等下載結束，重新看到 PS 開頭的輸入位置。看到紅色錯誤就保留畫面，請助教幫忙；不要直接按下一步。'],[]];
+stages[7].view.openPhotoSteps=['留在剛才的 Windows PowerShell，複製下方 explorer.exe 指令，貼上後按 Enter。','新開的 photos 資料夾裡，點兩下 JPG 照片。第一次詢問用哪個程式開啟時，選「相片／Photos」。','確定看得到照片，再回網頁按「完成課程」。'];
+stages[7].view.path='Windows 照片位置：使用者資料夾 → Downloads → pi-camera-photos → photos';
+stages[7].notes=stages[7].notes.filter(text=>!text.startsWith('重複下載可能'));
+stages[7].notes.push('每次依序使用這三行。照片固定放在 Downloads\\pi-camera-photos\\photos；重複下載不會再多一層 photos。','若 Windows 的「下載」已移到 OneDrive 或其他地方，仍用本頁 explorer.exe 指令開啟這次指定的位置。');
+environment.view.commandInstructions=environment.commands.map((_,i)=>[...terminalSteps,...(i<2?['如果詢問 [sudo] password，輸入樹莓派密碼再按 Enter。沒有文字或星號是正常的；不要再貼一次指令。']:i===3?['相機要插在樹莓派。找到 GENERAL WEBCAM 下方的 /dev/video…，下一步會用到。']:i>=4?['先在下方「相機位置」選剛才看到的 /dev/video…。不確定選哪個，就保留畫面請助教幫忙。']:[])]);
+assignment.view.runningInstructions=[...terminalSteps.slice(0,2),'等拍照視窗出現，用滑鼠按「拍照」。看到存檔成功後，按程式的「結束」，不要只縮小視窗。','回到網頁等檢查結果。有錯誤先保留終端機畫面；要修改程式，按下方「回去修改程式」。'];
 function instructionsFor(stage,{writing=false,lineIndex=0}={}){
  return writing?stage.view.writingInstructions||[]:stage.view.commandInstructions?.[lineIndex]||stage.view.runningInstructions||stage.view.instructions||[];
 }

@@ -14,6 +14,7 @@ function status(row,error){
  return {state:'fresh',text:'已收到 Pi 設備回報',hint:'設備檢查不代表筆電已成功登入。'};
 }
 const service=value=>({active:'已啟動',inactive:'未啟動',failed:'啟動失敗',activating:'啟動中',deactivating:'停止中',missing:'尚未安裝',unknown:'無法確認'})[value]||'無法確認';
+const uptime=value=>!Number.isSafeInteger(value)||value<0?'無法確認':value<60?'不到 1 分鐘':Math.floor(value/3600)+' 小時 '+Math.floor(value%3600/60)+' 分鐘';
 const installed=value=>value===true?'已安裝':value===false?'尚未安裝':'無法確認';
 function render(container,row,{group,detailed=false,error='',step=''}={}){
  const state=status(row,error);container.dataset.deviceState=state.state;container.replaceChildren();
@@ -27,7 +28,7 @@ function render(container,row,{group,detailed=false,error='',step=''}={}){
   if(!match)container.append(make('p','主機名稱不同：應為 '+hostname(group)+'，設備回報為 '+snapshot.hostname+'。先請助教核對組別。','device-warning'));
   if(detailed){
    const list=make('dl',undefined,'device-check-list');
-   const values=[['主機名稱',snapshot.hostname],['SSH',service(snapshot.ssh)],['遠端桌面服務',service(snapshot.xrdp)],['xrdp 套件',installed(snapshot.xrdp_installed)],['xorgxrdp 套件',installed(snapshot.xorgxrdp_installed)],['本機桌面設定',({x11:'X11',wayland:'Wayland',unknown:'無法確認'})[snapshot.display]||'無法確認'],['Python',snapshot.python_version||'無法確認'],['USB 相機',snapshot.usb_cameras===null?'無法確認':snapshot.usb_cameras>0?'偵測到 '+snapshot.usb_cameras+' 台':'尚未偵測到'],['可用空間',snapshot.free_mb===null?'無法確認':snapshot.free_mb+' MB']];
+   const values=[['主機名稱',snapshot.hostname],['SSH',service(snapshot.ssh)],['遠端桌面服務',service(snapshot.xrdp)],['xrdp 套件',installed(snapshot.xrdp_installed)],['xorgxrdp 套件',installed(snapshot.xorgxrdp_installed)],['本機桌面設定',({x11:'X11',wayland:'Wayland',unknown:'無法確認'})[snapshot.display]||'無法確認'],['Python',snapshot.python_version||'無法確認'],['USB 相機',snapshot.usb_cameras===null?'無法確認':snapshot.usb_cameras>0?'偵測到 '+snapshot.usb_cameras+' 台':'尚未偵測到'],['可用空間',snapshot.free_mb===null?'無法確認':snapshot.free_mb+' MB'],['本次開機經過時間',uptime(snapshot.uptime_seconds)]];
    for(const [key,value] of values)list.append(make('dt',key),make('dd',value));container.append(list);
    container.append(make('p','相機僅檢查是否被系統偵測到；X11 顯示設定值，仍需依課程重新開機。','muted'));
   }else container.append(make('p',step&&['login','trust','password','verify','name','tcp','network','localCheck','account'].includes(step)?'SSH：'+service(snapshot.ssh):'SSH：'+service(snapshot.ssh)+' · 遠端桌面：'+service(snapshot.xrdp),'device-service-summary'));

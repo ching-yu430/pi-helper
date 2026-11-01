@@ -764,3 +764,5 @@ body[data-assistant-view="details"] .group-details-title { position:absolute; wi
 .clear-course-option { display:flex; align-items:center; gap:10px; min-height:48px; margin:12px 0; }
 .clear-course-option input { width:22px; height:22px; flex-shrink:0; }
 @media(max-width:600px) { .group-record-actions button { width:100%; } }
+
+.tool-capability-note { padding:14px 16px; border-radius:12px; background:var(--site-soft); font-size:15px; }

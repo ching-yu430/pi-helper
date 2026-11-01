@@ -1,4 +1,4 @@
-.page-camera main,.page-camera header>div { max-width:860px; }
+.page-camera main,.page-camera header>div { max-width:920px; }
 .page-camera header { padding:12px 20px; }
 .page-camera .camera-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .page-camera header h1 { margin:0; font-size:22px; }
@@ -139,3 +139,60 @@
 .camera-instructions { margin:12px 0 20px; padding:14px 16px 14px 40px; border:1px solid var(--site-border); border-radius:12px; background:#f8faf7; font-size:16px; line-height:1.7; }
 .camera-instructions li { padding-left:3px; margin:6px 0; }
 .camera-instructions li::marker { color:var(--site-accent,#205b45); font-weight:700; }
+
+/* Keep the current action, its destination and its result in one reading order. */
+.page-camera { background:#f3f6f2; }
+.page-camera header { background:#fff; color:var(--site-ink); border-bottom:1px solid var(--site-border); }
+.page-camera header h1 { color:var(--site-ink); }
+.page-camera header .site-nav a,.page-camera #cameraTools>summary { background:#fff; color:var(--site-green); border-color:var(--site-border); }
+.page-camera .camera-course-bar { margin-bottom:8px; }
+.page-camera #cameraGroupLabel { font-weight:700; color:var(--site-green); }
+.camera-stage-nav select { background:#fff; border:1px solid var(--site-border); border-radius:10px; }
+#cameraStageCount { color:var(--site-green); font-weight:700; }
+.camera-progress { display:block; width:100%; height:5px; margin:0 0 20px; border:0; border-radius:8px; overflow:hidden; accent-color:var(--site-green); background:#dfe9e0; }
+.camera-progress::-webkit-progress-bar { background:#dfe9e0; }
+.camera-progress::-webkit-progress-value { background:var(--site-green); border-radius:8px; }
+.camera-progress::-moz-progress-bar { background:var(--site-green); border-radius:8px; }
+.page-camera .camera-task-card { border:1px solid var(--site-border); border-top:4px solid var(--site-green); border-radius:18px; padding:28px; box-shadow:0 5px 22px #173d3108; }
+.camera-task-card h2 { font-size:28px; line-height:1.4; letter-spacing:.02em; margin-bottom:12px; }
+.camera-task-card .place { padding:5px 12px; margin-bottom:12px; }
+.camera-task-card[data-place="windows"] { border-top-color:#375c91; }
+.camera-task-card[data-place="windows"] .place { color:#254d7b; background:#eaf1fb; }
+.camera-task-action { font-weight:600; margin:6px 0 18px; }
+.camera-instructions-title { font-size:15px; color:var(--site-muted); margin:0 0 8px; font-weight:600; }
+.camera-instructions { list-style:none; counter-reset:camera-instruction; display:grid; gap:12px; margin:0 0 22px; padding:0; border:0; background:transparent; }
+.camera-instructions li { counter-increment:camera-instruction; position:relative; padding:0 0 0 38px; margin:0; min-height:28px; }
+.camera-instructions li::before { content:counter(camera-instruction); position:absolute; left:0; top:0; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#edf3ed; color:var(--site-green); font-size:14px; font-weight:700; }
+.camera-phases { display:grid; grid-template-columns:1fr 1fr; list-style:none; margin:0 0 18px; padding:4px; gap:4px; background:#f0f4ef; border-radius:10px; font-size:14px; }
+.camera-phases li { padding:8px; text-align:center; color:#617267; border-radius:7px; }
+.camera-phases li[aria-current="step"] { background:white; color:var(--site-green); font-weight:700; box-shadow:0 1px 4px #173d3110; }
+#cameraAssignment { padding:18px; margin:0 0 20px; border:1px solid var(--site-border); border-radius:12px; background:#f8faf7; overflow-wrap:anywhere; }
+#cameraAssignment h3 { margin:0 0 10px; font-size:18px; }
+.camera-requirements { display:grid; grid-template-columns:1fr 1fr; gap:8px 24px; margin:0 0 16px; padding-left:22px; }
+.camera-requirements li { margin:0; padding-left:2px; }
+#cameraAssignment p { margin:8px 0; font-size:14px; }
+.camera-assignment-environment { border-top:1px solid var(--site-border); padding-top:12px; }
+#cameraSaveAs { padding:14px; border:1px solid var(--site-border); border-radius:12px; background:#f8faf7; }
+.page-camera .command-line-result { margin-top:4px; }
+.page-camera .command-compact .command-line-result { padding:10px 12px; border-left:3px solid #84aa8c; border-radius:6px; background:#f0f6ef; color:#31543c; font-size:15px; }
+.camera-check-overview { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:20px 0 0; padding:14px 16px; border:1px solid #d5dfeb; border-radius:12px; background:#f5f8fc; }
+.camera-check-label { color:#50657e; font-size:13px; }
+#cameraCheckSummary { margin:2px 0; font-size:16px; font-weight:700; }
+.camera-check-hint { margin:3px 0 0; color:var(--site-muted); font-size:13px; }
+.camera-check-overview button { flex-shrink:0; }
+.camera-check-overview[data-state="passed"] { background:#edf6ee; border-color:#bad1bd; }
+.camera-check-overview[data-state="issue"] { background:#fff8ec; border-color:#e5cfaa; }
+.camera-navigation { border-top:1px solid var(--site-border); padding-top:20px; margin-top:22px; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:stretch; }
+.camera-navigation button { display:flex; align-items:center; justify-content:center; }
+.camera-download-guide { padding:16px; border:1px solid #c8d7e9; border-radius:12px; background:#f5f8fd; }
+.page-camera #cameraRecords { margin-top:18px; }
+@media(max-width:600px) {
+ .page-camera .camera-task-card { padding:18px 16px; border-radius:14px; }
+ .camera-task-card h2 { font-size:24px; }
+ .camera-requirements { grid-template-columns:1fr; gap:9px; }
+ #cameraAssignment { padding:14px; }
+ .camera-check-overview { flex-wrap:wrap; gap:10px; }
+ .camera-check-overview button { width:100%; }
+ .camera-navigation { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+ #cameraCommandCount { grid-column:1/-1; grid-row:1; text-align:center; }
+}
