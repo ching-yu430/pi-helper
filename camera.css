@@ -80,7 +80,7 @@
 .camera-editor-intro { margin:0 0 10px; color:var(--site-ink); font-size:15px; }
 #cameraSaveAs { display:flex; flex-direction:column; gap:5px; font-size:14px; }
 #cameraSaveAs code { color:var(--site-green); font-size:15px; font-weight:600; }
-.camera-copy-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:stretch; gap:10px; }
+.camera-copy-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:10px; }
 .camera-copy-row .command-copy { min-width:112px; min-height:48px; padding:10px 14px; text-align:center; font-size:14px; }
 .camera-path-copy { align-items:center; margin-top:4px; }
 .camera-copy-feedback { display:block; margin:7px 0 0; color:#326148; font-size:13px; }
@@ -117,7 +117,7 @@
 .connection-trouble summary { min-height:44px; cursor:pointer; padding:10px 0; }
 .connection-trouble ul { padding-left:22px; }
 .connection-trouble li { margin:12px 0; }
-.connection-navigation { display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-top:20px; }
+.connection-navigation { display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:12px; margin-top:20px; }
 .connection-navigation button { min-height:52px; }
 .connection-already { width:100%; margin-top:12px; min-height:48px; }
 #connectionAsk { margin:12px 0; }

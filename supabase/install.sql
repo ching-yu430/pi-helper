@@ -12,7 +12,7 @@ alter table pi_helper.schema_migrations enable row level security;
 revoke all on pi_helper.schema_migrations from public,anon,authenticated;
 do $installer$
 begin
- if exists(select 1 from pi_helper.schema_migrations where version>25) then
+ if exists(select 1 from pi_helper.schema_migrations where version>26) then
   raise exception 'Installer is older than this database; use the latest release.';
  end if;
 
@@ -2540,6 +2540,45 @@ grant execute on function public.pi_helper_teacher_set_teacher_progress(text,tex
 notify pgrst,'reload schema';
 $migration_25$;
   insert into pi_helper.schema_migrations(version,name,sha256) values(25,'025_reinstall_teacher_progress.sql','ad8669a9c8ba625f5d811b2ebd9d7bb0b7e9aafa6ed756d2e47957fd5e8f9a30');
+ end if;
+
+ if exists(select 1 from pi_helper.schema_migrations where version=26 and (sha256<>'ff76d18c97916eb7e7dbcc3d6c804d3d90449262c4c205781734a3c25a911e05' or name<>'026_clear_course_records.sql')) then
+  raise exception 'Migration 026_clear_course_records.sql differs from the applied version; append a new migration instead.';
+ end if;
+ if not exists(select 1 from pi_helper.schema_migrations where version=26) then
+  if exists(select 1 from pi_helper.schema_migrations where version>26) then
+   raise exception 'Migration history has a gap at 026_clear_course_records.sql.';
+  end if;
+  execute $migration_26$-- Explicit, teacher-authorized clearing. Pairing and sequence replay protection remain intact.
+
+set local lock_timeout='5s';
+create or replace function public.pi_helper_teacher_clear_course_records(
+ p_room_code text,p_teacher_code text,p_group_no smallint default null,p_include_board boolean default false)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare r uuid; total integer; tasks bigint; runs bigint; board jsonb:='{"reports":0,"help_requests":0}'::jsonb;
+begin
+ r:=pi_helper.require_teacher(p_room_code,p_teacher_code);
+ select group_count into total from pi_helper.rooms where id=r for update;
+ if p_group_no is not null and (p_group_no<1 or p_group_no>total) then raise exception 'INVALID_GROUP'; end if;
+ if p_include_board is null then raise exception 'INVALID_STATE'; end if;
+ -- Course events acquire the same device lock before writing tasks and history.
+ perform 1 from pi_helper.course_devices where room_id=r and (p_group_no is null or group_no=p_group_no) order by group_no for update;
+ select count(*) into runs from pi_helper.course_runs where room_id=r and (p_group_no is null or group_no=p_group_no);
+ delete from pi_helper.course_tasks where room_id=r and (p_group_no is null or group_no=p_group_no);
+ get diagnostics tasks=row_count;
+ -- Task deletion normally clears its history; also remove any orphan history.
+ delete from pi_helper.course_runs where room_id=r and (p_group_no is null or group_no=p_group_no);
+ update pi_helper.course_devices set received_at=null,network='[]'::jsonb where room_id=r and (p_group_no is null or group_no=p_group_no);
+ -- Never reset last_sequence: replaying an already received event cannot restore cleared results.
+ if p_include_board then board:=public.pi_helper_teacher_clear_board(p_room_code,p_teacher_code,p_group_no); end if;
+ return board||jsonb_build_object('course_tasks',tasks,'course_runs',runs);
+end;
+$$;
+revoke all on function public.pi_helper_teacher_clear_course_records(text,text,smallint,boolean) from public;
+grant execute on function public.pi_helper_teacher_clear_course_records(text,text,smallint,boolean) to anon,authenticated;
+notify pgrst,'reload schema';
+$migration_26$;
+  insert into pi_helper.schema_migrations(version,name,sha256) values(26,'026_clear_course_records.sql','ff76d18c97916eb7e7dbcc3d6c804d3d90449262c4c205781734a3c25a911e05');
  end if;
 end;
 $installer$;

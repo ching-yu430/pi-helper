@@ -70,6 +70,7 @@ window.PiSyncAPI={configured:()=>true,pollMs:5000,async rpc(name,args={}){
  case 'pi_helper_teacher_course_settings':case 'pi_helper_course_settings':result=policy;break;
  case 'pi_helper_teacher_help':result=help;break;
  case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0','1.2.0','1.3.0','1.4.0','1.5.0','1.5.1','1.6.0'],groups:installations};break;
+ case 'pi_helper_teacher_clear_course_records':{let course_tasks=0,course_runs=0;for(const row of courses.filter(r=>!args.p_group_no||r.group_no===args.p_group_no)){course_tasks+=row.tasks.length;course_runs+=row.runs.length;row.tasks=[];row.runs=[];row.received_at=null}result={course_tasks,course_runs,reports:0,help_requests:0};break;}
  case 'pi_helper_teacher_update_help':{
   const row=help.find(r=>r.id===args.p_id);if(!row||row.revision!==args.p_revision)throw Error('模擬求助已更新，請重新讀取。');
   if(!['open','claimed','waiting','resolved'].includes(args.p_status))throw Error('不支援此模擬狀態。');
