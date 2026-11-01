@@ -175,6 +175,23 @@ class StudentCameraTests(unittest.TestCase):
             self.assertEqual(course.main(),0)
         self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','passed'),('camera_exit','passed'),('student_camera','passed')])
 
+    def test_explicit_script_command_executes_the_same_group_file_and_checks(self):
+        self.fixture()
+        events=[];reporter=self.reporter();reporter.emit=lambda *args:events.append(args);reporter.flush=lambda **kwargs:None
+        args=['pi-course','run','--','/usr/bin/python3',str(self.project/'pi5-03_camera.py')]
+        with patch.object(course.Path,'home',return_value=self.home),patch.object(course,'Reporter',return_value=reporter),patch.object(course.os,'geteuid',return_value=1000),patch.object(course.sys,'argv',args),patch.object(course,'PYTHON',sys.executable),patch.object(course,'probe_camera',return_value='/dev/video0'),patch('sys.stdout',new=io.TextIOWrapper(io.BytesIO(),encoding='utf-8')):
+            self.assertEqual(course.main(),0)
+        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','passed'),('camera_exit','passed'),('student_camera','passed')])
+        self.assertEqual(events[-1][2]['script_name'],'pi5-03_camera.py')
+
+    def test_explicit_camera_path_rejects_another_group_or_arbitrary_file(self):
+        with patch.object(course.Path,'home',return_value=self.home):
+            for script in [self.project/'pi5-04_camera.py',self.project/'camera_app.py',self.home/'unrelated.py']:
+                with self.assertRaises(ValueError):
+                    course.resolve_classroom_command(['/usr/bin/python3',str(script)])
+            with self.assertRaises(ValueError):
+                course.resolve_classroom_command(['/usr/bin/python3',str(self.project/'pi5-03_camera.py'),'--unexpected'])
+
     def test_command_cancellation_reports_no_success(self):
         events = []
         reporter = self.reporter()

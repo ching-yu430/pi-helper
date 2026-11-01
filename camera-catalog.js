@@ -69,14 +69,14 @@ Object.assign(environment,{
 // The AI assignment owns its file; the legacy teacher camera app remains available separately.
 const assignment=stages.find(s=>s.id==='camera');
 Object.assign(assignment,{
- assignment:true,where:'樹莓派｜Thonny，寫好後回終端機',download:null,commands:[runner+'camera-student'],tasks:['student_camera','photo','camera_exit'],
+ assignment:true,where:'樹莓派｜Thonny，寫好後回終端機',download:null,commands:[runner+'run -- /usr/bin/python3 /home/user/pi-camera/{host}_camera.py'],commandTasks:['student_camera'],tasks:['student_camera','photo','camera_exit'],
  action:'自己向 AI 提問，做出符合以下規範的拍照程式。',
  expected:'結束程式後，檢查這次的新照片與相機；預覽和照片品質要親眼確認。',
  actions:['先讀作業規範，再自己想要怎麼向 AI 提問。','在樹莓派開啟 Thonny，貼上程式並儲存到指定位置。','用網頁指令開啟程式，預覽、拍照，再按結束。','有錯誤就把錯誤交給 AI 修改，儲存後重新執行。'],
  requirements:['看得到相機畫面。','用滑鼠按「拍照」，存成 1920×1080 JPG，不放大小圖。','照片存到指定資料夾，檔名不重複。','顯示已存檔、張數、尺寸與位置。','按「結束」或關閉視窗後，相機還能再用。','相機沒接好或不能存檔時，有提示並可重試。'],
- notes:['環境：樹莓派 5、系統 Python 3、OpenCV、Tkinter。程式不需額外參數就能啟動。','先做出能拍照的程式，再修改功能，不用加入辨識或串流。','檢查在程式結束後進行；只留下舊照片不算這次完成。','看到預覽、照片清楚、不是把小圖放大，由學生或助教確認。','工具需要 1.1.0。找不到 camera-student 指令時，請助教到「課堂工具」指派更新。','保留一次「遇到什麼問題、請 AI 改了什麼」的例子即可。'],
+ notes:['環境：樹莓派 5、系統 Python 3、OpenCV、Tkinter。程式不需額外參數就能啟動。','先做出能拍照的程式，再修改功能，不用加入辨識或串流。','檢查在程式結束後進行；只留下舊照片不算這次完成。','看到預覽、照片清楚、不是把小圖放大，由學生或助教確認。','這行會執行上方存好的本組程式，並檢查新照片。需要課堂工具 1.3.0；舊版請助教指派更新。','保留一次「遇到什麼問題、請 AI 改了什麼」的例子即可。'],
  view:{title:'用 AI 做拍照程式',where:'樹莓派｜Thonny',action:'自己向 AI 提問，做出符合以下規範的拍照程式。',saveAs:'/home/user/pi-camera/{host}_camera.py',commandTitles:['開啟本組程式並檢查'],results:['預覽 → 拍照 → 結束，之後才會回報檢查結果。']}
 });
 const fill=(text,host,device='/dev/video0')=>String(text).replaceAll('{host}',host).replaceAll('{group}',host.slice(-2)).replaceAll('{device}',device);
-window.PiCameraCourse={version:'1.2.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
+window.PiCameraCourse={version:'1.3.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
 })();

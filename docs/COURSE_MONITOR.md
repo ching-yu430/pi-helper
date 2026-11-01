@@ -59,3 +59,5 @@ course_runs 啟用 RLS，不能直接從公開 API 讀取。教師 RPC 只允許
 新版需要 migration 018 及 Pi 工具 1.1.0，沿用同一份 install.sql 與指派更新，不新增配對。程式名依組別如 pi5-01_camera.py；實際執行名稱顯示在該操作的細項。程式執行中約每 30 秒回報，結束後才檢查本次新照片與相機可再次取像。不會將未驗證的預覽、按鈕或照片品質寫成通過。詳見 [拍照課程](CAMERA_COURSE.md)。
 
 逐項環境回報需要 migration 019 及工具 1.2.0。`--list-formats-ext` 通過只代表選定 USB 取像節點列出 MJPG 1920×1080；`--all` 通過只代表唯讀查詢成功。兩者不是已取得清楚照片，也不表示自動對焦或長時間 FPS 已驗證。完整 v4l2 輸出保留在 Pi 終端機，後台只接收限定的結果與裝置路徑。
+
+工具 1.3.0 的拍照教材改為完整路徑，例如 `~/pi-course run -- /usr/bin/python3 /home/user/pi-camera/pi5-01_camera.py`。operation ID 與 student_camera／photo／camera_exit 事件不變，後台仍保留原執行與重試紀錄；實際腳本名稱繼續列在證據中。

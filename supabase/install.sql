@@ -12,7 +12,7 @@ alter table pi_helper.schema_migrations enable row level security;
 revoke all on pi_helper.schema_migrations from public,anon,authenticated;
 do $installer$
 begin
- if exists(select 1 from pi_helper.schema_migrations where version>19) then
+ if exists(select 1 from pi_helper.schema_migrations where version>20) then
   raise exception 'Installer is older than this database; use the latest release.';
  end if;
 
@@ -2164,6 +2164,21 @@ insert into pi_helper.tool_releases(version,bootstrap_sha256,files) values ('1.2
 notify pgrst,'reload schema';
 $migration_19$;
   insert into pi_helper.schema_migrations(version,name,sha256) values(19,'019_environment_steps.sql','50097b6820f0f402d1274bc2f48b2fe3f3f040152cd08e05975dc045dbe0c285');
+ end if;
+
+ if exists(select 1 from pi_helper.schema_migrations where version=20 and (sha256<>'3c310d8589a10d4b2b4a1ee7136d694a8912fd5c1eba04f4e3e5adf7b9bb522d' or name<>'020_camera_script_path.sql')) then
+  raise exception 'Migration 020_camera_script_path.sql differs from the applied version; append a new migration instead.';
+ end if;
+ if not exists(select 1 from pi_helper.schema_migrations where version=20) then
+  if exists(select 1 from pi_helper.schema_migrations where version>20) then
+   raise exception 'Migration history has a gap at 020_camera_script_path.sql.';
+  end if;
+  execute $migration_20$-- Publish explicit per-group camera script launch; existing checks and tokens are retained.
+
+insert into pi_helper.tool_releases(version,bootstrap_sha256,files) values ('1.3.0','f72ae8edbb7d9c1ac1373f3de80d92e82a81cd6f4c2e54ecf711ae42e5fef570','{"device":"8d7c9e27aeff174f269d5c8ce88ad9f79e2dd92c92c29daeb9da5551d44c6d81","course":"4d5c8b1d995e90ffa1d64b16c01c98aa37d61585200aff944d29137649c803e1","camera":"e53b91296f3b30883de35fa6b9486b1e83a752b69b2fd044359a40312749dd42"}'::jsonb) on conflict(version) do nothing;
+notify pgrst,'reload schema';
+$migration_20$;
+  insert into pi_helper.schema_migrations(version,name,sha256) values(20,'020_camera_script_path.sql','3c310d8589a10d4b2b4a1ee7136d694a8912fd5c1eba04f4e3e5adf7b9bb522d');
  end if;
 end;
 $installer$;

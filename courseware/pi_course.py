@@ -23,7 +23,7 @@ import urllib.error
 import urllib.request
 import uuid
 
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 PYTHON = '/usr/bin/python3'
 TASKS = ('location', 'folders', 'hello', 'write', 'update', 'install', 'environment', 'camera-install', 'camera', 'camera-student', 'run')
 LAUNCHER = '''#!/usr/bin/python3
@@ -425,6 +425,9 @@ def resolve_classroom_command(command):
              ('v4l2-ctl', '--list-devices'): 'camera_list'}
     if tuple(command) in fixed:
         return fixed[tuple(command)], None
+    expected_script = Path.home() / 'pi-camera' / (hostname() + '_camera.py')
+    if command == ['/usr/bin/python3', str(expected_script)]:
+        return 'camera-student', None
     if len(command) == 4 and command[:2] == ['v4l2-ctl', '-d'] and re.fullmatch(r'/dev/video[0-9]{1,3}', command[2]):
         task = {'--list-formats-ext': 'camera_formats', '--all': 'camera_info'}.get(command[3])
         if task:
