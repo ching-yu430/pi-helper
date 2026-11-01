@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -20,7 +21,7 @@ import urllib.error
 import urllib.request
 import uuid
 
-SOURCES = {'device': 'device-agent/pi_reporter.py', 'course': 'courseware/pi_course.py', 'camera': 'courseware/camera_app.py'}
+SOURCES = {'device': 'device-agent/pi_reporter.py', 'course': 'courseware/pi_course.py', 'camera': 'courseware/camera_app.py', 'updater': 'tooling/updater.py'}
 ORIGIN = 'https://raw.githubusercontent.com/ching-yu430/pi-helper/main/tooling/releases/'
 ERRORS = {'TOOL_EXPIRED': '授權已到期，請回網頁請助教重新核准。', 'TOOL_DENIED': '安裝授權不正確或已取消。',
           'TOOL_HOST_MISMATCH': '這台樹莓派不是指派的組別，尚未安裝。',
@@ -30,6 +31,9 @@ ERRORS = {'TOOL_EXPIRED': '授權已到期，請回網頁請助教重新核准�
           'ROOM_NOT_FOUND': '課堂已關閉、到期或本組未開放，請助教確認。',
           'INVALID_STATE': '安裝任務狀態不符，請回工作台確認指派版本。',
           'NETWORK_ERROR': '網路連線失敗，請確認樹莓派能上網後重試。',
+          'TOOL_SYSTEM_REQUIRED': '這次需要更新系統服務，請重新開啟課堂工具再試。',
+          'TOOL_REQUEST_EXISTS': '已有另一個更新申請，請找助教確認。',
+          'TOOL_VERSION': '請助教指派支援桌面更新的版本（1.5.0 以上）。',
           'REMOTE_ERROR': '伺服器未完成安裝確認，請助教查看課堂設定。'}
 
 
@@ -189,7 +193,55 @@ def privileged(action):
     load_module(source, 'device_installer').install(config=data['config'], report_first=False)
 
 
-def install(ticket, home=None):
+class UserBundle:
+    """Switch only managed program files; exercises, photos and pairing stay put."""
+    def __init__(self, home, files, version):
+        self.target = home / '.local/share/pi-helper-course'
+        directory = home / '.local/share/pi-helper-tools/releases'
+        directory.mkdir(parents=True, exist_ok=True)
+        self.release = directory / (version + '-' + uuid.uuid4().hex)
+        self.release.mkdir(mode=0o755)
+        self.previous = None
+        self.switched = False
+        names = dict(course='pi_course.py', camera='camera_app.py', device='device.py', updater='updater.py')
+        for name, filename in names.items():
+            (self.release / filename).write_bytes(files[name])
+        shutil.copyfile(Path(__file__).resolve(), self.release / 'installer.py')
+
+    def activate(self):
+        if self.target.is_symlink():
+            self.previous = self.target.resolve()
+        elif self.target.exists():
+            self.previous = self.release.parent / ('previous-' + uuid.uuid4().hex)
+            self.target.rename(self.previous)
+        link = self.target.with_name('.pi-helper-link-' + uuid.uuid4().hex)
+        try:
+            link.symlink_to(self.release, target_is_directory=True)
+            os.replace(link, self.target)
+        except OSError:
+            if self.previous and not self.target.exists() and not self.target.is_symlink():
+                self.target.symlink_to(self.previous, target_is_directory=True)
+            raise
+        finally:
+            link.unlink(missing_ok=True)
+        self.switched = True
+
+    def rollback(self):
+        if not self.switched:
+            return
+        if self.previous:
+            link = self.target.with_name('.pi-helper-restore-' + uuid.uuid4().hex)
+            link.symlink_to(self.previous, target_is_directory=True)
+            os.replace(link, self.target)
+        else:
+            self.target.unlink(missing_ok=True)
+
+
+def sudo_args(gui):
+    return ['sudo', '-A'] if gui else ['sudo']
+
+
+def install(ticket, home=None, desktop=False, gui=False):
     home = Path.home() if home is None else Path(home)
     if os.geteuid() == 0:
         raise ValueError('請用 user 執行安裝指令，不要在整行前加 sudo。')
@@ -210,25 +262,32 @@ def install(ticket, home=None):
         atomic_json(state_path, state)
         claim_secret = state['claim_secret']
         print('確認本組與授權。若詢問密碼，輸入樹莓派密碼，不是後台密碼。', flush=True)
-        with installation_step('sudo', directory):
-            subprocess.run(['sudo', '-v'], check=True)
+        if not desktop:
+            with installation_step('sudo', directory):
+                subprocess.run(sudo_args(gui) + ['-v'], check=True)
         script = str(Path(__file__).resolve())
         with installation_step('read_config', directory):
-            existing = subprocess.run(['sudo', '/usr/bin/python3', '-B', script, '--privileged', 'read-device'], check=True, capture_output=True, text=True)
-            device = json.loads(existing.stdout)
+            device = {}
+            if not desktop:
+                existing = subprocess.run(sudo_args(gui) + ['/usr/bin/python3', '-B', script, '--privileged', 'read-device'], check=True, capture_output=True, text=True)
+                device = json.loads(existing.stdout)
             course_path = home / '.config/pi-helper-course/config.json'
             course = json.loads(course_path.read_text()) if course_path.exists() else {}
         # Never send an old credential to a different configured server.
         if device and device.get('url') != ticket['url'] or course and course.get('url') != ticket['url']:
             raise ValueError('本機已有其他課堂設定，請助教確認；尚未變更。')
         with installation_step('claim', directory):
-            job = rpc(ticket, 'pi_helper_tool_claim', dict(p_job_id=ticket['job_id'], p_request_secret=ticket['request_secret'],
-                      p_claim_secret=claim_secret, p_hostname=ticket['expected_hostname'],
-                      p_device_token=device.get('device_token'), p_course_token=course.get('course_token')))
+            args = dict(p_job_id=ticket['job_id'], p_request_secret=ticket['request_secret'],
+                        p_claim_secret=claim_secret, p_hostname=ticket['expected_hostname'], p_course_token=course.get('course_token'))
+            if not desktop:
+                args['p_device_token'] = device.get('device_token')
+            job = rpc(ticket, 'pi_helper_tool_desktop_claim' if desktop else 'pi_helper_tool_claim', args)
         if job.get('completed'):
             state_path.unlink(missing_ok=True)
             print('這次安裝已完成，請回網頁繼續上課。')
             return
+        bundle = None
+        verifying = False
         try:
             with installation_step('download', directory):
                 files = fetch_sources(job['files'], version=job['version'])
@@ -238,22 +297,28 @@ def install(ticket, home=None):
                     with installation_step('write_files', directory):
                         for name, data in files.items():
                             (stage / (name + '.py')).write_bytes(data)
-                        target = home / '.local/share/pi-helper-course'
-                        target.mkdir(parents=True, mode=0o755, exist_ok=True)
-                        for name, filename in [('course', 'pi_course.py'), ('camera', 'camera_app.py')]:
-                            temporary_path = target / (filename + '.' + uuid.uuid4().hex)
-                            temporary_path.write_bytes(files[name])
-                            temporary_path.chmod(0o644)
-                            os.replace(temporary_path, target / filename)
+                        bundle = UserBundle(home, files, job['version'])
+                        bundle.activate()
+                        target = bundle.target
                     shared = dict(url=ticket['url'], key=ticket['key'], expected_hostname=ticket['expected_hostname'])
                     with installation_step('course_setup', directory):
                         load_module(target / 'pi_course.py', 'course_installer').setup(home=home, config={**shared, 'course_token': job['course_token']})
-                    payload = dict(config={**shared, 'device_token': job['device_token']}, source=str(stage / 'device.py'), sha256=job['files']['device'])
                     with installation_step('device_setup', directory):
-                        subprocess.run(['sudo', '/usr/bin/python3', '-B', script, '--privileged', 'install-device'], input=json.dumps(payload), text=True, check=True)
+                        if not desktop:
+                            # Tk is needed only for the desktop updater, not the camera assignment.
+                            probe = subprocess.run(['/usr/bin/python3', '-c', 'import tkinter'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            if probe.returncode:
+                                subprocess.run(sudo_args(gui) + ['apt-get', 'update'], check=True)
+                                subprocess.run(sudo_args(gui) + ['apt-get', 'install', '-y', 'python3-tk'], check=True)
+                            payload = dict(config={**shared, 'device_token': job['device_token']}, source=str(stage / 'device.py'), sha256=job['files']['device'])
+                            subprocess.run(sudo_args(gui) + ['/usr/bin/python3', '-B', script, '--privileged', 'install-device'], input=json.dumps(payload), text=True, check=True)
+                        load_module(target / 'updater.py', 'desktop_installer').install_shortcuts(home)
             with installation_step('course_report', directory):
                 subprocess.run(['/usr/bin/python3', str(home / 'pi-course'), 'location'], check=True)
             with installation_step('verify', directory):
+                # A lost response may follow a committed finish: keep verified files
+                # on confirmation errors instead of rolling back a completed job.
+                verifying = True
                 for attempt in range(13):
                     try:
                         rpc(ticket, 'pi_helper_tool_finish', dict(p_job_id=ticket['job_id'], p_claim_secret=claim_secret,
@@ -275,7 +340,19 @@ def install(ticket, home=None):
                 state_path.unlink(missing_ok=True)
                 (directory / 'last-error.json').unlink(missing_ok=True)
             print('課堂工具安裝完成，設備與課程回報都已收到。請回網頁繼續上課。', flush=True)
+            try:
+                load_module(target / 'updater.py', 'desktop_notifier').start_notifier(home)
+            except Exception:
+                # A notification problem cannot undo a server-confirmed install.
+                pass
         except Exception as error:
+            if bundle and not verifying:
+                try:
+                    bundle.rollback()
+                except OSError:
+                    # Preserve the original safe diagnostic, and retain both bundles
+                    # for the assistant to recover if filesystem writes also failed.
+                    pass
             try:
                 rpc(ticket, 'pi_helper_tool_finish', dict(p_job_id=ticket['job_id'], p_claim_secret=claim_secret,
                     p_status='failed', p_version=job['version'], p_error_code=diagnostic(error)['error_code']))
@@ -288,14 +365,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('ticket', nargs='?')
     parser.add_argument('--privileged', choices=['read-device', 'install-device'])
+    parser.add_argument('--ticket-file')
+    parser.add_argument('--desktop', action='store_true', help='Approved user-only desktop update')
+    parser.add_argument('--gui', action='store_true', help='Use the desktop sudo password dialog')
     args = parser.parse_args()
     if args.privileged:
         privileged(args.privileged)
     else:
-        raw = args.ticket or ''
+        raw = Path(args.ticket_file).read_text() if args.ticket_file else args.ticket or ''
         if len(raw) > 8192:
             raise ValueError('安裝指令過長。')
-        install(validate_ticket(json.loads(base64.b64decode(raw, validate=True))))
+        value = json.loads(raw) if args.ticket_file else json.loads(base64.b64decode(raw, validate=True))
+        install(validate_ticket(value), desktop=args.desktop, gui=args.gui)
 
 
 if __name__ == '__main__':
