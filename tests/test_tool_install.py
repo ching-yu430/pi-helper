@@ -111,6 +111,18 @@ class ToolInstallTests(unittest.TestCase):
             self.assertEqual(source.with_suffix('.marker').read_text(),'installed')
             self.assertFalse((source.parent/'__pycache__').exists())
 
+    def test_system_launcher_helper_requires_root_and_verified_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'updater.py'
+            source.write_text('from pathlib import Path\ndef install_system_launcher():\n    Path(__file__).with_suffix(".marker").write_text("registered")\n')
+            payload=dict(source=str(source),sha256=hashlib.sha256(source.read_bytes()).hexdigest())
+            with mock.patch.object(installer.os,'geteuid',return_value=0),mock.patch('sys.stdin',new=io.StringIO(json.dumps(payload))):installer.privileged('install-launcher')
+            self.assertEqual(source.with_suffix('.marker').read_text(),'registered');self.assertFalse((source.parent/'__pycache__').exists())
+            source.with_suffix('.marker').unlink();source.write_text(source.read_text()+'# changed\n')
+            with mock.patch.object(installer.os,'geteuid',return_value=0),mock.patch('sys.stdin',new=io.StringIO(json.dumps(payload))),self.assertRaises(ValueError):installer.privileged('install-launcher')
+            self.assertFalse(source.with_suffix('.marker').exists())
+            with mock.patch.object(installer.os,'geteuid',return_value=1000),self.assertRaises(ValueError):installer.privileged('install-launcher')
+
     @contextmanager
     def simulated_install(self,home,*,cleanup_failure=False,delayed_verification=False):
         files={key:(ROOT/path).read_bytes() for key,path in installer.SOURCES.items()}

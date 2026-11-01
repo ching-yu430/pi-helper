@@ -30,8 +30,9 @@ jobs:
         env:
           PGLITE_ROOT: /tmp/pi-test/node_modules/@electric-sql/pglite
       - run: python3 -m unittest discover -s tests -p test_desktop_updater.py
-      - run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb
+      - run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb pcmanfm xdotool dbus-x11
       - run: xvfb-run -a /usr/bin/python3 -B tests/test_desktop_gui.py -v
+      - run: sudo env PI_HELPER_TEST_DESKTOP_LAUNCHER=1 xvfb-run -a dbus-run-session -- /usr/bin/python3 -B tests/test_desktop_launcher.py -v
       - run: python3 -m unittest discover -s tests -p test_tool_install.py
       - run: sudo python3 tests/test_installer_permissions.py -v
       - run: python3 -m unittest discover -s tests -p test_device_agent.py

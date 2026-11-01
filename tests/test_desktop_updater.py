@@ -35,9 +35,22 @@ class DesktopUpdaterTests(unittest.TestCase):
             with mock.patch.object(updater,'desktop_directory',return_value=desktop),mock.patch.object(updater.subprocess,'run'):
                 updater.install_shortcuts(home)
             for path in [desktop/'pi-helper-tools.desktop',home/'.local/share/applications/pi-helper-tools.desktop',home/'.config/autostart/pi-helper-tools.desktop']:
-                data=path.read_text();self.assertIn('Terminal=false',data);self.assertIn('Name=課堂工具',data);self.assertNotIn('sudo',data)
+                data=path.read_text();self.assertIn('Name=課堂工具',data);self.assertNotIn('sudo',data)
+                if path==desktop/'pi-helper-tools.desktop':
+                    self.assertIn('Type=Link',data);self.assertIn('URL='+str(updater.SYSTEM_LAUNCHER),data);self.assertNotIn('Exec=',data)
+                else:self.assertIn('Terminal=false',data)
+                self.assertEqual(path.stat().st_mode&0o777,0o644)
             self.assertIn('--notify',(home/'.config/autostart/pi-helper-tools.desktop').read_text())
             helper=home/'.local/share/pi-helper-tools/askpass';self.assertEqual(helper.stat().st_mode&0o777,0o700);self.assertIn('--askpass',helper.read_text())
+
+    def test_system_launcher_uses_current_user_and_preserves_file_manager_preferences(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home=Path(directory);preferences=home/'.config/libfm/libfm.conf';preferences.parent.mkdir(parents=True);preferences.write_text('[config]\nquick_exec=0\n')
+            target=home/'system/pi-helper-tools.desktop'
+            with mock.patch.object(updater,'SYSTEM_LAUNCHER',target),mock.patch.object(updater.os,'geteuid',return_value=0):updater.install_system_launcher()
+            self.assertIn('Path.home()',target.read_text());self.assertIn('Terminal=false',target.read_text());self.assertNotIn('sudo',target.read_text());self.assertEqual(target.stat().st_mode&0o777,0o644)
+            with mock.patch.object(updater,'desktop_directory',return_value=home/'桌面'),mock.patch.object(updater.subprocess,'run'):updater.install_shortcuts(home)
+            self.assertEqual(preferences.read_text(),'[config]\nquick_exec=0\n')
 
     def test_states_do_not_allow_update_before_own_approved_request(self):
         job=self.job();self.assertEqual(updater.presentation(job,'a'*64)[2],'update')

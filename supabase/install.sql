@@ -12,7 +12,7 @@ alter table pi_helper.schema_migrations enable row level security;
 revoke all on pi_helper.schema_migrations from public,anon,authenticated;
 do $installer$
 begin
- if exists(select 1 from pi_helper.schema_migrations where version>22) then
+ if exists(select 1 from pi_helper.schema_migrations where version>23) then
   raise exception 'Installer is older than this database; use the latest release.';
  end if;
 
@@ -2344,6 +2344,24 @@ insert into pi_helper.tool_releases(version,system_revision,bootstrap_sha256,fil
 notify pgrst,'reload schema';
 $migration_22$;
   insert into pi_helper.schema_migrations(version,name,sha256) values(22,'022_desktop_updates.sql','cf74b959f47f755c21feaf023e6f58307f13e7fceb80743a1dc20ebecd235950');
+ end if;
+
+ if exists(select 1 from pi_helper.schema_migrations where version=23 and (sha256<>'606b957b411a9d2bd8aa04806fad8164276ce625a5d9429e33294dfa5f9de4d5' or name<>'023_desktop_launcher_fix.sql')) then
+  raise exception 'Migration 023_desktop_launcher_fix.sql differs from the applied version; append a new migration instead.';
+ end if;
+ if not exists(select 1 from pi_helper.schema_migrations where version=23) then
+  if exists(select 1 from pi_helper.schema_migrations where version>23) then
+   raise exception 'Migration history has a gap at 023_desktop_launcher_fix.sql.';
+  end if;
+  execute $migration_23$
+set local lock_timeout='5s';
+-- A launcher patch: fix PCManFM's repeated Execute prompt for the desktop
+-- launcher by registering a system application (system revision 3). Existing
+-- pairings, approval rules and classroom files are unchanged.
+insert into pi_helper.tool_releases(version,system_revision,bootstrap_sha256,files) values ('1.5.1',3,'237f7c4e90662e8ee12d7346576d74047091b5c74b029b3ec04e732b1af49f11','{"device":"b53c4e04e72bdb55d448e733a0fbb440e6e71f79b2891737e5d53f93735c182d","course":"4d5c8b1d995e90ffa1d64b16c01c98aa37d61585200aff944d29137649c803e1","camera":"e53b91296f3b30883de35fa6b9486b1e83a752b69b2fd044359a40312749dd42","updater":"29002520501a1164bfb3d845d00d2f4beed7f493a6564b805a295aa35782909d"}'::jsonb) on conflict(version) do nothing;
+notify pgrst,'reload schema';
+$migration_23$;
+  insert into pi_helper.schema_migrations(version,name,sha256) values(23,'023_desktop_launcher_fix.sql','606b957b411a9d2bd8aa04806fad8164276ce625a5d9429e33294dfa5f9de4d5');
  end if;
 end;
 $installer$;

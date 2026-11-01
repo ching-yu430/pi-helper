@@ -18,6 +18,29 @@ import threading
 import time
 import urllib.request
 
+SYSTEM_LAUNCHER = Path('/usr/local/share/applications/pi-helper-tools.desktop')
+
+
+def install_system_launcher():
+    """A static menu entry, launched as the desktop user (never as root)."""
+    if os.geteuid() != 0:
+        raise PermissionError('需要 Pi 安裝權限。')
+    command = ('from pathlib import Path; import runpy; '
+               "runpy.run_path(str(Path.home()/'.local/share/pi-helper-course/updater.py'),run_name='__main__')")
+    entry = ('[Desktop Entry]\nType=Application\nName=課堂工具\nComment=查看與更新本組課堂工具\n'
+             'Icon=system-software-update\nTerminal=false\nCategories=Education;\nExec=/usr/bin/python3 -c "' + command + '"\n')
+    SYSTEM_LAUNCHER.parent.mkdir(parents=True, exist_ok=True)
+    # The directory is root-owned. Replace only this app's entry atomically.
+    fd, temporary = tempfile.mkstemp(prefix='.pi-helper-', dir=SYSTEM_LAUNCHER.parent)
+    try:
+        with os.fdopen(fd, 'w') as stream:
+            stream.write(entry)
+            stream.flush()
+            os.fsync(stream.fileno())
+            os.fchmod(stream.fileno(), 0o644)
+        os.replace(temporary, SYSTEM_LAUNCHER)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
 
 def installer(home=None):
     path = (Path.home() if home is None else Path(home)) / '.local/share/pi-helper-course/installer.py'
@@ -50,11 +73,15 @@ def install_shortcuts(home):
     entry = ('[Desktop Entry]\nType=Application\nName=課堂工具\nComment=查看與更新本組課堂工具\n'
              'Icon=system-software-update\nTerminal=false\nCategories=Education;\nExec=' + command + '\n')
     desktop = desktop_directory(home) / 'pi-helper-tools.desktop'
-    for path, data in [(desktop, entry), (home / '.local/share/applications/pi-helper-tools.desktop', entry),
+    # PCManFM recognises a Link to a registered system application as a desktop
+    # shortcut. A copied Application entry prompts Execute every time, even 0644.
+    link = ('[Desktop Entry]\nType=Link\nName=課堂工具\nComment=查看與更新本組課堂工具\n'
+            'Icon=system-software-update\nURL=' + str(SYSTEM_LAUNCHER) + '\n')
+    for path, data in [(desktop, link), (home / '.local/share/applications/pi-helper-tools.desktop', entry),
                        (home / '.config/autostart/pi-helper-tools.desktop', entry.replace('Exec=' + command, 'Exec=' + command + ' --notify'))]:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(data)
-        path.chmod(0o755 if path == desktop else 0o644)
+        path.chmod(0o644)
     # Only sudo receives this helper's stdout; no password is saved or logged.
     helper = home / '.local/share/pi-helper-tools/askpass'
     helper.parent.mkdir(parents=True, exist_ok=True)

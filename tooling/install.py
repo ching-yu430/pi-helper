@@ -40,7 +40,7 @@ ERRORS = {'TOOL_EXPIRED': '授權已到期，請回網頁請助教重新核准�
 
 STEPS = {'sudo': '取得 Pi 安裝權限', 'read_config': '讀取既有配對', 'claim': '核對安裝授權',
          'download': '下載與驗證工具', 'write_files': '寫入課堂工具', 'course_setup': '設定課程回報',
-         'device_setup': '啟動設備回報服務', 'cleanup': '清理安裝暫存檔', 'course_report': '送出課程位置回報',
+         'device_setup': '設定設備服務與桌面捷徑', 'cleanup': '清理安裝暫存檔', 'course_report': '送出課程位置回報',
          'verify': '等候兩項回報確認', 'save': '儲存完成紀錄'}
 
 
@@ -190,7 +190,10 @@ def privileged(action):
     source = Path(data['source'])
     if hashlib.sha256(source.read_bytes()).hexdigest() != data['sha256']:
         raise ValueError('設備工具校驗失敗。')
-    load_module(source, 'device_installer').install(config=data['config'], report_first=False)
+    if action == 'install-launcher':
+        load_module(source, 'desktop_system_installer').install_system_launcher()
+    else:
+        load_module(source, 'device_installer').install(config=data['config'], report_first=False)
 
 
 class UserBundle:
@@ -312,6 +315,8 @@ def install(ticket, home=None, desktop=False, gui=False):
                                 subprocess.run(sudo_args(gui) + ['apt-get', 'install', '-y', 'python3-tk'], check=True)
                             payload = dict(config={**shared, 'device_token': job['device_token']}, source=str(stage / 'device.py'), sha256=job['files']['device'])
                             subprocess.run(sudo_args(gui) + ['/usr/bin/python3', '-B', script, '--privileged', 'install-device'], input=json.dumps(payload), text=True, check=True)
+                            launcher_payload = dict(source=str(stage / 'updater.py'), sha256=job['files']['updater'])
+                            subprocess.run(sudo_args(gui) + ['/usr/bin/python3', '-B', script, '--privileged', 'install-launcher'], input=json.dumps(launcher_payload), text=True, check=True)
                         load_module(target / 'updater.py', 'desktop_installer').install_shortcuts(home)
             with installation_step('course_report', directory):
                 subprocess.run(['/usr/bin/python3', str(home / 'pi-course'), 'location'], check=True)
@@ -364,7 +369,7 @@ def install(ticket, home=None, desktop=False, gui=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('ticket', nargs='?')
-    parser.add_argument('--privileged', choices=['read-device', 'install-device'])
+    parser.add_argument('--privileged', choices=['read-device', 'install-device', 'install-launcher'])
     parser.add_argument('--ticket-file')
     parser.add_argument('--desktop', action='store_true', help='Approved user-only desktop update')
     parser.add_argument('--gui', action='store_true', help='Use the desktop sudo password dialog')

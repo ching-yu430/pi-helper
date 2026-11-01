@@ -1,11 +1,11 @@
 {
-  "version": "1.5.0",
-  "system_revision": 2,
-  "bootstrap_sha256": "10f86be20c049ffc52112de4fda7337dc7640334e27b0f0f8d9d232102c05dac",
+  "version": "1.5.1",
+  "system_revision": 3,
+  "bootstrap_sha256": "237f7c4e90662e8ee12d7346576d74047091b5c74b029b3ec04e732b1af49f11",
   "files": {
     "device": "b53c4e04e72bdb55d448e733a0fbb440e6e71f79b2891737e5d53f93735c182d",
     "course": "4d5c8b1d995e90ffa1d64b16c01c98aa37d61585200aff944d29137649c803e1",
     "camera": "e53b91296f3b30883de35fa6b9486b1e83a752b69b2fd044359a40312749dd42",
-    "updater": "79a924ded115db4076b01e53f41798479300fe1873a8db6c46cd8dac696a77ee"
+    "updater": "29002520501a1164bfb3d845d00d2f4beed7f493a6564b805a295aa35782909d"
   }
 }
