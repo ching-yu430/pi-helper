@@ -5,7 +5,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
 (async()=>{
  const db=new PGlite({extensions:{pgcrypto}});await db.exec('create role anon;create role authenticated;create role service_role');
  const install=read('supabase/install.sql');await db.exec(install);
- assert.equal((await db.query('select count(*)::integer n from pi_helper.schema_migrations')).rows[0].n,24);
+ assert.equal((await db.query('select count(*)::integer n from pi_helper.schema_migrations')).rows[0].n,25);
  const created=(await db.query(read('supabase/create-classroom.sql'))).rows[0];
  const room=created['課堂加入碼_給學生'],password=created['助教管理碼_僅助教保管'];
  const identity=async()=> (await db.query('select public.pi_helper_workbench_identity($1,$2) v',[room,password])).rows[0].v;
@@ -29,7 +29,7 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
  await legacy.query("select public.pi_helper_request_help($1,'11111111-1111-4111-8111-111111111111'::uuid,$2,5::smallint,'22222222-2222-4222-8222-222222222222'::uuid,'SSH','登入','請助教確認')",[code,'a'.repeat(48)]);
  const current=(await legacy.query('select public.pi_helper_teacher_course_settings($1,$2) v',[code,pw])).rows[0].v;
  await legacy.query("select public.pi_helper_teacher_present_course($1,$2,'desktop',3::integer,true,$3::bigint)",[code,pw,current.revision]);
- const data={};for(const table of ['reports','help_requests','course_settings'])data[table]=(await legacy.query('select * from pi_helper.'+table)).rows.map(row=>table==='course_settings'?{...row,camera_checks_enabled:false}:row);
+ const data={};for(const table of ['reports','help_requests','course_settings'])data[table]=(await legacy.query('select * from pi_helper.'+table)).rows.map(row=>table==='course_settings'?{...row,camera_checks_enabled:false,teacher_progress_visible:true}:row);
  const before=(await legacy.query('select * from pi_helper.rooms')).rows;
  await legacy.exec(install);assert.deepEqual((await legacy.query('select * from pi_helper.rooms')).rows,before);for(const table of Object.keys(data))assert.deepEqual((await legacy.query('select * from pi_helper.'+table)).rows,data[table]);
  assert.equal((await legacy.query("select public.pi_helper_workbench_identity($1,'legacy-staff') v",[code])).rows[0].v.name,'既有助教');

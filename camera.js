@@ -102,6 +102,8 @@ q('cameraNext').onclick=()=>{
  if(index===stages.length-1){if(!staff){completionConfirmed=true;PiLearning.save(group,{completed:{camera:true}});publish()}q('cameraCompletionTitle').textContent=staff?'教材預覽結束':'本組已確認完成';q('cameraCompletion').hidden=false;q('cameraTask').hidden=true;q('cameraNavigation').hidden=true;q('cameraFallback').hidden=true;q('cameraCompletion').scrollIntoView({block:'nearest'});q('cameraCompletionTitle').focus({preventScroll:true});return}
  move(index+1);
 };
+function renderTeacherProgress(){q('followCameraTeacher').hidden=!PiLearning.showTeacherProgress()}
+document.addEventListener('pi-helper-course-policy',renderTeacherProgress);renderTeacherProgress();
 q('reconnectCamera').onclick=openConnection;
 q('cameraManualFallback').onchange=()=>{manualFallback[stages[index].id]=q('cameraManualFallback').checked;save();updateNext();publish()};q('refreshCameraChecks').onclick=()=>refresh(true);q('retryCameraEntry').onclick=()=>enter(params.get('teacher')==='1');q('followCameraTeacher').onclick=()=>{q('cameraTools').open=false;enter(true)};
 q('cameraAsk').onclick=()=>{if(!ready||!window.PiStudentSupport)return;PiStudentSupport.request({groupNo:number(),stage:'Python與USB拍照',step:stages[index].title,result:'學生請求課程協助',status:'need_help'})};

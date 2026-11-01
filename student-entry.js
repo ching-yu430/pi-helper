@@ -16,6 +16,8 @@ async function enter(followTeacher=false){
  }catch(e){status.textContent=e.code==='RPC_ERROR'||e instanceof TypeError?'暫時無法確認課堂設定，請重試，或請助教協助。':e.message;status.hidden=false;actions.hidden=false}
  finally{busy=false;follow.disabled=workspace.hidden}
 }
+function renderTeacherProgress(){follow.hidden=!PiLearning.showTeacherProgress()}
+document.addEventListener('pi-helper-course-policy',renderTeacherProgress);renderTeacherProgress();
 document.getElementById('retryStudentEntry').onclick=()=>enter(lastFollow);follow.onclick=()=>enter(true);enter(params.get('teacher')==='1');
 setInterval(async()=>{if(document.hidden)return;try{await PiLearning.loadPolicy();if(!workspace.hidden&&!PiLearning.allowed(PiStudentFlow.lesson())){workspace.hidden=true;document.getElementById('reset').hidden=true;for(const button of document.querySelectorAll('header button'))button.disabled=true;status.hidden=false;status.textContent='老師已關閉這一課，請回課程首頁。需要結束操作時仍可使用正確關機教學。';actions.hidden=false}}catch{}},5000);
 })();

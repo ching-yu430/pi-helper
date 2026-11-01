@@ -21,7 +21,7 @@ function populate(){
 }
 function renderLearning(){
  const group=selected(),saved=group?PiLearning.read(group):null,policy=PiLearning.policy,resume=Boolean(saved?.step&&PiLearning.allowed(saved.lesson)&&!saved.completed?.[saved.lesson]),link=q('continueLink'),description=q('continueDescription');
- const teacher=q('teachingNow'),hasTeacher=policy.managed&&policy.revision>0,entry=q('teacherEntry');
+ const teacher=q('teachingNow'),hasTeacher=policy.managed&&policy.revision>0&&PiLearning.showTeacherProgress(),entry=q('teacherEntry');
  entry.hidden=!group||!hasTeacher;
  const step=policy.current_lesson==='camera'?(policy.current_step===0?'其他檢查':'第 '+policy.current_step+' 步'):'第 '+(policy.current_step+1)+' 步';
  teacher.textContent=hasTeacher?'老師上次指定：'+PiLearning.names[policy.current_lesson]+' · '+step:'';
