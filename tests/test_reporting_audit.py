@@ -40,16 +40,16 @@ class ReportingAuditTests(unittest.TestCase):
         # Bind the script to this fixture's home; keep the actual Bash functions.
         hook.write_text((ROOT/'courseware/course_shell.bash').read_text().replace('__pi_helper_root=$HOME','__pi_helper_root='+shlex.quote(str(self.home))))
         script=self.home/'exercise.bash'
-        script.write_text('alias ls="ls --color=auto"\nsource '+shlex.quote(str(hook))+'\n'
+        script.write_text('alias ls="ls --color=auto"\nprintf "BEFORE_HOOK=%s\\n" "${__pi_helper_loaded:-0}"\nsource '+shlex.quote(str(hook))+'\nprintf "AFTER_HOOK=%s\\n" "${__pi_helper_loaded:-0}"\n'
           'cd '+shlex.quote(str(self.home/'pi-camera'))+'\nprintf "FAILED_CD_STATUS=%s\\n" "$?"\n'
-          'mkdir -p '+shlex.quote(str(self.home/'pi-camera/photos'))+'\n'
+          'source '+shlex.quote(str(hook))+' && mkdir -p '+shlex.quote(str(self.home/'pi-camera/photos'))+'\n'
           'cd '+shlex.quote(str(self.home/'pi-camera'))+'\npwd\nls\n'
           'mkdir -p '+shlex.quote(str(self.home/'pi-camera/photos'))+'\n'
           'ls -aIphotos\nprintf "not-a-classroom-secret\\n"\n')
         result=subprocess.run(['bash','--noprofile','--norc','-i',str(script)],cwd=self.home,capture_output=True,text=True,timeout=10)
-        self.assertEqual(result.returncode,0,result.stderr);self.assertIn('FAILED_CD_STATUS=1',result.stdout);self.assertIn(str(self.home/'pi-camera'),result.stdout);self.assertIn('photos',result.stdout)
-        events=self.events();self.assertEqual([e['task'] for e in events],['terminal_ready','enter_project','mkdir_photos','enter_project','working_dir','list_project','mkdir_photos'])
-        self.assertEqual(events[1]['status'],'failed');self.assertEqual(events[3]['evidence']['cwd'],'project')
+        self.assertEqual(result.returncode,0,result.stderr);self.assertIn('BEFORE_HOOK=0',result.stdout);self.assertIn('AFTER_HOOK=1',result.stdout);self.assertIn('FAILED_CD_STATUS=1',result.stdout);self.assertIn(str(self.home/'pi-camera'),result.stdout);self.assertIn('photos',result.stdout)
+        events=self.events();self.assertEqual([e['task'] for e in events],['terminal_ready','enter_project','terminal_ready','mkdir_photos','enter_project','working_dir','list_project','mkdir_photos'])
+        self.assertEqual(events[1]['status'],'failed');self.assertEqual(events[4]['evidence']['cwd'],'project')
         self.assertTrue(events[-1]['evidence']['already_existed']);self.assertNotIn('not-a-classroom-secret',json.dumps(events))
         self.assertTrue(all(e['evidence']['observed'] for e in events))
 

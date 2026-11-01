@@ -68,6 +68,8 @@ course_runs 啟用 RLS，不能直接從公開 API 讀取。教師 RPC 只允許
 
 ## 1.6.0 回報檢視修正
 
+工具更新不會改變已經開啟的 Bash 視窗。若 `printf 'hook=%s\n' "${__pi_helper_loaded:-0}"` 顯示 `hook=0`，該視窗尚未載入回報；執行 `source ~/.local/share/pi-helper-course/course_shell.bash` 可在目前視窗啟用，再重做 mkdir/cd/ls。教材「建立資料夾」第 1 行已合併載入回報與 mkdir，沿用現有操作識別；不因資料夾存在而補造先前的指令紀錄。
+
 先套用 install.sql（含 024），指派 1.6.0，完成更新後關閉所有舊終端機並開新視窗。新視窗會發出 terminal_ready，詳細內容顯示是否啟用；已有自訂同名 Bash 函式時不覆蓋，明確回報 hook_conflict。整合只處理互動 Bash 的固定課程指令，不讀取 history、PROMPT_COMMAND、密碼或任意指令；非互動 SSH、SCP 與腳本不受影響。
 
 課程指令維持原樣；新增前述五項獨立紀錄及結束碼。舊 folders 成功不會補成 mkdir/cd/ls 已執行，升級前沒有收集的操作需重做才能有紀錄。沒有指定的新操作不會自動加入監控。Thonny 編輯、AI 提問過程、預覽介面、畫質與 Windows 下載維持人工確認，不能用全課程自行回報完成來標成每項設備驗證。

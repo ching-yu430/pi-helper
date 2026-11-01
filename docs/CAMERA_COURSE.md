@@ -6,7 +6,7 @@
 
 ## 更新後先開新終端機
 
-目前請使用最新 SQL（含 024）與工具 1.6.0。更新後關閉所有舊終端機，再開新的終端機；課程 mkdir/cd/ls/pwd/hostname 才會各自回報。學生使用的原指令不變。回報範圍、離線補送及本次／上次照片判讀見 [工作台說明](COURSE_MONITOR.md)。
+目前請使用最新 SQL（含 024）與工具 1.6.0。更新後關閉所有舊終端機，再開新的終端機；課程 mkdir/cd/ls/pwd/hostname 才會各自回報。建立資料夾第 1 行會先載入本終端機的回報功能，再執行 mkdir；已開啟的舊視窗不會因工具更新而自動載入。之前沒記錄到的 mkdir/cd/ls 需重新執行，不補造歷史紀錄。回報範圍、離線補送及本次／上次照片判讀見 [工作台說明](COURSE_MONITOR.md)。
 
 ## 學生操作
 
@@ -16,6 +16,8 @@
 4. 按「開始試拍」，回 Pi 終端機執行網頁帶入本組完整路徑的指令，例如第 01 組是 `~/pi-course run -- /usr/bin/python3 /home/user/pi-camera/pi5-01_camera.py`。不加 sudo。程式不需要接收額外命令列參數。
 5. 預覽、拍照，再按程式的「結束」。工具在結束後檢查新照片與相機，結果顯示在工作台。若出錯，複製本機錯誤給 AI 修改，儲存後重試同一行。
 6. 用檔案管理員開啟照片，親眼確認清楚、完整，再下載到 Windows，準備之後的辨識課。
+
+Windows 下載指令的 `$HOME` 是目前 Windows 帳號的家目錄，通常為 `C:\Users\你的Windows帳號`。目的地為 `$HOME\Downloads\pi-camera-photos`；資料夾已存在時，SCP 可能把來源 `photos` 放在其內。下載後依教材在同一個 PowerShell 執行 `explorer.exe "$HOME\Downloads\pi-camera-photos"` 直接開啟位置，再找到並開啟照片。這與瀏覽器的預設下載位置分開；若 Windows 的「下載」移到別處，仍以命令指定的路徑為準。
 
 每組路徑：
 
