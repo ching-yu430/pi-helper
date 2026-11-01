@@ -52,7 +52,7 @@ const views={
  environment:{title:'接相機、安裝工具',where:'樹莓派｜終端機',action:'先把 USB 相機插在樹莓派。',commandTitles:['更新工具清單','安裝拍照工具','檢查相機'],results:['等到「本次操作完成」。','等到「本次操作完成」。','顯示 OpenCV 和可用相機。']},
  camera:{title:'拍一張照片',where:'樹莓派｜終端機',action:'執行這兩行，開啟拍照視窗。',commandTitles:['取得拍照程式','開啟拍照視窗'],results:['程式已放入 pi-camera。','按「拍照」，再按「結束」。']},
  quality:{title:'檢查照片',where:'樹莓派｜檔案管理員',action:'打開資料夾，點兩下照片。',path:'pi-camera → photos',check:'照片清楚、物品完整'},
- download:{title:'下載到筆電',where:'Windows｜PowerShell',action:'縮小遠端桌面，在 Windows 開啟 PowerShell。',path:'下載位置：Windows 使用者資料夾 → Downloads → pi-camera-photos',commandTitles:['下載照片','開啟下載的資料夾'],results:['等下載完成，重新出現 PS 命令列，再按下一步。','資料夾開啟後，點兩下照片；若只有 photos，先打開它。'],check:'我已在筆電開啟照片'}
+ download:{title:'下載到筆電',where:'Windows｜PowerShell',action:'縮小遠端桌面，在 Windows 開啟 PowerShell。',commandActions:['在 Windows PowerShell 執行下載指令。等下載完成，再按「下一步」。','下載完成後，照下面的步驟開啟電腦裡的照片。'],openPhotoSteps:['按 Win + E，開啟 Windows「檔案總管」。','在左邊點「下載」（Downloads），再點兩下 pi-camera-photos。','若裡面有 photos 資料夾，先點兩下進去。','點兩下 JPG 照片。看到照片後，再按「完成課程」。'],path:'照片位置：檔案總管 → 下載（Downloads）→ pi-camera-photos',commandTitles:['下載照片','開啟下載的資料夾'],results:['等下載完成，重新出現 PS 命令列，再按下一步。','資料夾開啟後，點兩下照片；若只有 photos，先打開它。'],check:'我已在筆電開啟照片'}
 };
 for(const stage of stages)stage.view=views[stage.id];
 // Keep the saved stage ID while teaching each real command separately.

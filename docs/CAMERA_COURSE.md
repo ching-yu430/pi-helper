@@ -17,6 +17,8 @@
 5. 預覽、拍照，再按程式的「結束」。工具在結束後檢查新照片與相機，結果顯示在工作台。若出錯，複製本機錯誤給 AI 修改，儲存後重試同一行。
 6. 用檔案管理員開啟照片，親眼確認清楚、完整，再下載到 Windows，準備之後的辨識課。
 
+下載完成後的教材主畫面會直接列出：Win+E 開啟檔案總管 → 左側「下載」→ pi-camera-photos → 視情況進入 photos → 點兩下 JPG 照片；確認看到照片後才按「完成課程」。不用展開操作說明即可看到，找不到資料夾時可用同頁的 explorer.exe 指令直接開啟。
+
 Windows 下載指令的 `$HOME` 是目前 Windows 帳號的家目錄，通常為 `C:\Users\你的Windows帳號`。目的地為 `$HOME\Downloads\pi-camera-photos`；資料夾已存在時，SCP 可能把來源 `photos` 放在其內。下載後依教材在同一個 PowerShell 執行 `explorer.exe "$HOME\Downloads\pi-camera-photos"` 直接開啟位置，再找到並開啟照片。這與瀏覽器的預設下載位置分開；若 Windows 的「下載」移到別處，仍以命令指定的路徑為準。
 
 每組路徑：
