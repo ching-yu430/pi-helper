@@ -19,7 +19,8 @@
 | `~/pi-course hello` | 真正執行 hello.py、結束成功且輸出本組名稱 |
 | `~/pi-course write` | 真正執行寫檔程式，本次重新寫入本組文字 |
 | `~/pi-course update`、`install` | apt 執行結果；長操作定期回報仍在執行 |
-| `~/pi-course environment` | Python/OpenCV/Tk/v4l2 與相機裝置檢查 |
+| 工具 1.2.0 的 `~/pi-course run -- …` | apt 更新／安裝、OpenCV 載入、USB 相機清單、選定位置的解析度與設定，各項獨立結果 |
+| 舊版 `~/pi-course environment` | 保留原本綜合環境結果，不當成新版六項均已執行 |
 | `~/pi-course camera-student`（1.1.0） | 執行本組腳本、結束碼、本次新增 JPG 名稱／尺寸／大小、舊照未變更、結束後重新開啟相機並取像；預覽及介面仍需人工確認 |
 | 舊版 `camera` | 老師統一程式的預覽、照片與釋放結果；不能通過新版 AI 作業 |
 | `mkdir`、`cd`、`ls`、`camera-install` | 尚無各行獨立紀錄，不能推定已執行 |
@@ -56,3 +57,5 @@ course_runs 啟用 RLS，不能直接從公開 API 讀取。教師 RPC 只允許
 ## AI 拍照作業
 
 新版需要 migration 018 及 Pi 工具 1.1.0，沿用同一份 install.sql 與指派更新，不新增配對。程式名依組別如 pi5-01_camera.py；實際執行名稱顯示在該操作的細項。程式執行中約每 30 秒回報，結束後才檢查本次新照片與相機可再次取像。不會將未驗證的預覽、按鈕或照片品質寫成通過。詳見 [拍照課程](CAMERA_COURSE.md)。
+
+逐項環境回報需要 migration 019 及工具 1.2.0。`--list-formats-ext` 通過只代表選定 USB 取像節點列出 MJPG 1920×1080；`--all` 通過只代表唯讀查詢成功。兩者不是已取得清楚照片，也不表示自動對焦或長時間 FPS 已驗證。完整 v4l2 輸出保留在 Pi 終端機，後台只接收限定的結果與裝置路徑。

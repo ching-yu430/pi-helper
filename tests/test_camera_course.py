@@ -265,6 +265,66 @@ class StudentCameraTests(unittest.TestCase):
             self.assertTrue(all(call.kwargs['timeout']==8 for call in run.call_args_list))
 
 
+class EnvironmentStepTests(unittest.TestCase):
+    setUp = CourseTests.setUp
+    tearDown = CourseTests.tearDown
+    reporter = CourseTests.reporter
+
+    def test_fixed_command_dispatch_rejects_arbitrary_commands(self):
+        self.assertEqual(course.resolve_classroom_command(['--','sudo','apt','update']), ('update',None))
+        self.assertEqual(course.resolve_classroom_command(['v4l2-ctl','-d','/dev/video2','--all']), ('camera_info','/dev/video2'))
+        for command in [['sh','-c','echo dangerous'],['sudo','apt','install','-y','unexpected'],['v4l2-ctl','-d','/tmp/file','--all'],['v4l2-ctl','-d','/dev/video2','--set-ctrl=brightness=0'],['sudo','apt','update',';','true']]:
+            with self.assertRaises(ValueError):
+                course.resolve_classroom_command(command)
+
+    def test_opencv_check_uses_the_system_python_and_reports_versions(self):
+        with patch.object(course,'execute',return_value=(0,'4.6.0\n')) as execute:
+            evidence,_=course.run_task('opencv',self.reporter())
+        self.assertTrue(evidence['cv2_ok'] and evidence['tk_ok'])
+        self.assertEqual(evidence['opencv_version'],'4.6.0')
+        self.assertEqual(execute.call_args.args[0],[course.PYTHON,'-c',course.OPENCV_CODE])
+        with patch.object(course,'execute',return_value=(1,'ModuleNotFoundError: cv2')),self.assertRaises(course.CourseError) as caught:
+            course.run_task('opencv',self.reporter())
+        self.assertEqual(caught.exception.code,'environment_missing')
+
+    def test_camera_list_requires_a_usb_capture_node(self):
+        with patch.object(course,'execute',return_value=(0,'GENERAL WEBCAM')),patch.object(course,'capture_devices',return_value=['/dev/video2']),patch('sys.stdout',new=io.StringIO()):
+            evidence,_=course.run_task('camera_list',self.reporter())
+        self.assertEqual(evidence['device'],'/dev/video2')
+        with patch.object(course,'execute',return_value=(0,'only codec nodes')),patch.object(course,'capture_devices',return_value=[]),self.assertRaises(course.CourseError):
+            course.run_task('camera_list',self.reporter())
+
+    def test_formats_require_1080p_under_mjpeg_not_another_format(self):
+        for output,valid in [("[0]: 'MJPG' (Motion-JPEG)\n Size: Discrete 1920x1080\n[1]: 'YUYV'\n Size: Discrete 640x480",True),("[0]: 'MJPG'\n Size: Discrete 640x480\n[1]: 'YUYV'\n Size: Discrete 1920x1080",False)]:
+            with patch.object(course,'capture_devices',return_value=['/dev/video2']),patch.object(course,'execute',return_value=(0,output)) as execute:
+                if valid:
+                    evidence,_=course.run_task('camera_formats',self.reporter(),device='/dev/video2')
+                    self.assertTrue(evidence['supports_1080p'])
+                    self.assertEqual(evidence['device'],'/dev/video2')
+                    self.assertEqual(execute.call_args.args[0],['v4l2-ctl','-d','/dev/video2','--list-formats-ext'])
+                else:
+                    with self.assertRaises(course.CourseError) as caught:
+                        course.run_task('camera_formats',self.reporter(),device='/dev/video2')
+                    self.assertEqual(caught.exception.code,'camera_size')
+
+    def test_camera_query_is_read_only_and_rejects_metadata_or_missing_nodes(self):
+        with patch.object(course,'capture_devices',return_value=['/dev/video2']),patch.object(course,'execute',return_value=(0,'Driver name: uvcvideo')) as execute:
+            evidence,_=course.run_task('camera_info',self.reporter(),device='/dev/video2')
+            self.assertTrue(evidence['v4l_ok'])
+            self.assertEqual(execute.call_args.args[0],['v4l2-ctl','-d','/dev/video2','--all'])
+        with patch.object(course,'capture_devices',return_value=['/dev/video2']),patch.object(course,'execute') as execute,self.assertRaises(course.CourseError):
+            course.run_task('camera_info',self.reporter(),device='/dev/video3')
+        execute.assert_not_called()
+
+    def test_cli_reports_the_real_classroom_operation(self):
+        reporter=self.reporter();events=[];reporter.emit=lambda *args:events.append(args);reporter.flush=lambda **kwargs:None
+        args=['pi-course','run','--','v4l2-ctl','-d','/dev/video2','--all']
+        with patch.object(course.sys,'argv',args),patch.object(course.os,'geteuid',return_value=1000),patch.object(course,'Reporter',return_value=reporter),patch.object(course,'run_task',return_value=({'v4l_ok':True,'device':'/dev/video2'},None)) as run,patch('sys.stdout',new=io.StringIO()):
+            self.assertEqual(course.main(),0)
+        run.assert_called_once_with('camera_info',reporter,device='/dev/video2')
+        self.assertEqual([(e[0],e[1]) for e in events],[('camera_info','running'),('camera_info','passed')])
+
+
 class PhotoTests(unittest.TestCase):
     def test_reconnect_finds_camera_after_usb_node_changes(self):
         import cv2

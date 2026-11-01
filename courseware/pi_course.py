@@ -23,9 +23,9 @@ import urllib.error
 import urllib.request
 import uuid
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 PYTHON = '/usr/bin/python3'
-TASKS = ('location', 'folders', 'hello', 'write', 'update', 'install', 'environment', 'camera-install', 'camera', 'camera-student')
+TASKS = ('location', 'folders', 'hello', 'write', 'update', 'install', 'environment', 'camera-install', 'camera', 'camera-student', 'run')
 LAUNCHER = '''#!/usr/bin/python3
 # PI_HELPER_COURSE_LAUNCHER_V1
 from pathlib import Path
@@ -410,9 +410,66 @@ def run_student_camera(reporter):
     return {'verifier': 'student-v1', 'script_name': script.name, 'exit_code': 0}, None
 
 
-def run_task(task, reporter):
+
+# These are fixed classroom operations, not an arbitrary shell execution API.
+OPENCV_CODE = 'import cv2; import tkinter; print(cv2.__version__)'
+
+
+def resolve_classroom_command(command):
+    command = list(command)
+    if command[:1] == ['--']:
+        command = command[1:]
+    fixed = {('sudo', 'apt', 'update'): 'update',
+             ('sudo', 'apt', 'install', '-y', 'v4l-utils', 'python3-opencv', 'python3-tk'): 'install',
+             ('/usr/bin/python3', '-c', OPENCV_CODE): 'opencv',
+             ('v4l2-ctl', '--list-devices'): 'camera_list'}
+    if tuple(command) in fixed:
+        return fixed[tuple(command)], None
+    if len(command) == 4 and command[:2] == ['v4l2-ctl', '-d'] and re.fullmatch(r'/dev/video[0-9]{1,3}', command[2]):
+        task = {'--list-formats-ext': 'camera_formats', '--all': 'camera_info'}.get(command[3])
+        if task:
+            return task, command[2]
+    raise ValueError('這不是課程指定指令，請從網頁重新複製完整的一行。')
+
+
+def run_environment_step(task, reporter, device=None):
+    if task == 'opencv':
+        code, output = execute([PYTHON, '-c', OPENCV_CODE], reporter.home)
+        if code or not re.fullmatch(r'[0-9][0-9A-Za-z.+_-]{0,39}', output.strip()):
+            raise CourseError('environment_missing', 'OpenCV 或介面套件還不能載入，請先完成上一行安裝。')
+        return {'cv2_ok': True, 'tk_ok': True, 'opencv_version': output.strip(), 'python_version': sys.version.split()[0]}, None
+    if task == 'camera_list':
+        try:
+            code, _ = execute(['v4l2-ctl', '--list-devices'], reporter.home)
+        except FileNotFoundError:
+            raise CourseError('environment_missing', '找不到 v4l2-ctl，請先安裝相機工具。') from None
+        devices = capture_devices() if code == 0 else []
+        if not devices:
+            raise CourseError('camera_missing', '沒有找到可取像的 USB 相機，請確認相機接在樹莓派。')
+        print('可用 USB 相機：' + ', '.join(devices))
+        return {'v4l_ok': True, 'device': devices[0]}, None
+    if task in ('camera_formats', 'camera_info'):
+        if device not in capture_devices():
+            raise CourseError('camera_missing', '選定的位置不是可取像的 USB 相機，請依上一行結果重新選擇。')
+        option = '--list-formats-ext' if task == 'camera_formats' else '--all'
+        code, output = execute(['v4l2-ctl', '-d', device, option], reporter.home)
+        if code or not output.strip():
+            raise CourseError('camera_read', '相機查詢失敗，請保留終端機畫面並重新確認相機位置。')
+        result = {'v4l_ok': True, 'device': device}
+        if task == 'camera_formats':
+            mjpeg = re.search(r"'MJPG'(?P<body>.*?)(?=\n\s*\[\d+\]:|\Z)", output, re.S)
+            if not mjpeg or not re.search(r'\b1920x1080\b', mjpeg['body']):
+                raise CourseError('camera_size', '這個相機位置沒有列出 MJPG 1920x1080，請助教確認。')
+            result['supports_1080p'] = True
+        return result, None
+    raise ValueError('不支援的環境檢查。')
+
+
+def run_task(task, reporter, device=None):
     home, project = reporter.home, reporter.project
     group = hostname()[-2:]
+    if task in ('opencv', 'camera_list', 'camera_formats', 'camera_info'):
+        return run_environment_step(task, reporter, device)
     if task == 'camera-student':
         return run_student_camera(reporter)
     if task == 'location':
@@ -507,7 +564,15 @@ def run_task(task, reporter):
 def main():
     parser = argparse.ArgumentParser(description='Pi 課程執行與結果檢查；請使用 user，不要加 sudo。')
     parser.add_argument('task', choices=['setup', 'flush', *TASKS])
+    parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    device = None
+    if args.task == 'run':
+        task, device = resolve_classroom_command(args.command)
+    else:
+        if args.command:
+            raise ValueError('這個操作不需要額外參數，請從網頁重新複製。')
+        task = args.task
     if os.geteuid() == 0:
         raise ValueError('請用 user 執行課程工具，不要在整行前面加 sudo。')
     if args.task == 'setup':
@@ -518,7 +583,6 @@ def main():
         reporter.flush(blocking=True)
         print('已嘗試補送本機待回報結果，請回網頁按「更新檢查結果」。')
         return 0
-    task = args.task
     event_task = 'student_camera' if task == 'camera-student' else task
     with lock(reporter.directory, 'operation.lock', blocking=False):
         heartbeat_stop = threading.Event()
@@ -536,7 +600,7 @@ def main():
         if task != 'camera-install':
             reporter.emit(event_task, 'running')
         try:
-            evidence, network = run_task(task, reporter)
+            evidence, network = run_task(task, reporter, device=device) if device else run_task(task, reporter)
             stop_heartbeat()
             if evidence is not None:
                 reporter.emit(event_task, 'passed', evidence, network)

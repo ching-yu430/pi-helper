@@ -13,7 +13,7 @@ const scenarios=[
  {group:3,title:'第 03 組｜Python 失敗與重試',hint:'上次成功、這次失敗。展開「執行紀錄」比較兩次結果，再模擬重試成功。',advance:'模擬重試成功'},
  {group:4,title:'第 04 組｜找不到相機、學生求助',hint:'可先查看而不接手；展開「本組求助」試著接手、請學生再試一次，最後模擬學生確認解決。',advance:'模擬接回相機'},
  {group:5,title:'第 05 組｜安裝後沒有後續回報',hint:'顯示狀態待確認，保留上次資料；不會直接判定失敗或關機。',advance:'模擬恢復回報'},
- {group:6,title:'第 06 組｜拍照課的設備檢查完成',hint:'預覽、1080P 存檔與正常結束為同一次操作；照片品質及筆電下載另標學生自行確認。'},
+ {group:6,title:'第 06 組｜拍照課的設備檢查完成',hint:'本組程式、1080P 新照片與結束後取像為同一次操作；照片品質及筆電下載另標學生自行確認。'},
  {group:7,title:'第 07 組｜只按網頁完成、沒有 Pi 證據',hint:'學生自行確認與樹莓派驗證分開。這組不能因為按了完成就顯示設備檢查通過。'},
  {group:8,title:'第 08 組｜尚未收到任何紀錄',hint:'沒有紀錄不代表學生沒操作。可以看到尚無紀錄與工具安裝確認提示。'},
  {group:9,title:'第 09 組｜剛安裝課堂工具',hint:'展開「設備資訊」可看版本、服務與備用 IP。安裝工具完成不等於課程完成。'}
@@ -34,8 +34,8 @@ function seed(){
  for(let group=1;group<=9;group++){
   const enabled=![7,8].includes(group),stale=group===5;
   devices.push({group_no:group,enabled,received_at:enabled?stamp(stale?300:10):null,snapshot:enabled?{hostname:host(group),ssh:'active',xrdp:'active',display:'x11',xrdp_installed:true,xorgxrdp_installed:true,python_version:'Python 3.11.2',usb_cameras:group===4?0:1,free_mb:8192,uptime_seconds:1200}:null});
-  courses.push({student_camera_supported:true,group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
-  installations.push({group_no:group,installed_version:enabled?(group===6?'1.1.0':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
+  courses.push({environment_steps_supported:true,student_camera_supported:true,group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
+  installations.push({group_no:group,installed_version:enabled?(group===6?'1.2.0':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
   if(enabled)attempt(group,'location',{cwd:'home',python_version:'3.11.2'},600);
   if(enabled&&group!==9)attempt(group,'folders',{folders_ok:true},500);
   if([2,3,4,5,6].includes(group))attempt(group,'hello',{group_output:true,exit_code:0},450);
@@ -44,9 +44,9 @@ function seed(){
  }
  record(2,'install','running',{},undefined,10);
  const failed=id(++runNumber);record(3,'hello','running',{},failed,30);record(3,'hello','failed',{error_code:'python_failed'},failed,25);
- const cameraRun=id(++runNumber);record(4,'environment','running',{},cameraRun,35);record(4,'environment','failed',{error_code:'camera_missing'},cameraRun,30);
+ const cameraRun=id(++runNumber);record(4,'camera_list','running',{},cameraRun,35);record(4,'camera_list','failed',{error_code:'camera_missing'},cameraRun,30);
  record(5,'install','running',{},undefined,300);
- attempt(6,'environment',{cv2_ok:true,tk_ok:true,v4l_ok:true,device:'/dev/video0',python_version:'3.11.2',opencv_version:'4.6.0',os:'示範系統版本',arch:'aarch64'},250);
+ for(const [task,evidence] of [['opencv',{cv2_ok:true,tk_ok:true,opencv_version:'4.6.0',python_version:'3.11.2'}],['camera_list',{v4l_ok:true,device:'/dev/video0'}],['camera_formats',{v4l_ok:true,device:'/dev/video0',supports_1080p:true}],['camera_info',{v4l_ok:true,device:'/dev/video0'}]])attempt(6,task,evidence,250);
  const capture=id(++runNumber);record(6,'student_camera','running',{},capture,200);record(6,'student_camera','passed',{verifier:'student-v1',script_name:'pi5-06_camera.py',exit_code:0},capture,195);record(6,'photo','passed',{readable:true,width:1920,height:1080,bytes:245760,file_name:'pi5-06_20261031_120000_000001.jpg',photo_count:1,verifier:'student-v1',fresh_photo:true},capture,170);record(6,'camera_exit','passed',{verifier:'student-v1',camera_reopened:true,device:'/dev/video0'},capture,160);
  reports=[browser(1,'建立並找到課程資料夾'),browser(2,'安裝 OpenCV 並確認 USB 相機'),browser(3,'親手寫第一個 Python 程式'),browser(4,'安裝 OpenCV 並確認 USB 相機','need_help'),browser(5,'安裝 OpenCV 並確認 USB 相機'),browser(6,'把照片下載到 Windows','done','camera'),browser(7,'把照片下載到 Windows','done','camera'),browser(9,'建立並找到課程資料夾')];
  help=[{id:id(999),group_no:4,stage:'Python與USB拍照',step:'安裝 OpenCV 並確認 USB 相機',message:'USB 相機已接到樹莓派，但檢查找不到相機。',status:'open',assignee:null,revision:1,requested_at:stamp(180),updated_at:stamp(30)}];
@@ -65,7 +65,7 @@ window.PiSyncAPI={configured:()=>true,pollMs:5000,async rpc(name,args={}){
  case 'pi_helper_workbench_identity':result={id:id(800),name:'示範助教',admin:false};break;
  case 'pi_helper_teacher_course_settings':case 'pi_helper_course_settings':result=policy;break;
  case 'pi_helper_teacher_help':result=help;break;
- case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0'],groups:installations};break;
+ case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0','1.2.0'],groups:installations};break;
  case 'pi_helper_teacher_update_help':{
   const row=help.find(r=>r.id===args.p_id);if(!row||row.revision!==args.p_revision)throw Error('模擬求助已更新，請重新讀取。');
   if(!['open','claimed','waiting','resolved'].includes(args.p_status))throw Error('不支援此模擬狀態。');
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(chosen.has(current))return;const group=current,button=document.getElementById('previewAdvance');button.disabled=true;
   if(group===2){const run=courses[1].tasks.find(t=>t.task==='install').run_id;record(2,'install','passed',{exit_code:0},run)}
   if(group===3)attempt(3,'hello',{group_output:true,exit_code:0});
-  if(group===4){devices[3].snapshot.usb_cameras=1;attempt(4,'environment',{cv2_ok:true,tk_ok:true,v4l_ok:true,device:'/dev/video0',python_version:'3.11.2',opencv_version:'4.6.0'})}
+  if(group===4){devices[3].snapshot.usb_cameras=1;attempt(4,'camera_list',{v4l_ok:true,device:'/dev/video0'})}
   if(group===5){devices[4].received_at=stamp();const run=courses[4].tasks.find(t=>t.task==='install').run_id;record(5,'install','passed',{exit_code:0},run);reports.find(r=>r.group_no===5).updated_at=stamp()}
   chosen.add(group);await refresh();document.getElementById('previewHint').textContent=group===4?'模擬相機檢查已通過。求助仍需助教處理及學生確認，不會自動結束。':'已送出模擬成功結果。展開該項執行紀錄，可看到之前的狀況。';
  };

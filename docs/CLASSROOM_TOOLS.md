@@ -4,7 +4,7 @@
 
 ## 首次啟用
 
-1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 018。既有課堂、帳號、進度、設備及課程紀錄保留。
+1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 019。既有課堂、帳號、進度、設備及課程紀錄保留。
 2. 登入工作台，開啟「課堂工具 → 指派安裝／更新」，勾選組別及版本，按「指派安裝／更新」。可一次選取全班。
 3. 學生在首頁選自己的組別，按「安裝課堂工具」提出申請，畫面顯示組別與核對碼。
 4. 老師／助教可以在學生頁輸入自己的後台密碼核准，也可以在自己的手機開啟 [課堂工具頁](https://ching-yu430.github.io/pi-helper/assistant.html?view=classroom-tools)，登入後會直接進入上方「課堂工具」分頁；核對該組核對碼後按「核准安裝」。前者不建立或保存學生瀏覽器的後台登入。
@@ -36,11 +36,11 @@
 
 ## 發布新的工具版本
 
-`tooling/releases/1.0.0/` 與 `1.1.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
+`tooling/releases/1.0.0/`、`1.1.0/` 與 `1.2.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
 
 1. 修改來源工具並通過測試。
 2. 新增下一份編號 migration，包含 begin／commit 與 `-- RELEASE_SEED` 標記；不要修改已發布的 016 或既有版本目錄。
-3. 例如：`node scripts/build-tool-release.cjs --version=1.2.0 --migration=019_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。
+3. 例如：`node scripts/build-tool-release.cjs --version=1.3.0 --migration=020_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。
 4. 執行 `node scripts/build-sql.cjs`、`node scripts/version-assets.cjs`，提交並部署程式與資料庫更新。
 5. 老師選新版指派更新，同一組沿用既有配對。
 
@@ -68,3 +68,7 @@ CI 檢查版本目錄、來源、校驗碼與 SQL 目錄是否一致。
 先執行最新 SQL 安裝檔（含 018），再指派 1.1.0 更新既有 Pi。學生自己的 `pi5-組號_camera.py` 不會被更新工具覆寫。`~/pi-course camera-student` 不安裝範例程式，只執行本組檔案，結束後檢查新照片及相機可再次取像。舊版 `camera-install`／`camera` 留供相容，不會替新版作業新增成功。
 
 程式執行期間約每 30 秒回報執行中，照片結果在結束後回傳；關掉課程網頁不會停止 Pi 程式。這不是逐行監控 Python，也不會在後台自動顯示預覽或照片影像。詳見 [課程設計](CAMERA_COURSE.md)。
+
+## OpenCV 與相機逐項回報（1.2.0）
+
+最新 SQL 安裝檔含 019；更新後指派同一套課堂工具 1.2.0。可從 1.0.0／1.1.0 直接更新，配對、序號、照片與學生程式保留。新 run 前綴只接受教材列出的固定 apt、Python 載入與 v4l2 唯讀查詢，不接受任意指令、額外套件或 set-ctrl。後台新增 OpenCV、相機清單、解析度及設定四項獨立紀錄，原本 update／install 保留。詳細流程見 [課程](CAMERA_COURSE.md)。

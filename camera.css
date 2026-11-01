@@ -94,3 +94,6 @@
 
 .camera-requirements { margin:8px 0 16px; padding-left:24px; font-size:16px; }
 .camera-requirements li { margin:5px 0; }
+
+#cameraDevicePicker { display:block; margin:10px 0 14px; font-size:14px; font-weight:600; }
+#cameraDevice { display:block; width:100%; min-height:44px; margin:6px 0 0; }

@@ -40,6 +40,12 @@ const pkg=process.env.PGLITE_ROOT||'@electric-sql/pglite',{PGlite}=require(pkg),
  const newState=await student();assert.equal(newState.tasks.find(t=>t.task==='photo').evidence.fresh_photo,true);assert.equal(newState.tasks.find(t=>t.task==='camera_exit').evidence.camera_reopened,true);
  await send(event('student_camera','failed',{error_code:'photo_overwritten',verifier:'student-v1'}));assert.equal((await student()).tasks.find(t=>t.task==='student_camera').evidence.error_code,'photo_overwritten');
  console.log('PASS group-bound AI script results, fresh JPEG proof, camera reuse and backward-compatible legacy photo evidence');
+ assert.equal((await student()).environment_steps_supported,true);
+ for(const [task,evidence] of [['opencv',{cv2_ok:true,tk_ok:true,opencv_version:'4.6.0',python_version:'3.11.2'}],['camera_list',{v4l_ok:true,device:'/dev/video2'}],['camera_formats',{v4l_ok:true,device:'/dev/video2',supports_1080p:true}],['camera_info',{v4l_ok:true,device:'/dev/video2'}]]){await send(event(task,'running'));await send(event(task,'passed',evidence));assert.equal((await student()).tasks.find(t=>t.task===task).status,'passed')}
+ await assert.rejects(()=>send(event('opencv','passed',{cv2_ok:true,opencv_version:'4.6.0'})),/INVALID_COURSE_EVENT/);
+ await assert.rejects(()=>send(event('camera_formats','passed',{v4l_ok:true,device:'/dev/video2',supports_1080p:false})),/INVALID_COURSE_EVENT/);
+ await assert.rejects(()=>send(event('camera_info','passed',{v4l_ok:true,device:'/tmp/file'})),/INVALID_COURSE_EVENT/);
+ console.log('PASS independent OpenCV/camera reports, required evidence and safe device paths');
  const beforeMode=await student();p=await policy();p=await checks(false,p.revision);assert.equal(p.camera_checks_enabled,false);assert.deepEqual((await student()).tasks,beforeMode.tasks);
  const original=token;token=(await pair()).course_token;assert.notEqual(token,original);await assert.rejects(()=>send(event('hello','running'),original),/COURSE_DEVICE_DENIED/);assert.deepEqual((await student()).tasks,[]);sequence=0;await send(event('folders','passed',{folders_ok:true}));
  await q('select public.pi_helper_teacher_disable_course($1,$2,3::smallint) v',[room,pw]);await assert.rejects(()=>send(event('hello','running')),/COURSE_DEVICE_DENIED/);assert.equal((await student()).enabled,false);
