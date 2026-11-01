@@ -21,7 +21,7 @@ import urllib.error
 import urllib.request
 import uuid
 
-SOURCES = {'device': 'device-agent/pi_reporter.py', 'course': 'courseware/pi_course.py', 'camera': 'courseware/camera_app.py', 'updater': 'tooling/updater.py'}
+SOURCES = {'device': 'device-agent/pi_reporter.py', 'course': 'courseware/pi_course.py', 'camera': 'courseware/camera_app.py', 'updater': 'tooling/updater.py', 'shell': 'courseware/course_shell.bash'}
 ORIGIN = 'https://raw.githubusercontent.com/ching-yu430/pi-helper/main/tooling/releases/'
 ERRORS = {'TOOL_EXPIRED': '授權已到期，請回網頁請助教重新核准。', 'TOOL_DENIED': '安裝授權不正確或已取消。',
           'TOOL_HOST_MISMATCH': '這台樹莓派不是指派的組別，尚未安裝。',
@@ -171,7 +171,7 @@ def fetch_sources(manifest, fetch=None, version='1.0.0'):
         if fetch:
             data = fetch(path)
         else:
-            with urllib.request.urlopen(ORIGIN + version + '/' + name + '.py', timeout=30) as response:
+            with urllib.request.urlopen(ORIGIN + version + '/' + name + Path(path).suffix, timeout=30) as response:
                 data = response.read(2 * 1024 * 1024 + 1)
         if len(data) > 2 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != checksum:
             raise ValueError('工具版本與指派內容不同，尚未更新檔案。請助教指派最新版本。')
@@ -206,7 +206,7 @@ class UserBundle:
         self.release.mkdir(mode=0o755)
         self.previous = None
         self.switched = False
-        names = dict(course='pi_course.py', camera='camera_app.py', device='device.py', updater='updater.py')
+        names = dict(course='pi_course.py', camera='camera_app.py', device='device.py', updater='updater.py', shell='course_shell.bash')
         for name, filename in names.items():
             (self.release / filename).write_bytes(files[name])
         shutil.copyfile(Path(__file__).resolve(), self.release / 'installer.py')
@@ -299,7 +299,7 @@ def install(ticket, home=None, desktop=False, gui=False):
                     stage = Path(temporary)
                     with installation_step('write_files', directory):
                         for name, data in files.items():
-                            (stage / (name + '.py')).write_bytes(data)
+                            (stage / (name + Path(SOURCES[name]).suffix)).write_bytes(data)
                         bundle = UserBundle(home, files, job['version'])
                         bundle.activate()
                         target = bundle.target

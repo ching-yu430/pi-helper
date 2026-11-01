@@ -4,7 +4,7 @@
 
 ## 首次啟用
 
-1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 023；目前選 1.5.1。既有課堂、帳號、進度、設備及課程紀錄保留。
+1. 資料庫管理者在 Supabase SQL 編輯器執行最新的 [supabase/install.sql](../supabase/install.sql)，含 024；目前選 1.6.0。既有課堂、帳號、進度、設備及課程紀錄保留。
 2. 登入工作台，開啟「課堂工具 → 指派安裝／更新」，勾選組別及版本，按「指派安裝／更新」。可一次選取全班。
 3. 學生在首頁選自己的組別，按「安裝課堂工具」提出申請，畫面顯示組別與核對碼。
 4. 老師／助教可以在學生頁輸入自己的後台密碼核准，也可以在自己的手機開啟 [課堂工具頁](https://ching-yu430.github.io/pi-helper/assistant.html?view=classroom-tools)，登入後會直接進入上方「課堂工具」分頁；核對該組核對碼後按「核准安裝」。前者不建立或保存學生瀏覽器的後台登入。
@@ -59,11 +59,11 @@
 
 ## 發布新的工具版本
 
-`tooling/releases/1.0.0/`、`1.1.0/`、`1.2.0/`、`1.3.0/` 、`1.4.0/` 、`1.5.0/` 與 `1.5.1/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
+`tooling/releases/1.0.0/`、`1.1.0/`、`1.2.0/`、`1.3.0/` 、`1.4.0/` 、`1.5.0/` 、`1.5.1/` 與 `1.6.0/` 是固定版本的安裝包，舊指派不會隨 main 上的新課程改變。`tooling/release.json` 描述目前版本；SQL 中的版本目錄決定老師能指派的版本。
 
 1. 修改來源工具並通過測試。
 2. 新增下一份編號 migration，包含 begin／commit 與 `-- RELEASE_SEED` 標記；不要修改已發布的 016 或既有版本目錄。
-3. 例如：`node scripts/build-tool-release.cjs --version=1.6.0 --migration=023_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。若系統需求改變，另加 `--system-revision=4`（1.5.0 為 2、1.5.1 為 3，之後持續遞增）；只有課程工具改變則沿用目前值。
+3. 例如：`node scripts/build-tool-release.cjs --version=1.6.1 --migration=025_tool_release.sql`。產生新版本安裝包、校驗碼及 SQL 版本資料。若系統需求改變，另加 `--system-revision=4`（1.5.0 為 2、1.5.1 為 3，之後持續遞增）；只有課程工具改變則沿用目前值。
 4. 執行 `node scripts/build-sql.cjs`、`node scripts/version-assets.cjs`，提交並部署程式與資料庫更新。
 5. 老師選新版指派更新，同一組沿用既有配對。
 
@@ -128,3 +128,9 @@ CI 檢查版本目錄、來源、校驗碼與 SQL 目錄是否一致。
 PCManFM／libfm 對桌面的 Application 啟動檔會呼叫執行確認，單改 chmod 或 gio trusted metadata 仍不足。1.5.1 安裝固定的 `/usr/local/share/applications/pi-helper-tools.desktop`，桌面改用 Type=Link 指向此登錄項目，程式仍以登入桌面的使用者身分開啟。沒有修改 libfm 的 quick_exec 或其他檔案的啟動設定。
 
 在離線 Xvfb／DBus／PCManFM 環境重現舊版 Execute 確認，並驗證修正版連續啟動三次均直接執行。實際 Pi 桌面仍請在 pi5-10 更新後雙擊確認。
+
+## 1.6.0 課程指令回報
+
+套用最新 SQL（含 024），再指派 1.6.0。可用既有桌面工具申請／核准／更新，無需每課新增安裝；設備回報修正可能要求 Pi 密碼。**更新後關閉所有舊終端機，再開啟新終端機**，才能讓原本的 mkdir/cd/ls/pwd/hostname 接上回報。新功能不會把以前沒收到的指令補成已完成。
+
+Bash 整合集中在 .bashrc 的 pi-helper 標記區塊，不更改既有內容、別名或非互動腳本。自訂同名函式時停止啟用並向後台回報。user 權限的 sender 負責離線補送，關閉教學網頁或終端機後仍可補送；沒有 root 遠端指令佇列。自動檢查開關只控制能否下一步，不停止這些回報。完整判讀見 [回報範圍](COURSE_MONITOR.md)。

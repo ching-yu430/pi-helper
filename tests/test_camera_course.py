@@ -159,11 +159,11 @@ class StudentCameraTests(unittest.TestCase):
         with patch.object(course, 'PYTHON', sys.executable), patch.object(course, 'probe_camera', return_value='/dev/video2'), patch('sys.stdout', new=io.TextIOWrapper(io.BytesIO(), encoding='utf-8')):
             evidence, _ = course.run_task('camera-student', reporter)
         self.assertEqual(evidence, dict(verifier='student-v1', script_name='pi5-03_camera.py', exit_code=0))
-        self.assertEqual([e[0] for e in events], ['photo', 'camera_exit'])
-        self.assertTrue(events[0][2]['fresh_photo'])
-        self.assertEqual(events[0][2]['photo_count'], 1)
-        self.assertTrue(events[1][2]['camera_reopened'])
-        self.assertNotIn('released', events[1][2])
+        self.assertEqual([(e[0],e[1]) for e in events], [('photo','running'),('photo','passed'),('camera_exit','running'),('camera_exit','passed')])
+        self.assertTrue(events[1][2]['fresh_photo'])
+        self.assertEqual(events[1][2]['photo_count'], 1)
+        self.assertTrue(events[-1][2]['camera_reopened'])
+        self.assertNotIn('released', events[-1][2])
 
     def test_command_reports_running_and_final_pass_with_one_run(self):
         self.fixture()
@@ -173,7 +173,7 @@ class StudentCameraTests(unittest.TestCase):
         reporter.flush = lambda **kwargs: None
         with patch.object(course,'Reporter',return_value=reporter), patch.object(course.os,'geteuid',return_value=1000), patch.object(course.sys,'argv',['pi-course','camera-student']), patch.object(course,'PYTHON',sys.executable), patch.object(course,'probe_camera',return_value='/dev/video0'), patch('sys.stdout',new=io.TextIOWrapper(io.BytesIO(),encoding='utf-8')):
             self.assertEqual(course.main(),0)
-        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','passed'),('camera_exit','passed'),('student_camera','passed')])
+        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','running'),('photo','passed'),('camera_exit','running'),('camera_exit','passed'),('student_camera','passed')])
 
     def test_explicit_script_command_executes_the_same_group_file_and_checks(self):
         self.fixture()
@@ -181,7 +181,7 @@ class StudentCameraTests(unittest.TestCase):
         args=['pi-course','run','--','/usr/bin/python3',str(self.project/'pi5-03_camera.py')]
         with patch.object(course.Path,'home',return_value=self.home),patch.object(course,'Reporter',return_value=reporter),patch.object(course.os,'geteuid',return_value=1000),patch.object(course.sys,'argv',args),patch.object(course,'PYTHON',sys.executable),patch.object(course,'probe_camera',return_value='/dev/video0'),patch('sys.stdout',new=io.TextIOWrapper(io.BytesIO(),encoding='utf-8')):
             self.assertEqual(course.main(),0)
-        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','passed'),('camera_exit','passed'),('student_camera','passed')])
+        self.assertEqual([(e[0],e[1]) for e in events],[('student_camera','running'),('photo','running'),('photo','passed'),('camera_exit','running'),('camera_exit','passed'),('student_camera','passed')])
         self.assertEqual(events[-1][2]['script_name'],'pi5-03_camera.py')
 
     def test_explicit_camera_path_rejects_another_group_or_arbitrary_file(self):
@@ -249,7 +249,7 @@ class StudentCameraTests(unittest.TestCase):
             course.run_task('camera-student', self.reporter())
         self.assertEqual(caught.exception.code, 'missing_script')
 
-    def test_program_failure_or_camera_failure_never_emits_passed_events(self):
+    def test_program_failure_and_camera_failure_have_separate_accurate_results(self):
         script = self.fixture()
         events = []
         reporter = self.reporter()
@@ -261,7 +261,11 @@ class StudentCameraTests(unittest.TestCase):
                 self.fixture()
             with patch.object(course, 'PYTHON', sys.executable), patch.object(course, 'probe_camera', side_effect=course.CourseError('camera_busy','busy')), patch('sys.stdout', new=io.TextIOWrapper(io.BytesIO(), encoding='utf-8')), self.assertRaises(course.CourseError):
                 course.run_task('camera-student', reporter)
-            self.assertEqual(events, [])
+            if fails:self.assertEqual(events, [])
+            else:
+                self.assertTrue(any(e[0]=='photo' and e[1]=='passed' for e in events))
+                self.assertTrue(any(e[0]=='camera_exit' and e[1]=='failed' for e in events))
+                self.assertFalse(any(e[0]=='camera_exit' and e[1]=='passed' for e in events))
 
     def test_photo_symlinks_are_not_followed(self):
         path = self.photo()

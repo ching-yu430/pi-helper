@@ -8,12 +8,12 @@ const host=group=>'pi5-'+String(group).padStart(2,'0');
 const id=n=>'10000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const scenarios=[
  {group:0,title:'全班總覽：九組不同狀況',hint:'點「查看本組」看操作清單；有求助的組別另外顯示「處理求助」。'},
- {group:1,title:'第 01 組｜照片資料夾檢查成功',hint:'展開「確認資料夾可寫入」。mkdir、cd、ls 仍顯示尚無獨立回報，不會一起打勾。'},
+ {group:1,title:'第 01 組｜照片資料夾檢查成功',hint:'展開「確認資料夾可寫入」。這組只有資料夾檢查；mkdir、cd、ls 沒有各別紀錄，不會一起打勾。'},
  {group:2,title:'第 02 組｜拍照工具安裝中',hint:'後台顯示執行中。按下方按鈕，模擬安裝結束，觀察結果與下一步改變。',advance:'模擬安裝完成'},
  {group:3,title:'第 03 組｜Python 失敗與重試',hint:'上次成功、這次失敗。展開「執行紀錄」比較兩次結果，再模擬重試成功。',advance:'模擬重試成功'},
  {group:4,title:'第 04 組｜找不到相機、學生求助',hint:'可先查看而不接手；展開「本組求助」試著接手、請學生再試一次，最後模擬學生確認解決。',advance:'模擬接回相機'},
  {group:5,title:'第 05 組｜安裝後沒有後續回報',hint:'顯示狀態待確認，保留上次資料；不會直接判定失敗或關機。',advance:'模擬恢復回報'},
- {group:6,title:'第 06 組｜拍照課的設備檢查完成',hint:'本組程式、1080P 新照片與結束後取像為同一次操作；照片品質及筆電下載另標學生自行確認。'},
+ {group:6,title:'第 06 組｜拍照課的設備檢查完成',hint:'本組程式、1080P 新照片與結束後取像為同一次操作；照片品質及筆電下載仍需人工確認，網頁完成回報另外顯示。'},
  {group:7,title:'第 07 組｜只按網頁完成、沒有 Pi 證據',hint:'學生自行確認與樹莓派驗證分開。這組不能因為按了完成就顯示設備檢查通過。'},
  {group:8,title:'第 08 組｜尚未收到任何紀錄',hint:'沒有紀錄不代表學生沒操作。可以看到尚無紀錄與工具安裝確認提示。'},
  {group:9,title:'第 09 組｜剛安裝課堂工具',hint:'展開「設備資訊」可看版本、服務與備用 IP。安裝工具完成不等於課程完成。'}
@@ -34,9 +34,13 @@ function seed(){
  for(let group=1;group<=9;group++){
   const enabled=![7,8].includes(group),stale=group===5;
   devices.push({group_no:group,enabled,received_at:enabled?stamp(stale?300:10):null,snapshot:enabled?{hostname:host(group),ssh:'active',xrdp:'active',display:'x11',xrdp_installed:true,xorgxrdp_installed:true,python_version:'Python 3.11.2',usb_cameras:group===4?0:1,free_mb:8192,uptime_seconds:1200}:null});
-  courses.push({environment_steps_supported:true,student_camera_supported:true,group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
-  installations.push({group_no:group,installed_version:enabled?(group===6?'1.5.1':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
+  courses.push({shell_steps_supported:true,environment_steps_supported:true,student_camera_supported:true,group_no:group,enabled,sequence:0,tasks:[],runs:[],received_at:null,network:enabled?[{interface:'wlan0',ip:'192.168.43.'+(20+group)}]:[]});
+  installations.push({group_no:group,installed_version:enabled?(group>=2&&group<=6?'1.6.0':'1.0.0'):null,completed_at:enabled?stamp(1800):null,job:null});
   if(enabled)attempt(group,'location',{cwd:'home',python_version:'3.11.2'},600);
+  if(group>=2&&group<=6){
+   record(group,'terminal_ready','passed',{observed:true,hook_ready:true,exit_code:0,cwd:'home'},undefined,580);
+   for(const [task,evidence] of [['mkdir_photos',{folder_exists:true,already_existed:true,cwd:'home'}],['enter_project',{cwd:'project'}],['list_project',{photos_listed:true,cwd:'project'}]])record(group,task,'passed',{observed:true,exit_code:0,...evidence},undefined,520);
+  }
   if(enabled&&group!==9)attempt(group,'folders',{folders_ok:true},500);
   if([2,3,4,5,6].includes(group))attempt(group,'hello',{group_output:true,exit_code:0},450);
   if([2,4,5,6].includes(group)){attempt(group,'write',{group_output:true,new_file:true,exit_code:0},400);attempt(group,'update',{exit_code:0},350)}
@@ -65,7 +69,7 @@ window.PiSyncAPI={configured:()=>true,pollMs:5000,async rpc(name,args={}){
  case 'pi_helper_workbench_identity':result={id:id(800),name:'示範助教',admin:false};break;
  case 'pi_helper_teacher_course_settings':case 'pi_helper_course_settings':result=policy;break;
  case 'pi_helper_teacher_help':result=help;break;
- case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0','1.2.0','1.3.0','1.4.0','1.5.0','1.5.1'],groups:installations};break;
+ case 'pi_helper_teacher_tools':result={supported:true,versions:['1.0.0','1.1.0','1.2.0','1.3.0','1.4.0','1.5.0','1.5.1','1.6.0'],groups:installations};break;
  case 'pi_helper_teacher_update_help':{
   const row=help.find(r=>r.id===args.p_id);if(!row||row.revision!==args.p_revision)throw Error('模擬求助已更新，請重新讀取。');
   if(!['open','claimed','waiting','resolved'].includes(args.p_status))throw Error('不支援此模擬狀態。');

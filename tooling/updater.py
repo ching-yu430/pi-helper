@@ -102,6 +102,16 @@ def start_notifier(home):
             pass
 
 
+def start_report_sender(home):
+    # Desktop login also recovers an offline outbox after a reboot, without
+    # waiting for the next student command. The sender holds its own user lock.
+    try:
+        subprocess.Popen(['/usr/bin/python3', str(Path(home) / '.local/share/pi-helper-course/pi_course.py'), 'sender'],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError:
+        pass
+
+
 def session_lock(home, kind):
     directory = Path(home) / '.config/pi-helper-install'
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -124,7 +134,7 @@ def owns(job, secret):
 def presentation(job, secret=''):
     """One main action; website and desktop use the same approved job."""
     if not job or job['status'] in ('completed', 'cancelled'):
-        return ('更新完成' if job and job['status'] == 'completed' else '目前沒有更新任務', '可以關閉，繼續上課。', None)
+        return ('更新完成' if job and job['status'] == 'completed' else '目前沒有更新任務', '更新後請關閉舊終端機，再開新終端機開始操作。' if job and job['status']=='completed' else '可以關閉，繼續上課。', None)
     if not job.get('desktop_supported'):
         return ('請助教重新指派', '這個版本不支援桌面更新，請指派 1.5.0 以上。', None)
     if job.get('claim_expired'):
@@ -379,6 +389,7 @@ def main():
         print(value)
         return 0
     client = Client()
+    start_report_sender(client.home)
     if args.notify:
         notify(client)
     else:

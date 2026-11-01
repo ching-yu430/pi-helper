@@ -36,6 +36,9 @@ for(const stage of stages)Object.assign(stage,help[stage.id],{notes:studentNotes
 // Preserve existing server step IDs; location is an optional troubleshooting check.
 stages[0].optional=true;
 stages[1].commands=['mkdir -p ~/pi-camera/photos','cd ~/pi-camera','ls',runner+'folders'];
+stages[0].commandTasks=['host_name','working_dir','location'];
+stages[1].commandTasks=['mkdir_photos','enter_project','list_project','folders'];
+stages[1].tasks=['mkdir_photos','enter_project','list_project','folders'];
 stages[1].actions=['在樹莓派桌面開啟終端機。','照下方指令建立資料夾。'];
 stages[1].expected='pi-camera 資料夾裡看得到 photos。';
 stages[1].notes=['mkdir 建立資料夾；cd 進入資料夾；ls 顯示裡面的東西。','資料夾已存在不用刪除。無法建立或寫入，保留錯誤畫面請助教幫忙。'];
@@ -60,7 +63,7 @@ Object.assign(environment,{
  action:'在樹莓派終端機，依序安裝 OpenCV、接上 USB 相機，再查詢相機。',
  actions:['更新套件清單，再安裝 OpenCV 與相機工具。','確認 OpenCV 能載入。','將 USB 相機插在樹莓派，列出相機。','依查詢結果選相機位置，再查解析度與設定。'],
  expected:'OpenCV 顯示版本，找到 USB 相機，且列出 MJPG 1920x1080。',
- notes:['每次只複製目前這一行；前面的 ~/pi-course run -- 讓同一次執行能回報給老師。請使用修正版課堂工具 1.4.0。','python3-opencv 是 OpenCV；v4l-utils 用來查相機；python3-tk 是視窗介面套件。','詢問密碼時輸入樹莓派密碼。看不到文字或星號是正常的。','沒有 GENERAL WEBCAM：確認相機插在樹莓派，不是在筆電。','/dev/video0 是常見位置，依本組列出的結果選擇；不要選只能提供中繼資料的節點。','ModuleNotFoundError: cv2：重新執行安裝，並使用 /usr/bin/python3。','安裝有下載錯誤：確認熱點能上網再重試；有套件鎖定就等其他安裝結束，不要刪除 lock 檔。','查詢列出的解析度與 FPS 是支援模式，仍需實際拍照確認。'],
+ notes:['每次只複製目前這一行；前面的 ~/pi-course run -- 讓同一次執行能回報給老師。請使用課堂工具 1.6.0。','python3-opencv 是 OpenCV；v4l-utils 用來查相機；python3-tk 是視窗介面套件。','詢問密碼時輸入樹莓派密碼。看不到文字或星號是正常的。','沒有 GENERAL WEBCAM：確認相機插在樹莓派，不是在筆電。','/dev/video0 是常見位置，依本組列出的結果選擇；不要選只能提供中繼資料的節點。','ModuleNotFoundError: cv2：重新執行安裝，並使用 /usr/bin/python3。','安裝有下載錯誤：確認熱點能上網再重試；有套件鎖定就等其他安裝結束，不要刪除 lock 檔。','查詢列出的解析度與 FPS 是支援模式，仍需實際拍照確認。'],
  view:{title:'安裝 OpenCV、確認相機',where:'樹莓派｜終端機',action:'先更新套件清單。',
  commandTitles:['更新套件清單','安裝 OpenCV 與相機工具','測試 OpenCV','列出 USB 相機','查詢支援解析度','查看相機設定'],
  commandActions:['先更新套件清單，等它執行完。','安裝 OpenCV、相機工具與視窗套件。','確認 Python 能使用 OpenCV。','把 USB 相機插在樹莓派，再執行這一行。','選好相機位置，再查詢支援的解析度。','使用同一個相機位置，查看設定。'],
@@ -74,9 +77,9 @@ Object.assign(assignment,{
  expected:'結束程式後，檢查這次的新照片與相機；預覽和照片品質要親眼確認。',
  actions:['先讀作業規範，再自己想要怎麼向 AI 提問。','在樹莓派開啟 Thonny，貼上程式並儲存到指定位置。','用網頁指令開啟程式，預覽、拍照，再按結束。','有錯誤就把錯誤交給 AI 修改，儲存後重新執行。'],
  requirements:['看得到相機畫面。','用滑鼠按「拍照」，存成 1920×1080 JPG，不放大小圖。','照片存到指定資料夾，檔名不重複。','顯示已存檔、張數、尺寸與位置。','按「結束」或關閉視窗後，相機還能再用。','相機沒接好或不能存檔時，有提示並可重試。'],
- notes:['環境：樹莓派 5、系統 Python 3、OpenCV、Tkinter。程式不需額外參數就能啟動。','先做出能拍照的程式，再修改功能，不用加入辨識或串流。','檢查在程式結束後進行；只留下舊照片不算這次完成。','看到預覽、照片清楚、不是把小圖放大，由學生或助教確認。','這行會執行上方存好的本組程式，並檢查新照片。請使用修正版課堂工具 1.4.0；舊版請助教指派更新。','保留一次「遇到什麼問題、請 AI 改了什麼」的例子即可。'],
+ notes:['環境：樹莓派 5、系統 Python 3、OpenCV、Tkinter。程式不需額外參數就能啟動。','先做出能拍照的程式，再修改功能，不用加入辨識或串流。','檢查在程式結束後進行；只留下舊照片不算這次完成。','看到預覽、照片清楚、不是把小圖放大，由學生或助教確認。','這行會執行上方存好的本組程式，並檢查新照片。請使用課堂工具 1.6.0；舊版請助教指派更新。','保留一次「遇到什麼問題、請 AI 改了什麼」的例子即可。'],
  view:{title:'用 AI 做拍照程式',where:'樹莓派｜Thonny',action:'自己向 AI 提問，做出符合以下規範的拍照程式。',saveAs:'/home/user/pi-camera/{host}_camera.py',commandTitles:['開啟本組程式並檢查'],results:['預覽 → 拍照 → 結束，之後才會回報檢查結果。']}
 });
 const fill=(text,host,device='/dev/video0')=>String(text).replaceAll('{host}',host).replaceAll('{group}',host.slice(-2)).replaceAll('{device}',device);
-window.PiCameraCourse={version:'1.3.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
+window.PiCameraCourse={version:'1.6.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
 })();

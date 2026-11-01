@@ -4,6 +4,7 @@ import argparse
 import base64
 from collections import deque
 from contextlib import contextmanager
+from datetime import datetime, timezone
 import fcntl
 import getpass
 import hashlib
@@ -23,9 +24,10 @@ import urllib.error
 import urllib.request
 import uuid
 
-VERSION = '1.3.0'
+VERSION = '1.6.0'
 PYTHON = '/usr/bin/python3'
 TASKS = ('location', 'folders', 'hello', 'write', 'update', 'install', 'environment', 'camera-install', 'camera', 'camera-student', 'run')
+OBSERVED = ('terminal_ready', 'host_name', 'working_dir', 'mkdir_photos', 'enter_project', 'list_project')
 LAUNCHER = '''#!/usr/bin/python3
 # PI_HELPER_COURSE_LAUNCHER_V1
 from pathlib import Path
@@ -108,41 +110,57 @@ class Reporter:
         if self.config and self.config['expected_hostname'] != hostname():
             raise CourseError('wrong_host', '課程設定屬於另一組，請助教核對這台 Pi。')
         self.run_id = str(uuid.uuid4())
+        self.task_statuses = {}
         self.tag = hashlib.sha256(self.config['course_token'].encode()).hexdigest() if self.config else None
 
-    def emit(self, task, status, evidence=None, network=None, run_id=None):
-        evidence = {'program_version': VERSION, **(evidence or {})}
+    def emit(self, task, status, evidence=None, network=None, run_id=None, asynchronous=True):
+        self.task_statuses[(task, run_id or self.run_id)] = status
+        evidence = {'program_version': VERSION, 'recorded_at': datetime.now(timezone.utc).isoformat(), **(evidence or {})}
         if not self.config:
             print('尚未設定課程回報；本次結果只顯示在這台 Pi。', flush=True)
-            return
+            return False
         with lock(self.directory):
             state = json.loads((self.directory / 'pending.json').read_text())
             if state.get('tag') != self.tag:
+                write_json(self.directory / 'delivery-error.json', {'code': 'CONFIG_CHANGED'})
                 print('課程設定已更新，請重新啟動程式。', flush=True)
-                return
+                return False
             state['sequence'] += 1
             event = dict(hostname=hostname(), sequence=state['sequence'], run_id=run_id or self.run_id,
                          task=task, status=status, evidence=evidence)
             if network is not None:
                 event['network'] = network
-            state['events'] = (state['events'] + [event])[-128:]
+            if len(state['events']) >= 4096:
+                raise CourseError('queue_full', '本機待送紀錄已滿，請連網補送後再操作；既有紀錄未刪除。')
+            # Keep the original running event and latest heartbeat while offline.
+            same = [i for i, item in enumerate(state['events']) if item['task'] == task and item['run_id'] == event['run_id'] and item['status'] == 'running']
+            if status == 'running' and len(same) >= 2:
+                state['events'].pop(same[-1])
+            state['events'].append(event)
             write_json(self.directory / 'pending.json', state)
-        threading.Thread(target=self.flush, daemon=True).start()
+        if asynchronous:
+            threading.Thread(target=self.flush, daemon=True).start()
+        return True
 
     def flush(self, blocking=False):
+        self.last_flush_progress = 0
         if not self.config:
-            return
+            return False
         # One sender per user. Do not hold the queue lock during a network request.
         try:
             with lock(self.directory, 'sender.lock', blocking=blocking):
                 deadline = time.monotonic() + 8
                 for _ in range(16):
                     if time.monotonic() > deadline:
-                        return
+                        return False
                     with lock(self.directory):
                         state = json.loads((self.directory / 'pending.json').read_text())
-                        if state.get('tag') != self.tag or not state['events']:
-                            return
+                        if state.get('tag') != self.tag:
+                            write_json(self.directory / 'delivery-error.json', {'code': 'CONFIG_CHANGED'})
+                            return False
+                        if not state['events']:
+                            (self.directory / 'delivery-error.json').unlink(missing_ok=True)
+                            return True
                         event = state['events'][0]
                     headers = {'apikey': self.config['key'], 'Content-Type': 'application/json'}
                     if self.config['key'].startswith('eyJ'):
@@ -152,17 +170,80 @@ class Reporter:
                     try:
                         with urllib.request.urlopen(request, timeout=4) as response:
                             if json.loads(response.read(1024)) is not True:
-                                return
+                                return False
+                    except urllib.error.HTTPError as error:
+                        try:
+                            code = json.loads(error.read(2048)).get('message', '')
+                        except (ValueError, OSError):
+                            code = ''
+                        code = code if isinstance(code, str) and code in ('INVALID_COURSE_EVENT', 'COURSE_DEVICE_DENIED', 'COURSE_HOST_MISMATCH', 'ROOM_NOT_FOUND') else 'NETWORK_ERROR'
+                        write_json(self.directory / 'delivery-error.json', {'code': code})
+                        return False
                     except (OSError, ValueError, urllib.error.URLError):
-                        return
+                        write_json(self.directory / 'delivery-error.json', {'code': 'NETWORK_ERROR'})
+                        return False
                     with lock(self.directory):
                         state = json.loads((self.directory / 'pending.json').read_text())
                         if state.get('tag') != self.tag:
-                            return
+                            return False
                         state['events'] = [item for item in state['events'] if item['sequence'] > event['sequence']]
                         write_json(self.directory / 'pending.json', state)
+                    self.last_flush_progress += 1
+                    (self.directory / 'delivery-error.json').unlink(missing_ok=True)
+                with lock(self.directory):
+                    state = json.loads((self.directory / 'pending.json').read_text())
+                    return state.get('tag') == self.tag and not state['events']
         except (CourseError, OSError, ValueError, KeyError):
-            return
+            return False
+
+
+def delivery_message(reporter, delivered):
+    if not reporter.config:
+        return '本機檢查通過，但尚未設定課程回報，請找助教。'
+    if delivered:
+        return '本機檢查通過，已回報網頁。'
+    try:
+        code = json.loads((reporter.directory / 'delivery-error.json').read_text()).get('code')
+    except (OSError, ValueError):
+        code = ''
+    if code == 'INVALID_COURSE_EVENT':
+        return '本機檢查通過；回報尚未送達，請助教更新 Supabase SQL。'
+    if code in ('COURSE_DEVICE_DENIED', 'COURSE_HOST_MISMATCH', 'ROOM_NOT_FOUND'):
+        return '本機檢查通過；回報授權或課堂狀態不符，請找助教。'
+    if code == 'CONFIG_CHANGED':
+        return '本機檢查通過；配對與待送紀錄不符，請助教重新設定課程工具。'
+    return '本機檢查通過；回報待送，連線恢復後會自動補送。'
+
+
+def ensure_sender():
+    # Each short observer enqueues locally, then wakes one lock-protected sender.
+    try:
+        subprocess.Popen([PYTHON, str(Path.home() / '.local/share/pi-helper-course/pi_course.py'), 'sender'],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError:
+        pass
+
+
+def send_forever():
+    home, _, directory = paths()
+    stable = home / '.local/share/pi-helper-course/pi_course.py'
+    signature = stable.read_bytes()
+    changed = False
+    try:
+        with lock(directory, 'watch.lock', blocking=False):
+            while True:
+                if stable.read_bytes() != signature:
+                    changed = True
+                    break
+                reporter = Reporter()
+                delivered = reporter.flush(blocking=True)
+                if not delivered and reporter.last_flush_progress:
+                    continue
+                time.sleep(3)
+    except (CourseError, OSError, ValueError):
+        return
+    if changed:
+        ensure_sender()
 
 
 def setup(home=None, config=None):
@@ -203,7 +284,69 @@ def setup(home=None, config=None):
             os.replace(temporary, launcher)
         finally:
             temporary.unlink(missing_ok=True)
+        install_shell_hook(home)
     print('課程回報已設定。之後使用 ~/pi-course 加上課程操作，例如 ~/pi-course location。')
+    print('請關閉舊終端機，再開啟新的終端機，啟用課程指令回報。')
+
+
+def install_shell_hook(home):
+    path = home / '.bashrc'
+    if path.is_symlink():
+        raise ValueError('終端機設定是連結，請助教確認後再啟用回報。')
+    text = path.read_text() if path.exists() else ''
+    begin, end = '# >>> pi-helper course shell >>>', '# <<< pi-helper course shell <<<'
+    if text.count(begin) != text.count(end) or text.count(begin) > 1:
+        raise ValueError('既有課程終端機設定區塊不完整，請助教確認。')
+    block = begin + '\nif [[ $- == *i* && -r "$HOME/.local/share/pi-helper-course/course_shell.bash" ]]; then\n    source "$HOME/.local/share/pi-helper-course/course_shell.bash"\nfi\n' + end
+    if begin in text:
+        text = re.sub(re.escape(begin) + '.*?' + re.escape(end), lambda _: block, text, flags=re.S)
+    else:
+        text = text.rstrip('\n') + '\n\n' + block + '\n'
+    temporary = path.with_name('.bashrc-pi-helper-' + uuid.uuid4().hex)
+    try:
+        temporary.write_text(text)
+        temporary.chmod(path.stat().st_mode & 0o777 if path.exists() else 0o644)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def observed_task(reporter, task, exit_code, cwd, flag):
+    if task not in OBSERVED or not 0 <= exit_code <= 255 or flag not in (0, 1):
+        raise ValueError('課程指令回報格式不正確。')
+    actual = Path.cwd().resolve()
+    if Path(cwd).resolve() != actual:
+        raise ValueError('指令回報位置不符。')
+    label = 'home' if actual == reporter.home.resolve() else 'project' if actual == reporter.project.resolve() else 'photos' if actual == (reporter.project / 'photos').resolve() else 'other'
+    evidence = dict(observed=True, exit_code=exit_code, cwd=label)
+    error = None
+    if exit_code:
+        error = 'command_failed'
+    elif task == 'terminal_ready':
+        evidence['hook_ready'] = bool(flag)
+        if not flag:
+            error = 'hook_conflict'
+    elif task == 'host_name':
+        evidence['hostname_ok'] = hostname() == reporter.config['expected_hostname'] if reporter.config else False
+        if not evidence['hostname_ok']:
+            error = 'wrong_host'
+    elif task == 'mkdir_photos':
+        evidence['already_existed'] = bool(flag)
+        evidence['folder_exists'] = checked_path(reporter.project, 'photos').is_dir()
+        if not evidence['folder_exists']:
+            error = 'missing_folder'
+    elif task == 'enter_project':
+        if label != 'project':
+            error = 'wrong_directory'
+    elif task == 'list_project':
+        evidence['photos_listed'] = label == 'project' and checked_path(reporter.project, 'photos').is_dir()
+        if not evidence['photos_listed']:
+            error = 'missing_folder'
+    if error:
+        evidence['error_code'] = error
+    if not reporter.emit(task, 'failed' if error else 'passed', evidence, asynchronous=False):
+        raise ValueError('尚未設定有效的課程回報。')
+    return 0
 
 
 def network_addresses():
@@ -248,21 +391,29 @@ def checked_path(project, name):
     return path
 
 
-def execute(command, cwd, timeout=15, limit=65536, interactive=False):
+def execute(command, cwd, timeout=15, limit=65536, interactive=False, capture_apt_errors=False):
     """Bound student output and execution; apt is never killed by an automatic timeout."""
     process = subprocess.Popen(command, cwd=cwd, stdin=None if interactive else subprocess.DEVNULL,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=not interactive,
                                env={**os.environ, 'LC_ALL': 'C', 'PYTHONUNBUFFERED': '1'})
     chunks = deque(maxlen=64)
     overflow = threading.Event()
+    apt_errors = set()
 
     def read():
         total = 0
+        tail = b''
         while True:
             chunk = process.stdout.read1(1024)
             if not chunk:
                 break
             chunks.append(chunk)
+            if capture_apt_errors:
+                joined = tail + chunk
+                for marker in (b'Failed to fetch', b'Some index files failed', b'Temporary failure resolving', b'Err:'):
+                    if marker in joined:
+                        apt_errors.add(marker)
+                tail = joined[-80:]
             total += len(chunk)
             if interactive:
                 sys.stdout.buffer.write(chunk)
@@ -294,6 +445,8 @@ def execute(command, cwd, timeout=15, limit=65536, interactive=False):
         if not reader.is_alive():
             process.stdout.close()
     output = b''.join(chunks).decode('utf-8', errors='replace')
+    if apt_errors:
+        output += '\n' + '\n'.join(marker.decode() for marker in sorted(apt_errors))
     if not interactive:
         print(output, end='' if output.endswith('\n') else '\n')
     if overflow.is_set():
@@ -401,10 +554,21 @@ def run_student_camera(reporter):
     code, _ = execute([PYTHON, str(script)], project, timeout=None, interactive=True)
     if code:
         raise CourseError('python_failed', '程式沒有正常結束，請保留終端機錯誤，修改並儲存後重試。')
-    photo = new_student_photos(project, before, hostname())
-    device = probe_camera()
-    reporter.emit('photo', 'passed', photo)
-    reporter.emit('camera_exit', 'passed', {'verifier': 'student-v1', 'camera_reopened': True, 'device': device})
+    first_error = None
+    photo = None
+    for task in ('photo', 'camera_exit'):
+        reporter.emit(task, 'running', {'verifier': 'student-v1'})
+        try:
+            evidence = new_student_photos(project, before, hostname()) if task == 'photo' else {'verifier': 'student-v1', 'camera_reopened': True, 'device': probe_camera()}
+            reporter.emit(task, 'passed', evidence)
+            if task == 'photo':
+                photo = evidence
+        except (CourseError, OSError, UnicodeError) as error:
+            problem = error if isinstance(error, CourseError) else CourseError('save_failed' if task == 'photo' else 'camera_read', '照片或相機檢查失敗，請保留本機畫面並找助教。')
+            reporter.emit(task, 'failed', {'verifier': 'student-v1', 'error_code': problem.code})
+            first_error = first_error or problem
+    if first_error:
+        raise first_error
     print('本次新增 ' + str(photo['photo_count']) + ' 張可讀取的 1920×1080 JPG；相機可再次取像。')
     print('預覽、畫面品質、是否由相機原始尺寸取像，請再親眼確認。')
     return {'verifier': 'student-v1', 'script_name': script.name, 'exit_code': 0}, None
@@ -519,7 +683,7 @@ def run_task(task, reporter, device=None):
     if task in ('update', 'install'):
         command = ['sudo', 'apt', 'update'] if task == 'update' else ['sudo', 'apt', 'install', '-y', 'v4l-utils', 'python3-opencv', 'python3-tk']
         print('執行：' + ' '.join(command), flush=True)
-        code, output = execute(command, home, timeout=None, interactive=True)
+        code, output = execute(command, home, timeout=None, interactive=True, capture_apt_errors=task == 'update')
         if code:
             raise CourseError('apt_failed', '更新或安裝尚未成功，請看終端機的完整錯誤，不要刪除 lock 檔。')
         if task == 'update' and any(value in output for value in ('Failed to fetch', 'Some index files failed', 'Temporary failure resolving', 'Err:')):
@@ -566,14 +730,14 @@ def run_task(task, reporter, device=None):
 
 def main():
     parser = argparse.ArgumentParser(description='Pi 課程執行與結果檢查；請使用 user，不要加 sudo。')
-    parser.add_argument('task', choices=['setup', 'flush', *TASKS])
+    parser.add_argument('task', choices=['setup', 'flush', 'observe', 'sender', *TASKS])
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     device = None
     if args.task == 'run':
         task, device = resolve_classroom_command(args.command)
     else:
-        if args.command:
+        if args.command and args.task != 'observe':
             raise ValueError('這個操作不需要額外參數，請從網頁重新複製。')
         task = args.task
     if os.geteuid() == 0:
@@ -581,10 +745,25 @@ def main():
     if args.task == 'setup':
         setup()
         return 0
+    if args.task == 'sender':
+        send_forever()
+        return 0
     reporter = Reporter()
+    if args.task == 'observe':
+        observer = argparse.ArgumentParser()
+        observer.add_argument('operation', choices=OBSERVED)
+        observer.add_argument('exit_code', type=int)
+        observer.add_argument('cwd')
+        observer.add_argument('flag', type=int)
+        observed = observer.parse_args(args.command)
+        result = observed_task(reporter, observed.operation, observed.exit_code, observed.cwd, observed.flag)
+        ensure_sender()
+        return result
     if args.task == 'flush':
-        reporter.flush(blocking=True)
-        print('已嘗試補送本機待回報結果，請回網頁按「更新檢查結果」。')
+        delivered = reporter.flush(blocking=True)
+        print('待送紀錄已送達網頁。' if delivered else delivery_message(reporter, False).replace('本機檢查通過；', ''))
+        if reporter.config and not delivered:
+            ensure_sender()
         return 0
     event_task = 'student_camera' if task == 'camera-student' else task
     with lock(reporter.directory, 'operation.lock', blocking=False):
@@ -596,7 +775,10 @@ def main():
                 heartbeat_thread.join(timeout=10)
         def heartbeat():
             while not heartbeat_stop.wait(30):
-                reporter.emit(event_task, 'running')
+                try:
+                    reporter.emit(event_task, 'running')
+                except (CourseError, OSError, ValueError):
+                    return
         if task in ('update', 'install', 'camera-student'):
             heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
             heartbeat_thread.start()
@@ -607,18 +789,32 @@ def main():
             stop_heartbeat()
             if evidence is not None:
                 reporter.emit(event_task, 'passed', evidence, network)
-            print('本次操作完成。請回網頁確認檢查結果。')
             result = 0
-        except (CourseError, OSError, UnicodeError) as error:
+        except (CourseError, OSError, UnicodeError, KeyboardInterrupt) as error:
             stop_heartbeat()
-            code = error.code if isinstance(error, CourseError) else 'unknown'
+            code = error.code if isinstance(error, CourseError) else 'interrupted' if isinstance(error, KeyboardInterrupt) else 'unknown'
+            if task == 'camera-student':
+                for child in ('photo', 'camera_exit'):
+                    if reporter.task_statuses.get((child, reporter.run_id)) == 'running':
+                        reporter.emit(child, 'cancelled', {'verifier': 'student-v1', 'error_code': code})
             if task != 'camera-install':
                 reporter.emit(event_task, 'cancelled' if code == 'interrupted' else 'failed', {'error_code': code})
-            print(str(error) if isinstance(error, CourseError) else '檔案或裝置操作失敗，請保留終端機畫面並請助教確認。', file=sys.stderr)
+            print(str(error) if isinstance(error, CourseError) else '本次操作已中斷。' if isinstance(error, KeyboardInterrupt) else '檔案或裝置操作失敗，請保留終端機畫面並請助教確認。', file=sys.stderr)
             result = 1
         finally:
             stop_heartbeat()
-            reporter.flush(blocking=True)
+            delivered = reporter.flush(blocking=True)
+            if reporter.config and not delivered:
+                ensure_sender()
+    if result == 0:
+        if task == 'camera-install':
+            print('本次操作完成。統一程式已放入本機；這個舊版取得步驟不另外回報。')
+        elif evidence is None:
+            print('程式已結束，請查看網頁各項檢查結果。' + ('' if delivered else '回報尚未送達，連線恢復後會自動補送。'))
+        else:
+            print('本次操作完成。' + delivery_message(reporter, delivered))
+    elif reporter.config and not delivered:
+        print('本次錯誤結果尚未送達網頁；請保留畫面，連線恢復後會自動補送。', file=sys.stderr)
     return result
 
 

@@ -22,12 +22,12 @@ SERVICE = Path('/etc/systemd/system/pi-helper-device.service')
 ACCOUNT = 'pi-helper-reporter'
 
 
-def run(*args):
+def run(*args, include_error=False):
     try:
-        result = subprocess.run(args, capture_output=True, text=True, timeout=5, check=False)
-        return result.returncode, result.stdout.strip()
+        result = subprocess.run(args, capture_output=True, text=True, timeout=5, check=False, env={**os.environ, 'LC_ALL': 'C'})
+        return (result.returncode, result.stdout.strip(), result.stderr.strip()) if include_error else (result.returncode, result.stdout.strip())
     except (OSError, subprocess.TimeoutExpired):
-        return None, ''
+        return (None, '', '') if include_error else (None, '')
 
 
 def service_state(name):
@@ -41,8 +41,14 @@ def service_state(name):
 
 
 def installed(name):
-    code, text = run('dpkg-query', '-W', '-f=${Status}', name)
-    return text == 'install ok installed' if code in (0, 1) else None
+    code, text, error = run('dpkg-query', '-W', '-f=${Status}', name, include_error=True)
+    if code == 0:
+        parts = text.split()
+        if len(parts) == 3 and parts[1] in ('ok', 'reinstreq'):
+            return parts[1:] == ['ok', 'installed']
+    if code == 1 and error == 'dpkg-query: no packages found matching ' + name:
+        return False
+    return None
 
 
 def display_backend(root=Path('/etc/lightdm')):
@@ -136,6 +142,8 @@ def report(config, snapshot):
                     'ROOM_NOT_FOUND': '課堂已關閉、到期或組別未開放。',
                     'DEVICE_TOO_FREQUENT': '回報間隔太短，稍後再試。',
                     'INVALID_DEVICE_REPORT': '設備資料格式不符，請更新回報程式。'}
+        if not isinstance(message, str):
+            message = None
         raise RuntimeError(messages.get(message, '無法送出回報，請檢查網路與資料庫升級。')) from None
     except (urllib.error.URLError, TimeoutError, ValueError, OSError):
         raise RuntimeError('網路暫時無法連線，稍後自動重試。') from None

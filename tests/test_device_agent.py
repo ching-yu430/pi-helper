@@ -53,13 +53,18 @@ class ReporterTests(unittest.TestCase):
     def test_missing_tools_are_unknown_not_false_success(self):
         with patch.object(agent, 'run', return_value=(None, '')):
             self.assertEqual(agent.service_state('xrdp'), 'unknown')
+        with patch.object(agent, 'run', return_value=(None, '', '')):
             self.assertIsNone(agent.installed('xrdp'))
         with patch.object(agent, 'run', side_effect=[(3, 'unknown'), (0, 'not-found')]):
             self.assertEqual(agent.service_state('xrdp'), 'missing')
         with patch.object(agent, 'run', side_effect=[(4, 'inactive'), (0, 'not-found')]):
             self.assertEqual(agent.service_state('xrdp'), 'missing')
-        with patch.object(agent, 'run', return_value=(2, '')):
+        with patch.object(agent, 'run', return_value=(2, '', 'query failed')):
             self.assertIsNone(agent.installed('xrdp'))
+
+    def test_package_query_failures_are_unknown_and_held_packages_are_installed(self):
+        for response,expected in [((0,'install ok installed',''),True),((0,'hold ok installed',''),True),((0,'install ok unpacked',''),False),((1,'','permission denied'),None),((1,'','dpkg-query: no packages found matching xrdp'),False)]:
+            with patch.object(agent,'run',return_value=response):self.assertIs(agent.installed('xrdp'),expected)
 
     def test_config_rejects_admin_keys_arbitrary_urls_and_extra_commands(self):
         self.assertEqual(agent.validate(self.config()), self.config())
@@ -83,6 +88,10 @@ class ReporterTests(unittest.TestCase):
         error = urllib.error.HTTPError('https://example.supabase.co', 403, '', {}, io.BytesIO(b'{"message":"DEVICE_DENIED","secret":"must-not-leak"}'))
         with patch.object(agent.urllib.request, 'urlopen', side_effect=error), self.assertRaisesRegex(RuntimeError, '設備憑證已停用') as result:
             agent.report(self.config(), {})
+        malformed = urllib.error.HTTPError('https://example.supabase.co', 500, '', {}, io.BytesIO(b'{"message":{"secret":"private-body"}}'))
+        with patch.object(agent.urllib.request, 'urlopen', side_effect=malformed), self.assertRaises(RuntimeError) as unknown:
+            agent.report(self.config(), {})
+        self.assertNotIn('private-body',str(unknown.exception))
         self.assertNotIn('must-not-leak', str(result.exception))
         with patch.object(agent.urllib.request, 'urlopen', side_effect=TimeoutError()), self.assertRaisesRegex(RuntimeError, '自動重試'):
             agent.report(self.config(), {})

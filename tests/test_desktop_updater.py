@@ -115,6 +115,11 @@ class DesktopUpdaterTests(unittest.TestCase):
     def test_errors_do_not_echo_remote_payload_or_credentials(self):
         error=RuntimeError('secret-course-token');self.assertNotIn('secret-course-token',updater.safe_error(error))
 
+    def test_desktop_login_starts_only_the_user_outbox_sender(self):
+        with mock.patch.object(updater.subprocess,'Popen') as launch:
+            updater.start_report_sender(Path('/home/user'))
+        self.assertEqual(launch.call_args.args[0],['/usr/bin/python3','/home/user/.local/share/pi-helper-course/pi_course.py','sender']);self.assertTrue(launch.call_args.kwargs['start_new_session'])
+
     def test_early_failure_restores_code_but_uncertain_cloud_confirmation_keeps_new_code(self):
         for failed_stage in ('course_report','verify'):
             with self.subTest(stage=failed_stage),tempfile.TemporaryDirectory() as directory:

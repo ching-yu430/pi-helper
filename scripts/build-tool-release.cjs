@@ -3,13 +3,13 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const arg=name=>process.argv.find(value=>value.startsWith('--'+name+'='))?.split('=').slice(1).join('=');
 const file=path.join(root,'tooling/release.json'),version=arg('version')||(fs.existsSync(file)?JSON.parse(fs.readFileSync(file)).version:'1.0.0');
 if(!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(version))throw Error('Invalid version');
-const sources={device:'device-agent/pi_reporter.py',course:'courseware/pi_course.py',camera:'courseware/camera_app.py',updater:'tooling/updater.py'},hash=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+const sources={device:'device-agent/pi_reporter.py',course:'courseware/pi_course.py',camera:'courseware/camera_app.py',updater:'tooling/updater.py',shell:'courseware/course_shell.bash'},hash=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
 const systemRevision=Number(arg('system-revision')||(fs.existsSync(file)?JSON.parse(fs.readFileSync(file)).system_revision:1)||1);
 if(!Number.isSafeInteger(systemRevision)||systemRevision<1)throw Error('Invalid system revision');
 const release={version,system_revision:systemRevision,bootstrap_sha256:hash('tooling/install.py'),files:Object.fromEntries(Object.entries(sources).map(([k,v])=>[k,hash(v)]))};
 const json=JSON.stringify(release,null,2)+'\n',dir=path.join(root,'tooling/releases',version),migrationDir=path.join(root,'supabase/migrations');
 const seed="insert into pi_helper.tool_releases(version,system_revision,bootstrap_sha256,files) values ('"+version+"',"+systemRevision+",'"+release.bootstrap_sha256+"','"+JSON.stringify(release.files)+"'::jsonb) on conflict(version) do nothing;";
-const bundle={...Object.fromEntries(Object.entries(sources).map(([k,v])=>[k+'.py',v])),'install.py':'tooling/install.py'};
+const bundle={...Object.fromEntries(Object.entries(sources).map(([k,v])=>[k+path.extname(v),v])),'install.py':'tooling/install.py'};
 if(process.argv.includes('--check')){
  if(!fs.existsSync(file)||fs.readFileSync(file,'utf8')!==json||!fs.readdirSync(migrationDir).some(name=>name.endsWith('.sql')&&fs.readFileSync(path.join(migrationDir,name),'utf8').includes(seed)))throw Error('Release catalog is stale; publish a new immutable version.');
  for(const [name,source] of Object.entries(bundle))if(!fs.existsSync(path.join(dir,name))||!fs.readFileSync(path.join(dir,name)).equals(fs.readFileSync(path.join(root,source))))throw Error('Released package differs from its source.');
