@@ -80,6 +80,26 @@ Object.assign(assignment,{
  notes:['環境：樹莓派 5、系統 Python 3、OpenCV、Tkinter。程式不需額外參數就能啟動。','先做出能拍照的程式，再修改功能，不用加入辨識或串流。','檢查在程式結束後進行；只留下舊照片不算這次完成。','看到預覽、照片清楚、不是把小圖放大，由學生或助教確認。','這行會執行上方存好的本組程式，並檢查新照片。請使用課堂工具 1.6.0；舊版請助教指派更新。','保留一次「遇到什麼問題、請 AI 改了什麼」的例子即可。'],
  view:{title:'用 AI 做拍照程式',where:'樹莓派｜Thonny',action:'自己向 AI 提問，做出符合以下規範的拍照程式。',saveAs:'/home/user/pi-camera/{host}_camera.py',commandTitles:['開啟本組程式並檢查'],results:['預覽 → 拍照 → 結束，之後才會回報檢查結果。']}
 });
+// Main lesson instructions: only the actions needed in the current window.
+const terminalSteps=['在樹莓派桌面，按左上角黑色「>_」圖示，開啟終端機。','按下方「複製指令」，點一下樹莓派終端機，按 Ctrl + Shift + V，再按 Enter。'];
+for(const stage of stages){
+ if(stage.commands.length&&stage.id!=='download')stage.view.instructions=terminalSteps;
+ if(stage.code){
+  stage.view.writingInstructions=['在樹莓派桌面，點左上角樹莓派選單 → 程式設計（Programming）→ Thonny，按 Ctrl + N。','點 Thonny 上半部空白區，複製下方程式後按 Ctrl + V。不要貼到下方的 >>>。','按 Ctrl + S；在「檔案名稱」貼上下方完整路徑，按「儲存」。存好才回網頁按「存好了，下一步」。'];
+  stage.view.editorIntro='按 Ctrl + N，在 Thonny 上半部空白區輸入：';
+ }
+}
+stages[1].view.commandActions=['先執行這一行，啟用目前視窗的回報並建立照片資料夾。','把目前操作的位置切換到 pi-camera 資料夾。','列出這個資料夾的內容，找 photos 這個名稱。','檢查 photos 能不能存檔，並將結果回報給老師。'];
+stages[3].view.runningInstructions=[...terminalSteps,'執行後，在樹莓派按上方黃色資料夾圖示。按 Ctrl + L，輸入 /home/user/pi-camera，按 Enter，再點兩下 message.txt。'];
+stages[6].view.instructions=['在樹莓派桌面，按上方黃色資料夾圖示，開啟檔案管理員。','在檔案管理員按 Ctrl + L，輸入 /home/user/pi-camera/photos，再按 Enter。','點兩下 JPG 照片。確認物品清楚、完整，沒有太亮或太暗，再回網頁按「照片看過了」。'];
+stages[6].view.path='照片在樹莓派：/home/user/pi-camera/photos';
+assignment.view.where='Windows｜AI 網站 → 樹莓派｜Thonny';
+assignment.view.writingInstructions=['在 Windows 筆電的瀏覽器開啟你使用的 AI 網站，自己描述下方六項功能。','複製 AI 給的 Python 程式。回到樹莓派遠端桌面，點樹莓派選單 → 程式設計 → Thonny，按 Ctrl + N。','點 Thonny 上半部空白區，按 Ctrl + V。按 Ctrl + S，在「檔案名稱」填下方完整路徑並儲存，再回網頁按「開始試拍」。'];
+assignment.view.runningInstructions=[...terminalSteps,'等拍照視窗出現：用滑鼠按「拍照」，再按程式的「結束」。回到網頁等檢查結果；有錯誤先保留終端機畫面。'];
+stages[7].view.commandInstructions=[['縮小樹莓派遠端桌面。按 Windows 開始鍵，輸入 PowerShell，再按 Enter；找到 PS 開頭的輸入位置。','複製下方指令，點一下 Windows PowerShell，按 Ctrl + V，再按 Enter。第一次出現 yes/no 時，先請助教核對本組目標，再輸入 yes。','出現 password 時，輸入樹莓派密碼，再按 Enter；看不到文字或星號是正常的。等下載結束，再按「下一步」。'],[]];
+function instructionsFor(stage,{writing=false,lineIndex=0}={}){
+ return writing?stage.view.writingInstructions||[]:stage.view.commandInstructions?.[lineIndex]||stage.view.runningInstructions||stage.view.instructions||[];
+}
 const fill=(text,host,device='/dev/video0')=>String(text).replaceAll('{host}',host).replaceAll('{group}',host.slice(-2)).replaceAll('{device}',device);
-window.PiCameraCourse={version:'1.6.0',startIndex:1,runner,stages,fill,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
+window.PiCameraCourse={version:'1.6.0',startIndex:1,runner,stages,fill,instructionsFor,indexFor(title){const i=stages.findIndex(s=>s.title===title);return i<0?0:i}};
 })();

@@ -22,6 +22,7 @@ function operationList(){
 }
 function taskMap(row){return new Map((row?.tasks||[]).map(task=>[task.task,task]))}
 function overview(row,error){
+ if(error==='FEATURE_UNAVAILABLE'&&!row)return {state:'none',title:'課程檢查尚未啟用',result:'需更新資料庫',next:'請老師在課堂工具套用最新 SQL，再設定本組工具。'};
  if(error){const previous=row?.tasks?.slice().sort((a,b)=>b.sequence-a.sequence)[0];return {state:'stale',title:previous?(titles[previous.task]||previous.task):'課程結果暫時無法更新',result:'狀態待確認',next:'重試更新；保留上次紀錄。',task:previous};}
  if(!row?.enabled)return {state:'none',title:'尚無課程操作回報',result:'尚無紀錄',next:'確認本組課堂工具已安裝並完成綁定。'};
  const tasks=taskMap(row),values=[...tasks.values()].filter(t=>t.task!=='terminal_ready'&&resultState(t,tasks)!=='outdated'&&(t.task!=='camera'||!tasks.has('student_camera'))&&(t.task!=='environment'||!tasks.has('opencv')&&!tasks.has('camera_list'))),failed=values.filter(t=>['failed','cancelled'].includes(t.status)).sort((a,b)=>b.sequence-a.sequence)[0],running=values.filter(t=>t.status==='running').sort((a,b)=>b.sequence-a.sequence)[0],latest=values.toSorted?values.toSorted((a,b)=>b.sequence-a.sequence)[0]:values.slice().sort((a,b)=>b.sequence-a.sequence)[0];

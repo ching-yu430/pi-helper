@@ -159,3 +159,5 @@ node tests/run-camera-browser.cjs
 - [GitHub About 建議設定](docs/GITHUB_ABOUT.md)。
 
 目前尚未選定程式碼開源授權，暫不新增 LICENSE；公開儲存庫不代表已授予自由再利用權利。第三方圖片沿用各自來源與授權說明。
+
+近期課程與後台檢視範圍見 [檢視紀錄](docs/REVIEW_2026-11-01.md)。測試機需要重新測試首次安裝時，使用 [pi5-10 還原流程](docs/RESET_PI10.md)，可保留作業系統與遠端連線設定。

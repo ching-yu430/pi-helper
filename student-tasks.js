@@ -53,6 +53,14 @@ function describe(id,node,config){
   rdpLogin:['Session 選 Xorg。','username 填 '+user+'。','password 填目前樹莓派密碼，按 OK。','看到樹莓派桌面後，才回網頁選成功。'],
   shutdown:['先把程式和作業存好。','在已登入本組樹莓派的視窗，執行下方指令。','斷線是正常的。先不要拔電，下一步還要等關機。']
  };
+ Object.assign(instructions,{
+  x11:['留在 Windows PowerShell 裡已登入本組樹莓派的視窗；要看得到 '+user+'@'+host+'。','先執行下方指令，等設定選單出現。接著照圖片用方向鍵、Enter 與 Tab 選擇。'],
+  rebootPi:['先在樹莓派把開著的程式或作業按 Ctrl + S 儲存。','回到已登入樹莓派的 PowerShell，貼下方指令，再按 Enter。','斷線後保持樹莓派供電及手機熱點開啟。回到 Windows PowerShell，依下一步測試連線。'],
+  shutdownSave:['在樹莓派開著的編輯器按 Ctrl + S，按「儲存」。','如果是第一次存檔，先選老師指定的資料夾與檔名。存好後再回網頁繼續。'],
+  shutdownWait:['看桌上的樹莓派，現在先不要拔電。','從遠端桌面斷線後至少再等 30 秒。不確定是否已關機，就請助教看過再拔電。']
+ });
+ const places={shutdown:'樹莓派｜已登入的 SSH 視窗，或桌面左上方黑色 >_ 終端機',shutdownSave:'樹莓派｜目前開啟的程式或作業視窗',client:'Windows 筆電｜PowerShell 與 Windows 設定',localCheck:'本組手機｜熱點設定；Windows 筆電｜右下角 Wi-Fi',network:'本組手機｜熱點；Windows 筆電｜Wi-Fi；桌上的樹莓派｜電源',black:'Windows 筆電｜本組樹莓派的遠端桌面連線視窗',sshDone:'Windows 筆電｜已登入本組樹莓派的 PowerShell 視窗',finish:'Windows 筆電｜課程網頁',rdpLogin:'Windows 筆電｜跳出的 xrdp 登入視窗'};
+ if(places[id])where=places[id];
  const brief={login:'先在 Windows 開啟 PowerShell，再貼上這一行。',password:'現在只要輸入密碼，再按 Enter。',trust:'看到 yes/no 的問題時，照下面做。',verify:'確認連到的是自己的組別。',aptUpdate:'先更新工具清單。等它跑完再繼續。',installXrdp:'安裝遠端桌面需要的工具。',enableXrdp:'把遠端桌面服務打開。',rdpTcp:'回 Windows，檢查能不能連上遠端桌面。',rdpOpen:'在 Windows 開啟遠端桌面連線。',rdpLogin:'在跳出的視窗，照下面三個欄位填。',shutdown:'先存檔，再關機。現在不要拔電。'};
  Object.assign(brief,{localCheck:'先檢查手機熱點和組別，不要急著改 IP。',network:'先把本組手機熱點打開。筆電也要連同一個熱點。',tcp:'在 Windows 執行下方指令，找最後的 True 或 False。',tcpFalse:'連線測試沒有通過。再做一次登入，看看出現哪個錯誤。',refused:'畫面寫 Connection refused？先確認組別，再請助教檢查。',account:'帳號或密碼沒有通過。先確認帳號，再輸入一次密碼。',key:'這個警告先不要自己改。保留畫面，請助教確認。',syntax:'先按 Ctrl + C 取消，再重新複製下方完整指令。',client:'Windows 找不到 ssh。做完下方檢查，還是找不到就請助教幫忙。',stable:'連線突然中斷了。先確認剛才有沒有按重新開機或關機。',rdpService:'先登入本組樹莓派，再做下方兩行檢查。',apt:'先停下，保留紅字或錯誤畫面，再選下方符合的情況。',aptNet:'樹莓派下載不到工具。確認本組手機能上網，再試一次。',aptLock:'可能有另一個安裝還沒做完。先等它完成，不要刪除檔案。',black:'登入後是黑畫面？先保留視窗，請助教檢查。'});
  const windowHint=node.pi?'這個視窗要看得到 '+user+'@'+host+'。若只看到 PS，表示還沒登入樹莓派。':node.cmd?'這個視窗的輸入位置要以 PS 開頭。若看到 '+user+'@'+host+'，先輸入 exit，再按 Enter。':'';

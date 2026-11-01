@@ -2,7 +2,7 @@
 'use strict';
 const make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e};
 const steps=[
-{title:"準備電腦、讀卡機與 microSD 卡",body:["先備份 SD 卡中需要保留的資料；寫入會清除整張卡。", "Pi 先不要接電。將 microSD 卡插入讀卡機，再接到 Windows 電腦。", "下載並開啟 Raspberry Pi Imager。"],picture:'devices',rows:[],download:true},
+{title:"準備電腦、讀卡機與 microSD 卡",body:["先備份 SD 卡中需要保留的資料；寫入會清除整張卡。", "Pi 先不要接電。將 microSD 卡插入讀卡機，再接到 Windows 電腦。", "在 Windows 按下方下載連結，下載後開啟安裝檔，依畫面完成安裝，再從開始選單開啟 Raspberry Pi Imager。"],picture:'devices',rows:[],download:true},
 {title:"選擇 Raspberry Pi 5",body:["找到 Device／裝置，按 Raspberry Pi 5，再按 Next（下一步）。"],rows:[['Device／裝置','Raspberry Pi 5'],['本課程設備','所有組別都使用 Pi 5']],highlight:0},
 {title:"選擇 64 位元桌面系統",body:["在 OS／作業系統頁選擇「本組實際設定」的系統。若助教指定版本，請使用指定版本。", "確認包含桌面環境，再按 Next；後續遠端桌面課程不能使用 Lite。"],rows:[['OS／作業系統','Raspberry Pi OS (64-bit)'],['版本類型','有桌面（Desktop）'],['不要選','Raspberry Pi OS Lite']],highlight:1},
 {title:"選擇本組 microSD 卡",body:["在 Storage／儲存裝置頁，依名稱與容量選取本組 microSD 卡。", "不確定是哪個磁碟時先停止，請助教協助。"],rows:[['Storage／儲存裝置','你的 microSD 卡'],['核對項目','容量 ＋ 裝置名稱'],['寫入影響','清除這張卡的所有資料']],highlight:0},

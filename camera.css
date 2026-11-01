@@ -135,3 +135,7 @@
 .camera-download-guide h3 { margin:0 0 10px; font-size:18px; }
 .camera-download-guide ol { padding-left:24px; margin:0; }
 .camera-download-guide li { margin:10px 0; }
+
+.camera-instructions { margin:12px 0 20px; padding:14px 16px 14px 40px; border:1px solid var(--site-border); border-radius:12px; background:#f8faf7; font-size:16px; line-height:1.7; }
+.camera-instructions li { padding-left:3px; margin:6px 0; }
+.camera-instructions li::marker { color:var(--site-accent,#205b45); font-weight:700; }
